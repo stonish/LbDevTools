@@ -6,7 +6,7 @@ LHCb Development tools
 Set of tools used by the LHCb experiment to develop and release software.
 
 
-.. |pipeline status| image:: https://gitlab.cern.ch/lhcb-core/LbPlatformUtils/badges/master/pipeline.svg
-                     :target: https://gitlab.cern.ch/lhcb-core/LbPlatformUtils/commits/master
-.. |coverage report| image:: https://gitlab.cern.ch/lhcb-core/LbPlatformUtils/badges/master/coverage.svg
-                     :target: https://gitlab.cern.ch/lhcb-core/LbPlatformUtils/commits/master
+.. |pipeline status| image:: https://gitlab.cern.ch/lhcb-core/LbDevTools/badges/master/pipeline.svg
+                     :target: https://gitlab.cern.ch/lhcb-core/LbDevTools/commits/master
+.. |coverage report| image:: https://gitlab.cern.ch/lhcb-core/LbDevTools/badges/master/coverage.svg
+                     :target: https://gitlab.cern.ch/lhcb-core/LbDevTools/commits/master

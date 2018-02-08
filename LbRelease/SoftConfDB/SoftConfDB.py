@@ -20,10 +20,7 @@ Created on May 2, 2013
 
 import logging
 from py2neo import neo4j, cypher
-from LbEnv.ProjectEnv.versions import versionKey
-#from LbConfiguration.Version import sortVersions, LCGVersion
-
-
+from LbEnv.ProjectEnv.version import versionKey
 
 class SoftConfDB(object):
     '''

@@ -9,7 +9,19 @@
 # granted to it by virtue of its status as an Intergovernmental Organization  #
 # or submit itself to any jurisdiction.                                       #
 ###############################################################################
+from __future__ import print_function
+
 import os
+
+
+DATA_DIR = os.path.join(os.path.dirname(__file__), 'data')
+
+
+def data_location():
+    '''
+    Print the location of the `data` folder.
+    '''
+    print(DATA_DIR)
 
 
 def createProjectMakefile(dest, overwrite=False):
@@ -22,7 +34,9 @@ def createProjectMakefile(dest, overwrite=False):
     if overwrite or not os.path.exists(dest):
         logging.debug("Creating '%s'", dest)
         with open(dest, "w") as f:
-            f.write("include ${LBCONFIGURATIONROOT}/data/Makefile\n")
+            f.write('DEVTOOLS_DATADIR := {0}\n'
+                    'include $(DEVTOOLS_DATADIR)/Makefile-common.mk\n'.format(
+                        DATA_DIR))
         return True
     return False
 
@@ -37,7 +51,8 @@ def createToolchainFile(dest, overwrite=False):
     if overwrite or not os.path.exists(dest):
         logging.debug("Creating '%s'", dest)
         with open(dest, "w") as f:
-            f.write("include($ENV{LBUTILSROOT}/data/toolchain.cmake)\n")
+            f.write("include({0})\n".format(
+                os.path.join(DATA_DIR, 'toolchain.cmake')))
         return True
     return False
 

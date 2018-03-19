@@ -170,6 +170,7 @@ setup(
         'console_scripts': [
             'lb-project-init=LbDevTools.ProjectInit:main',
             'lb-dev=LbDevTools.ProjectDev:main',
+            'lb-devtools-datadir=LbDevTools:data_location',
         ],
     },
 

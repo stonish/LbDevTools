@@ -6,6 +6,7 @@
 *~
 *.bk
 .*.swp
+gaudi_tmp/
 
 # setuptools artifacts
 build/

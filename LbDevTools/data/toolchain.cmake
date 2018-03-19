@@ -8,13 +8,15 @@
 # granted to it by virtue of its status as an Intergovernmental Organization  #
 # or submit itself to any jurisdiction.                                       #
 ###############################################################################
+cmake_minimum_required(VERSION 3)
 
 # this check is needed because the toolchain is called when checking the
 # compiler (without the proper cache)
 if(NOT CMAKE_SOURCE_DIR MATCHES "CMakeTmp")
 
   find_file(default_toolchain NAMES GaudiDefaultToolchain.cmake
-            HINTS ${CMAKE_SOURCE_DIR}/cmake)
+            HINTS ${CMAKE_SOURCE_DIR}/cmake
+                  ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
   if(default_toolchain)
     include(${default_toolchain})
   else()

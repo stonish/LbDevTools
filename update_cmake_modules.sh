@@ -41,7 +41,8 @@ notes_file=$rootdir/cmake_modules.notes
 
 echo "Clean destination directory"
 git rm -rf $datadir/cmake
-mkdir -p $datadir/cmake
+git reset HEAD $datadir/cmake/GangaTools.cmake
+git checkout $datadir/cmake/GangaTools.cmake
 
 echo "Importing the files from ${remote_id}"
 git clone --mirror $git_url gaudi_tmp

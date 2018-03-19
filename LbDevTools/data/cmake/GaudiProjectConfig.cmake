@@ -3,7 +3,7 @@
 #
 # Authors: Pere Mato, Marco Clemencic
 #
-# Commit Id: db9bbd2f66538bc509ca13a8ce6021f40026d53b
+# Commit Id: 84c911f90283e469c2beb9f1f14a5b890667c606
 
 cmake_minimum_required(VERSION 2.8.12)
 
@@ -732,7 +732,7 @@ main()")
         file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/python/${pypack})
         file(WRITE ${CMAKE_BINARY_DIR}/python/${pypack}/__init__.py "
 import os, sys
-__path__ = [d for d in [os.path.join(os.path.realpath(d), '${pypack}') for d in sys.path if d]
+__path__ = [d for d in [os.path.join(d, '${pypack}') for d in sys.path if d]
             if (d.startswith('${CMAKE_BINARY_DIR}') or
                 d.startswith('${CMAKE_SOURCE_DIR}')) and
                (os.path.exists(d) or 'python.zip' in d)]

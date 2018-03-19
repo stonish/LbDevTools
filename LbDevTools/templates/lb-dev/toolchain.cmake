@@ -36,6 +36,7 @@ if(NOT CMAKE_SOURCE_DIR MATCHES "CMakeTmp")
       set(generators_versions $${generators_versions})
     endif()
 
+    set(ENV{LBUTILSROOT} ${datadir}/..)
     message(STATUS "Using toolchain from $${$${first_used_project}_ROOT_DIR}")
     include($${$${first_used_project}_ROOT_DIR}/toolchain.cmake)
   endif()

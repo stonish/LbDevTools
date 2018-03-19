@@ -29,7 +29,8 @@ def main():
     '''
     from optparse import OptionParser
     from LbEnv.ProjectEnv.options import (addSearchPath, addOutputLevel,
-                                          addPlatform, addListing)
+                                          addPlatform, addListing,
+                                          checkPlatform)
     from LbEnv.ProjectEnv.lookup import findProject, MissingProjectError
     from subprocess import call
 
@@ -68,6 +69,8 @@ def main():
     opts, args = parser.parse_args()
 
     logging.basicConfig(level=opts.log_level)
+
+    opts.platform = checkPlatform(parser, opts.platform)
 
     if len(args) == 1:
         if '/' in args[0]:

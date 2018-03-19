@@ -28,8 +28,9 @@ def main():
     Script to generate a local development project.
     '''
     from optparse import OptionParser
-    from options import addSearchPath, addOutputLevel, addPlatform, addListing
-    from lookup import findProject, MissingProjectError
+    from LbEnv.ProjectEnv.options import (addSearchPath, addOutputLevel,
+                                          addPlatform, addListing)
+    from LbEnv.ProjectEnv.lookup import findProject, MissingProjectError
     from subprocess import call
 
     parser = OptionParser(usage='%prog [options] Project[/version]')
@@ -40,22 +41,23 @@ def main():
     addListing(parser)
 
     parser.add_option('--name', action='store',
-                      help='Name of the local project [default: "<proj>Dev_<vers>"].')
+                      help='Name of the local project '
+                      '[default: "<proj>Dev_<vers>"].')
 
     parser.add_option('--dest-dir', action='store',
                       help='Where to create the local project '
                            '[default: %default].')
 
     parser.add_option('--git', action='store_true',
-                      help='Initialize git repository in the generated directory'
-                           '[default, if git is available].')
+                      help='Initialize git repository in the generated '
+                      'directory [default, if git is available].')
 
     parser.add_option('--no-git', action='store_false',
                       dest='git',
                       help='Do not initialize the git local repository.')
 
     try:
-        from LbUtils import which
+        from LbEnv import which
         has_git = bool(which('git'))
     except ImportError:
         has_git = True
@@ -95,12 +97,12 @@ def main():
 
     # FIXME: we need to handle common options like --list in a single place
     if opts.list:
-        from lookup import listVersions
+        from LbEnv.ProjectEnv.lookup import listVersions
         for entry in listVersions(project, opts.platform):
             print '%s in %s' % entry
         sys.exit(0)
     if opts.list_platforms:
-        from lookup import listPlatforms
+        from LbEnv.ProjectEnv.lookup import listPlatforms
         platforms = listPlatforms(project, version)
         if platforms:
             print '\n'.join(platforms)

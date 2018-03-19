@@ -1,9 +1,8 @@
-LHCb Development tools 
+LHCb Development Tools
 =======================
 |pipeline status| |coverage report|
 
-
-Set of tools used by the LHCb experiment to develop and release software.
+Set of tools used by the LHCb experiment for software development.
 
 
 .. |pipeline status| image:: https://gitlab.cern.ch/lhcb-core/LbDevTools/badges/master/pipeline.svg

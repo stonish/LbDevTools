@@ -1,9 +1,18 @@
 *.pyc
 
+# temporary and backup files
+.#*
+\#*#
+*~
+*.bk
+.*.swp
+
+# setuptools artifacts
 build/
 dist/
 .eggs/
 *.egg-info/
 
+# test artifacts
 .coverage
 cover/

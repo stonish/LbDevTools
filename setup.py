@@ -129,7 +129,7 @@ setup(
     #
     # For an analysis of "install_requires" vs pip's requirements files see:
     # https://packaging.python.org/en/latest/requirements.html
-    install_requires=[  "py2neo == 1.4.6", "LbEnv" ],  # Optional
+    install_requires=[ 'LbEnv' ],  # Optional
 
     # List additional groups of dependencies here (e.g. development
     # dependencies). Users will be able to install these using the "extras"
@@ -139,9 +139,7 @@ setup(
     #
     # Similar to `install_requires` above, these must be valid existing
     # projects.
-    extras_require={  # Optional
-        'dev': ['check-manifest'],
-    },
+    extras_require={},  # Optional
     tests_require=['coverage'],
     setup_requires=['nose>=1.0', 'setuptools_scm'],
     # If there are data files included in your packages that need to be

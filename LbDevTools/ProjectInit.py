@@ -14,50 +14,51 @@ Script to initialize a project for the build.
 '''
 __author__ = 'Marco Clemencic <marco.clemencic@cern.ch>'
 
-import os
-import sys
-import logging
 
-from optparse import OptionParser
-from LbUtils.Script import Script
-from LbConfiguration import initProject
+def main():
+    import os
+    import logging
 
-parser = OptionParser(usage='%prog [options] [project_root_dir]',
-                      description='Initialize a directory for building a '
-                                  'project, useful when checking out a project '
-                                  'without using getpack (e.g. with git). '
-                                  'If the argument project_root_dir is not '
-                                  'specified, the required files are created '
-                                  'in the current directory.')
-parser.add_option('--overwrite', action='store_true',
-                  help='overwrite existing files [default: %default]')
-parser.add_option('-q', '--quiet',
-                  action='store_const', dest='loglevel',
-                  const=logging.WARNING,
-                  help='be quiet (default)')
-parser.add_option('-v', '--verbose',
-                  action='store_const', dest='loglevel',
-                  const=logging.INFO,
-                  help='be more verbose')
-parser.add_option('-d', '--debug',
-                  action='store_const', dest='loglevel',
-                  const=logging.DEBUG,
-                  help='print debug messages')
+    from optparse import OptionParser
+    from LbDevTools import initProject
 
-parser.set_defaults(overwrite=False,
-                    loglevel=logging.WARNING)
+    parser = OptionParser(usage='%prog [options] [project_root_dir]',
+                          description='Initialize a directory for building a '
+                                      'project, useful when checking out a '
+                                      'project without using getpack (e.g. '
+                                      'with git). If the argument '
+                                      'project_root_dir is not specified, the '
+                                      'required files are created in the '
+                                      'current directory.')
+    parser.add_option('--overwrite', action='store_true',
+                      help='overwrite existing files [default: %default]')
+    parser.add_option('-q', '--quiet',
+                      action='store_const', dest='loglevel',
+                      const=logging.WARNING,
+                      help='be quiet (default)')
+    parser.add_option('-v', '--verbose',
+                      action='store_const', dest='loglevel',
+                      const=logging.INFO,
+                      help='be more verbose')
+    parser.add_option('-d', '--debug',
+                      action='store_const', dest='loglevel',
+                      const=logging.DEBUG,
+                      help='print debug messages')
 
-options, args = parser.parse_args()
+    parser.set_defaults(overwrite=False,
+                        loglevel=logging.WARNING)
 
-logging.basicConfig(level=options.loglevel)
+    options, args = parser.parse_args()
 
-if not args:
-    path = os.curdir
-elif len(args) == 1:
-    path = args[0]
-else:
-    parser.error('wrong number of arguments')
+    logging.basicConfig(level=options.loglevel)
 
-logging.debug("using project root '%s'", path)
+    if not args:
+        path = os.curdir
+    elif len(args) == 1:
+        path = args[0]
+    else:
+        parser.error('wrong number of arguments')
 
-initProject(path, options.overwrite)
+    logging.debug("using project root '%s'", path)
+
+    initProject(path, options.overwrite)

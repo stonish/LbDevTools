@@ -1,5 +1,5 @@
 ###############################################################################
-# (c) Copyright 2013 CERN                                                     #
+# (c) Copyright 2018 CERN                                                     #
 #                                                                             #
 # This software is distributed under the terms of the GNU General Public      #
 # Licence version 3 (GPL Version 3), copied verbatim in the file "COPYING".   #
@@ -17,10 +17,10 @@ import sys
 
 from string import Template
 
-import LbConfiguration.SP2
-from LbConfiguration.SP2.version import DEFAULT_VERSION, expandVersionAlias
-from LbConfiguration.SetupProject import FixProjectCase
-from LbConfiguration import createGitIgnore
+import LbEnv.ProjectEnv
+from LbEnv.ProjectEnv.version import DEFAULT_VERSION, expandVersionAlias
+from LbEnv import fixProjectCase
+from LbDevTools import createGitIgnore
 
 
 def main():
@@ -54,11 +54,6 @@ def main():
                       dest='git',
                       help='Do not initialize the git local repository.')
 
-    # Note: the profile is not used in the script class, but in the wrapper
-    #       it is added to the parser to appear in the help and for checking
-    parser.add_option('--profile', action='store_true',
-                      help='Print some profile informations about the execution.')
-
     try:
         from LbUtils import which
         has_git = bool(which('git'))
@@ -89,10 +84,10 @@ def main():
     except ValueError:
         parser.error('wrong number of arguments')
 
-    project = FixProjectCase(project)
+    project = fixProjectCase(project)
 
     if opts.user_area and not opts.no_user_area:
-        from LbConfiguration.SP2 import EnvSearchPathEntry, SearchPathEntry
+        from LbEnv.ProjectEnv import EnvSearchPathEntry, SearchPathEntry
         if os.environ['User_release_area'] == opts.user_area:
             opts.dev_dirs.insert(0, EnvSearchPathEntry('User_release_area'))
         else:
@@ -127,7 +122,7 @@ def main():
 
     # prepend dev dirs to the search path
     if opts.dev_dirs:
-        LbConfiguration.SP2.path[:] = opts.dev_dirs + LbConfiguration.SP2.path
+        LbEnv.ProjectEnv.path[:] = opts.dev_dirs + LbEnv.ProjectEnv.path
 
     try:
         projectDir = findProject(project, version, opts.platform)
@@ -160,9 +155,9 @@ def main():
     data = dict(project=project,
                 version=version,
                 search_path=' '.join(
-                    ['"%s"' % p for p in LbConfiguration.SP2.path]),
-                search_path_repr=repr(LbConfiguration.SP2.path),
-                search_path_env=os.pathsep.join(LbConfiguration.SP2.path),
+                    ['"%s"' % p for p in LbEnv.ProjectEnv.path]),
+                search_path_repr=repr(LbEnv.ProjectEnv.path),
+                search_path_env=os.pathsep.join(LbEnv.ProjectEnv.path),
                 # we use cmake if available
                 build_tool=('cmake' if use_cmake else 'cmt'),
                 PROJECT=project.upper(),
@@ -171,7 +166,8 @@ def main():
                 cmt_project=opts.name)
 
     # FIXME: improve generation of searchPath files, so that they match the command line
-    templateDir = os.path.join(os.path.dirname(__file__), 'templates')
+    templateDir = os.path.join(os.path.dirname(__file__),
+                               'templates', 'lb-dev')
     templates = ['CMakeLists.txt', 'toolchain.cmake', 'Makefile',
                  'searchPath.py',
                  'build.conf', 'run']

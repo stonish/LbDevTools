@@ -148,9 +148,9 @@ setup(
     # If using Python 2.6 or earlier, then these have to be included in
     # MANIFEST.in as well.
     # package_data={  # Optional
-    #     'LbPlatformUtils': ['LICENSE',
-    #                         'README.rst'],
+    #     'LbDevTools': [],
     # },
+    include_package_data=True,
 
     # Although 'package_data' is the preferred approach, in some case you may
     # need to place data files outside of your packages. See:
@@ -166,14 +166,15 @@ setup(
     #
     # For example, the following would provide a command called `sample` which
     # executes the function `main` from this package when invoked:
-    #entry_points={  # Optional
-    #    'console_scripts': [
-    #        'lb-describe-platform=LbPlatformUtils.describe:main',
-    #    ],
-    #},
+    entry_points={  # Optional
+        'console_scripts': [
+            'lb-project-init=LbDevTools.ProjectInit:main',
+            'lb-dev=LbDevTools.ProjectDev:main',
+        ],
+    },
 
     # The package can be safely distributed as a ZIP file
-    zip_safe=True,
+    zip_safe=False,
 
     # Process files with 2to3 to run with Python 3
     use_2to3=version_info >= (3, 0),

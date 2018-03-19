@@ -20,7 +20,7 @@ from string import Template
 import LbEnv.ProjectEnv
 from LbEnv.ProjectEnv.version import DEFAULT_VERSION, expandVersionAlias
 from LbEnv import fixProjectCase
-from LbDevTools import createGitIgnore
+from LbDevTools import createGitIgnore, DATA_DIR
 
 
 def main():
@@ -165,7 +165,8 @@ def main():
                 PROJECT=project.upper(),
                 local_project=local_project,
                 local_version=local_version,
-                cmt_project=opts.name)
+                cmt_project=opts.name,
+                datadir=DATA_DIR)
 
     # FIXME: improve generation of searchPath files, so that they match the command line
     templateDir = os.path.join(os.path.dirname(__file__),

@@ -10,7 +10,8 @@ endif()
 # this check is needed because the toolchain is called when checking the
 # compiler (without the proper cache)
 if(NOT CMAKE_SOURCE_DIR MATCHES "CMakeTmp")
-  find_path(gaudi_cmake_modules NAMES GaudiToolchainMacros.cmake)
+  find_path(gaudi_cmake_modules NAMES GaudiToolchainMacros.cmake
+            HINTS ${datadir}/cmake)
   if(NOT gaudi_cmake_modules)
     message(FATAL_ERROR "Cannot find GaudiToolchainMacros.cmake")
   endif()
@@ -26,7 +27,7 @@ if(NOT CMAKE_SOURCE_DIR MATCHES "CMakeTmp")
 
   if(first_used_project STREQUAL "GAUDI")
     # special case for Gaudi
-    include($$ENV{LBUTILSROOT}/data/toolchain.cmake)
+    include(${datadir}/toolchain.cmake)
   else()
     # special case for Gauss (needs a fix in Gauss toolchain.cmake)
     if(EXISTS $${$${first_used_project}_ROOT_DIR}/generators_versions.txt)

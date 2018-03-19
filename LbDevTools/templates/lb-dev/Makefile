@@ -1,4 +1,7 @@
 build_tool=cmake
+
+DEVTOOLS_DATADIR := ${datadir}
+
 ifeq ($$(wildcard build.conf),build.conf)
 include build.conf
 endif
@@ -6,7 +9,7 @@ endif
 ifeq ($$(build_tool),cmake)
 ######## CMake case ########
 
-include $$(LBUTILSROOT)/data/Makefile-cmake.mk
+include $$(DEVTOOLS_DATADIR)/Makefile-cmake.mk
 
 else
 ######### CMT case #########
@@ -17,6 +20,6 @@ endif
 
 all:
 %:
-	@env CMTPROJECTPATH="$$(CMTPROJECTPATH)" $$(MAKE) -f $$(LBCONFIGURATIONROOT)/data/Makefile-cmt.mk $$*
+	@env CMTPROJECTPATH="$$(CMTPROJECTPATH)" $$(MAKE) -f $$(DEVTOOLS_DATADIR)/Makefile-cmt.mk $$*
 
 endif

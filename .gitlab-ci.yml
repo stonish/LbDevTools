@@ -10,7 +10,7 @@ centos7:
     - python --version
     - pip install -e .
     - python setup.py nosetests --cover-package ${CI_PROJECT_NAME}
-    - mkdir -p cover_report && mv -f python/cover cover_report/$CI_JOB_NAME
+    - mkdir -p cover_report && mv -f cover cover_report/$CI_JOB_NAME
     - lb-describe-platform
   artifacts:
     paths:
@@ -26,7 +26,7 @@ slc6:
     - python --version
     - pip install -e .
     - python setup.py nosetests
-    - mkdir -p cover_report && mv -f python/cover cover_report/$CI_JOB_NAME
+    - mkdir -p cover_report && mv -f cover cover_report/$CI_JOB_NAME
     - lb-describe-platform
   artifacts:
     paths:
@@ -42,7 +42,7 @@ slc5:
     - python --version
     - pip install -e .
     - python setup.py nosetests --cover-package ${CI_PROJECT_NAME}
-    - mkdir -p cover_report && mv -f python/cover cover_report/$CI_JOB_NAME
+    - mkdir -p cover_report && mv -f cover cover_report/$CI_JOB_NAME
     - lb-describe-platform
   artifacts:
     paths:
@@ -56,7 +56,7 @@ python2.7:
     - python --version
     - pip install -e .
     - python setup.py nosetests --cover-package ${CI_PROJECT_NAME}
-    - mkdir -p cover_report && mv -f python/cover cover_report/$CI_JOB_NAME
+    - mkdir -p cover_report && mv -f cover cover_report/$CI_JOB_NAME
     - lb-describe-platform
     - python setup.py bdist_wheel --dist-dir public/${CI_PROJECT_NAME,,}
   artifacts:

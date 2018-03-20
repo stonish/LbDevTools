@@ -174,7 +174,7 @@ setup(
             'git-lb-use=LbDevTools.GitTools.use:main',
             'git-lb-checkout=LbDevTools.GitTools.checkout:main',
             'git-lb-push=LbDevTools.GitTools.push:main',
-            # 'git-lb-clone-pkg=LbDevTools.GitTools:clone_pkg',
+            'git-lb-clone-pkg=LbDevTools.GitTools.clone_pkg:main',
         ],
     },
 

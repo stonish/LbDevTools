@@ -173,7 +173,7 @@ setup(
             'lb-devtools-datadir=LbDevTools:data_location',
             'git-lb-use=LbDevTools.GitTools.use:main',
             'git-lb-checkout=LbDevTools.GitTools.checkout:main',
-            # 'git-lb-push=LbDevTools.GitTools:push',
+            'git-lb-push=LbDevTools.GitTools.push:main',
             # 'git-lb-clone-pkg=LbDevTools.GitTools:clone_pkg',
         ],
     },

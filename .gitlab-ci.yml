@@ -17,21 +17,6 @@ centos7:
     when: always
     expire_in: 1 week
 
-slc6:
-  except:
-    - tags
-  image: gitlab-registry.cern.ch/lhcb-docker/python-deployment:slc6
-  script:
-    - python --version
-    - pip install -e .
-    - python setup.py nosetests
-    - mkdir -p cover_report && mv -f cover cover_report/$CI_JOB_NAME
-  artifacts:
-    paths:
-      - cover_report
-    when: always
-    expire_in: 1 week
-
 slc5:
   except:
     - tags

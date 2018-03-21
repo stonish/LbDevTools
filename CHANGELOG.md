@@ -11,6 +11,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   - `lb-project-init`
   - `lb-dev`
   - `lb-devtools-datadir`
+  - Git custom commands
+    - `git lb-use`
+    - `git lb-checkout`
+    - `git lb-push`
+    - `git lb-clone-pkg`
 - Generic makefiles for CMT and CMake
 - CMake support modules (from [Gaudi v30r2][])
 

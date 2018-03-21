@@ -12,8 +12,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   - `lb-dev`
   - `lb-devtools-datadir`
 - Generic makefiles for CMT and CMake
-- CMake support modules (from [Gaudi v30r1-205-gdb9bbd2][])
+- CMake support modules (from [Gaudi v30r2][])
 
 
 
-[Gaudi v30r1-205-gdb9bbd2]: https://gitlab.cern.ch/gaudi/Gaudi/tree/db9bbd2
+[Gaudi v30r2]: https://gitlab.cern.ch/gaudi/Gaudi/tags/v30r2

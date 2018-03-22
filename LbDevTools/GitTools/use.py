@@ -32,7 +32,7 @@ def project_url(project, protocol):
         'lhcb' if project.lower() != 'gaudi' else 'gaudi',
         fixProjectCase(project)
     )
-    return PROTOCOLS_URLS[protocol] + uri.split(':', 1)[-1]
+    return PROTOCOLS_URLS[protocol] + uri.split(':', 1)[-1] + '.git'
 
 
 def main():

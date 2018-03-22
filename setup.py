@@ -96,14 +96,13 @@ setup(
         # Specify the Python versions you support here. In particular, ensure
         # that you indicate whether you support Python 2, Python 3 or both.
         'Programming Language :: Python :: 2',
-        'Programming Language :: Python :: 2.6',
         'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3',
         'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
     ],
 
-    python_requires='>=2.6, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*, <4',
+    python_requires='>=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*, <4',
 
     # This field adds keywords for your project which will appear on the
     # project page. What does your project relate to?
@@ -129,7 +128,7 @@ setup(
     #
     # For an analysis of "install_requires" vs pip's requirements files see:
     # https://packaging.python.org/en/latest/requirements.html
-    install_requires=[  "py2neo == 1.4.6", "LbEnv" ],  # Optional
+    install_requires=[ 'LbEnv' ],  # Optional
 
     # List additional groups of dependencies here (e.g. development
     # dependencies). Users will be able to install these using the "extras"
@@ -139,9 +138,7 @@ setup(
     #
     # Similar to `install_requires` above, these must be valid existing
     # projects.
-    extras_require={  # Optional
-        'dev': ['check-manifest'],
-    },
+    extras_require={},  # Optional
     tests_require=['coverage'],
     setup_requires=['nose>=1.0', 'setuptools_scm'],
     # If there are data files included in your packages that need to be
@@ -150,9 +147,9 @@ setup(
     # If using Python 2.6 or earlier, then these have to be included in
     # MANIFEST.in as well.
     # package_data={  # Optional
-    #     'LbPlatformUtils': ['LICENSE',
-    #                         'README.rst'],
+    #     'LbDevTools': [],
     # },
+    include_package_data=True,
 
     # Although 'package_data' is the preferred approach, in some case you may
     # need to place data files outside of your packages. See:
@@ -168,14 +165,20 @@ setup(
     #
     # For example, the following would provide a command called `sample` which
     # executes the function `main` from this package when invoked:
-    #entry_points={  # Optional
-    #    'console_scripts': [
-    #        'lb-describe-platform=LbPlatformUtils.describe:main',
-    #    ],
-    #},
+    entry_points={  # Optional
+        'console_scripts': [
+            'lb-project-init=LbDevTools.ProjectInit:main',
+            'lb-dev=LbDevTools.ProjectDev:main',
+            'lb-devtools-datadir=LbDevTools:data_location',
+            'git-lb-use=LbDevTools.GitTools.use:main',
+            'git-lb-checkout=LbDevTools.GitTools.checkout:main',
+            'git-lb-push=LbDevTools.GitTools.push:main',
+            'git-lb-clone-pkg=LbDevTools.GitTools.clone_pkg:main',
+        ],
+    },
 
     # The package can be safely distributed as a ZIP file
-    zip_safe=True,
+    zip_safe=False,
 
     # Process files with 2to3 to run with Python 3
     use_2to3=version_info >= (3, 0),

@@ -1,0 +1,29 @@
+#!/bin/sh
+
+build_tool=${build_tool}
+
+if [ -z "$$CMTCONFIG" ] ; then
+  echo "error: CMTCONFIG not defined"
+  exit 1
+fi
+
+if [ "$build_tool" = "cmake" ] ; then
+  run_cmd=$$(dirname $$0)/build.$$CMTCONFIG/run
+  if [ -e "$$run_cmd" ] ; then
+    exec $$run_cmd "$$@"
+  else
+    echo "error: cannot find build.$$CMTCONFIG/run, did you build?"
+    exit 1
+  fi
+else
+  curdir=$$(pwd)
+  cd $$(dirname $$0)
+  . ./build_env.sh
+  cd $$curdir
+  . SetupProject.sh --keep-CMTPROJECTPATH --user $$(cd $$(dirname $$0)/.. ; pwd) ${cmt_project}
+  if [ "$$SetupProjectStatus" = 0 ] ; then
+    [ "$$#" = 0 ] && (printenv | sort) || exec "$$@"
+  else
+    exit $$SetupProjectStatus
+  fi
+fi

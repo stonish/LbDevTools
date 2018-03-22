@@ -1,9 +1,19 @@
 *.pyc
 
+# temporary and backup files
+.#*
+\#*#
+*~
+*.bk
+.*.swp
+gaudi_tmp/
+
+# setuptools artifacts
 build/
 dist/
 .eggs/
 *.egg-info/
 
+# test artifacts
 .coverage
 cover/

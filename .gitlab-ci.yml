@@ -5,29 +5,12 @@ stages:
 centos7:
   except:
     - tags
-  image: cern/cc7-base:latest
+  image: gitlab-registry.cern.ch/lhcb-docker/python-deployment:centos7
   script:
-    - yum install -y python-setuptools gcc python-devel git
     - python --version
-    - python setup.py nosetests --cover-package LbPlatformUtils
+    - pip install -e .
+    - python setup.py nosetests --cover-package ${CI_PROJECT_NAME}
     - mkdir -p cover_report && mv -f cover cover_report/$CI_JOB_NAME
-    - python setup.py install && lb-describe-platform
-  artifacts:
-    paths:
-      - cover_report
-    when: always
-    expire_in: 1 week
-
-slc6:
-  except:
-    - tags
-  image: cern/slc6-base:latest
-  script:
-    - yum install -y python-setuptools gcc python-devel git
-    - python --version
-    - python setup.py nosetests
-    - mkdir -p cover_report && mv -f cover cover_report/$CI_JOB_NAME
-    - python setup.py install && lb-describe-platform
   artifacts:
     paths:
       - cover_report
@@ -37,17 +20,12 @@ slc6:
 slc5:
   except:
     - tags
-  image: cern/slc5-base:latest
+  image: gitlab-registry.cern.ch/lhcb-docker/python-deployment:slc5
   script:
-    - ( yum install -y curl gcc make openssl-devel zilb-devel xz git &&
-        curl https://www.python.org/ftp/python/2.7.14/Python-2.7.14.tar.xz |
-          tar --use-compress-program=xz -x -f - &&
-        cd Python-2.7.14 && ./configure && make && make install &&
-        python -m ensurepip --default-pip )
     - python --version
-    - python setup.py nosetests --cover-package LbPlatformUtils
+    - pip install -e .
+    - python setup.py nosetests --cover-package ${CI_PROJECT_NAME}
     - mkdir -p cover_report && mv -f cover cover_report/$CI_JOB_NAME
-    - python setup.py install && lb-describe-platform
   artifacts:
     paths:
       - cover_report
@@ -55,20 +33,13 @@ slc5:
     expire_in: 1 week
 
 python2.7:
-  image: python:2.7-slim
+  image: gitlab-registry.cern.ch/lhcb-docker/python-deployment:python-2.7
   script:
-    - ( apt update && apt install -y curl git &&
-        cd /usr/local/share/ca-certificates &&
-        curl -O https://cafiles.cern.ch/cafiles/certificates/CERN%20Certification%20Authority.crt
-             -O https://cafiles.cern.ch/cafiles/certificates/CERN%20Grid%20Certification%20Authority.crt
-             -o crca2.der https://cafiles.cern.ch/cafiles/certificates/CERN%20Root%20Certification%20Authority%202.crt &&
-        openssl x509 -inform der -in crca2.der -outform pem -out crca2.crt && rm -f crca2.der &&
-        update-ca-certificates )
     - python --version
-    - python setup.py nosetests --cover-package LbPlatformUtils
+    - pip install -e .
+    - python setup.py nosetests --cover-package ${CI_PROJECT_NAME}
     - mkdir -p cover_report && mv -f cover cover_report/$CI_JOB_NAME
-    - python setup.py install && lb-describe-platform
-    - python setup.py bdist_wheel --dist-dir public/lbplatformutils
+    - python setup.py bdist_wheel --dist-dir public/${CI_PROJECT_NAME,,}
   artifacts:
     paths:
       - cover_report
@@ -79,19 +50,12 @@ python2.7:
 python3.5:
   except:
     - tags
-  image: python:3.5-slim
+  image: gitlab-registry.cern.ch/lhcb-docker/python-deployment:python-3.5
   script:
-    - ( apt update && apt install -y curl git &&
-        cd /usr/local/share/ca-certificates &&
-        curl -O https://cafiles.cern.ch/cafiles/certificates/CERN%20Certification%20Authority.crt
-             -O https://cafiles.cern.ch/cafiles/certificates/CERN%20Grid%20Certification%20Authority.crt
-             -o crca2.der https://cafiles.cern.ch/cafiles/certificates/CERN%20Root%20Certification%20Authority%202.crt &&
-        openssl x509 -inform der -in crca2.der -outform pem -out crca2.crt && rm -f crca2.der &&
-        update-ca-certificates )
     - python --version
+    - pip install -e .
     - python setup.py nosetests
     - mkdir -p cover_report && mv -f build/lib/cover cover_report/$CI_JOB_NAME
-    - python setup.py install && lb-describe-platform
   artifacts:
     paths:
       - cover_report
@@ -99,21 +63,14 @@ python3.5:
     expire_in: 1 week
 
 python3.6:
-  image: python:3.6-slim
+  image: gitlab-registry.cern.ch/lhcb-docker/python-deployment:python-3.6
   script:
-    - ( apt update && apt install -y curl git &&
-        cd /usr/local/share/ca-certificates &&
-        curl -O https://cafiles.cern.ch/cafiles/certificates/CERN%20Certification%20Authority.crt
-             -O https://cafiles.cern.ch/cafiles/certificates/CERN%20Grid%20Certification%20Authority.crt
-             -o crca2.der https://cafiles.cern.ch/cafiles/certificates/CERN%20Root%20Certification%20Authority%202.crt &&
-        openssl x509 -inform der -in crca2.der -outform pem -out crca2.crt && rm -f crca2.der &&
-        update-ca-certificates )
     - python --version
+    - pip install -e .
     - python setup.py nosetests
     - mkdir -p cover_report && mv -f build/lib/cover cover_report/$CI_JOB_NAME
-    - python setup.py install && lb-describe-platform
-    - python setup.py sdist --dist-dir public/lbplatformutils
-    - python setup.py bdist_wheel --dist-dir public/lbplatformutils
+    - python setup.py sdist --dist-dir public/${CI_PROJECT_NAME,,}
+    - python setup.py bdist_wheel --dist-dir public/${CI_PROJECT_NAME,,}
   artifacts:
     paths:
       - cover_report

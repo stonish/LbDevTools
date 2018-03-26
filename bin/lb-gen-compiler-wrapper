@@ -1,0 +1,188 @@
+#!/bin/sh
+###############################################################################
+# (c) Copyright 2018 CERN                                                     #
+#                                                                             #
+# This software is distributed under the terms of the GNU General Public      #
+# Licence version 3 (GPL Version 3), copied verbatim in the file "COPYING".   #
+#                                                                             #
+# In applying this licence, CERN does not waive the privileges and immunities #
+# granted to it by virtue of its status as an Intergovernmental Organization  #
+# or submit itself to any jurisdiction.                                       #
+###############################################################################
+# Based on:
+# cern-lxdistcc-wrappers.sh: v1 KELEMEN Peter <lxdistcc-admins@cern.ch>
+#
+# 2012-10-17: Modified by Marco Clemencic
+#
+if [ $# -lt 1 ] ; then
+  echo "usage: $(basename $0) [host_os] dest_name"
+fi
+
+if [ $# = 2 ] ; then
+  LCG_hostos=$1
+  shift
+fi
+
+dest_name=$1
+
+_self=${dest_name##*/}
+
+hostos() {
+    local arch=$(uname -i)
+    local os vers
+    case $(lsb_release -si) in
+        ScientificCERNSLC)
+            os=slc
+            vers=$(lsb_release -sr | cut -d. -f1)
+            ;;
+        *)
+            os=$(lsb_release -si | tr '[:upper:]' '[:lower:]')
+            vers=$(lsb_release -sr)
+    esac
+    echo $arch-$os$vers
+}
+
+_platform=${LCG_hostos:-$(hostos)}
+
+set_prefix() {
+    local _dirname=$1
+    local _version=$2
+
+    _prefix=
+
+    local _prefix_tmp
+    local search_path=$(echo ${MYSITEROOT}/lcg/{releases,app/releases,external})
+    if [ -n "$USE_SFT" ] ; then
+      search_path=$(echo $search_path /cvmfs/sft.cern.ch/lcg/{contrib,external,releases})
+    fi
+    for _prefix_tmp in $search_path ; do
+        if [ -d "${_prefix_tmp}/${_dirname}/${_version}/${_platform}" ] ; then
+            _prefix="${_prefix_tmp}/${_dirname}/${_version}/${_platform}"
+            break
+        fi
+    done
+}
+
+setup_gcc() {
+        local _version=$1
+        local _no_binutils=$2
+        _prefix=""
+
+        # look for a build of the compiler that uses custom binutils
+        [ -z "${_no_binutils}" ] && set_prefix gcc ${_version}binutils
+        if [ -z "${_prefix}" ] ; then
+          # fall back to a compiler with system binutils
+          set_prefix gcc ${_version}
+        fi
+
+        # FIXME: we have to hardcode the path to the latest binutils, just in case
+        new_LIB_PATH=/cvmfs/lhcb.cern.ch/lib/lcg/releases/binutils/2.28/${_platform}/lib${new_LIB_PATH:+:${new_LIB_PATH}}
+        new_BIN_PATH=/cvmfs/lhcb.cern.ch/lib/lcg/releases/binutils/2.28/${_platform}/bin${new_BIN_PATH:+:${new_BIN_PATH}}
+
+        _bin="${_prefix}/bin"
+        _lib="${_prefix}/lib64"
+        new_LIB_PATH=$(echo $new_LIB_PATH | sed 's-[^:]*/gcc/[^:]*:\?--g')
+        new_LIB_PATH="${_lib}${new_LIB_PATH:+:}${new_LIB_PATH}"
+        new_BIN_PATH="${_bin}${new_BIN_PATH:+:}${new_BIN_PATH}"
+        COMPILER_PATH="${_prefix}/lib/gcc/x86_64-unknown-linux-gnu/${_version}"
+
+        GCC_TOOLCHAIN="${_prefix}"
+        export new_LIB_PATH
+        export new_BIN_PATH
+        export COMPILER_PATH
+        export GCC_TOOLCHAIN
+}
+
+setup_clang() {
+        local _gcc_version _clang_version _base_platform
+        _prefix=
+
+        _clang_version=$1
+        if [ "${_clang_version}" = "5.0" ] ; then
+          _clang_version=5.0.0
+        fi
+
+        _base_platform=${_platform}
+        for _gcc_version in 7 62 49 48 46 ; do
+          _platform=${_base_platform}-gcc${_gcc_version}-opt
+          set_prefix llvm ${_clang_version}
+          if [ -n "${_prefix}" ] ; then
+            break;
+          fi
+        done
+
+        if [ -z "${_prefix}" ] ; then
+          _platform=${_base_platform}
+          set_prefix llvm ${_clang_version}
+          case ${_clang_version} in
+            3.2) _gcc_version=46 ;;
+            3.3|3.4) _gcc_version=48 ;;
+            *) _gcc_version=49 ;;
+          esac
+        fi
+
+        local _llvm_prefix=${_prefix}
+
+        _platform=${_base_platform}
+        case ${_gcc_version} in
+          46) _gcc_version=4.6.3 ;;
+          48) _gcc_version=4.8.1 ;;
+          49) _gcc_version=4.9.3 ;;
+          62) _gcc_version=6.2.0 ;;
+          7 ) _gcc_version=7.1.0 ;;
+        esac
+        setup_gcc ${_gcc_version} no-binutils
+
+
+        _bin="${_llvm_prefix}/bin"
+        _lib="${_llvm_prefix}/lib64"
+        new_LIB_PATH=$(echo $new_LIB_PATH | sed 's-[^:]*/llvm/[^:]*:\?--g')
+        new_LIB_PATH="${_lib}${new_LIB_PATH:+:}${new_LIB_PATH}"
+        new_BIN_PATH="${_bin}${new_BIN_PATH:+:}${new_BIN_PATH}"
+
+        export new_LIB_PATH
+        export new_BIN_PATH
+        export COMPILER_PATH
+}
+
+case ${_self} in
+
+        lcg-[cg]++-[0-9].[0-9].[0-9]|lcg-gcc-[0-9].[0-9].[0-9]|lcg-gfortran-[0-9].[0-9].[0-9])
+
+                _version=${_self##*-}
+                setup_gcc $_version
+                _self=${_self%-*}
+                _self=${_self#*-}
+                ;;
+
+        lcg-clang-*|lcg-clang++-*)
+
+                _version=${_self##*-}
+                setup_clang $_version
+                _self=${_self%-*}
+                _self=${_self#*-}
+                _self="${_self} --gcc-toolchain=${GCC_TOOLCHAIN}"
+                ;;
+
+        *)
+                echo "E: Unsupported compiler '${_self}', please contact <marco.clemencic@cern.ch>"
+                exit 100
+                ;;
+esac
+
+# if the lookup failed, we get "/bin" as compiler location, which happens to work on SLC/CentOS
+if [ "${_bin}" = "/bin" ] ; then
+    echo "error: ${dest_name##*/} not valid for ${_platform}"
+    exit 2
+fi
+
+cat > ${dest_name} <<EOF
+#!/bin/sh
+export PATH=${new_BIN_PATH}\${PATH:+:\$PATH}
+LD_LIBRARY_PATH=\$(printenv LD_LIBRARY_PATH | sed 's-[^:]*/\(gcc\|llvm\)/[^:]*:\?--g')
+export LD_LIBRARY_PATH=${new_LIB_PATH}\${LD_LIBRARY_PATH:+:\${LD_LIBRARY_PATH}}
+exec ${_bin}/${_self} "\$@"
+EOF
+chmod a+x ${dest_name}
+
+# End of file.

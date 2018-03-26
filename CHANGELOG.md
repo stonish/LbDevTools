@@ -5,6 +5,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased][]
+### Added
+- Script to generate compiler wrappers (`lb-gen-compiler-wrapper`)
 
 ## 0.1.0
 ### Added
@@ -18,6 +20,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
     - `git lb-checkout`
     - `git lb-push`
     - `git lb-clone-pkg`
+  - `lb-generate-compiler-wrappers`
 - Generic makefiles for CMT and CMake
 - CMake support modules (from [Gaudi v30r2][])
 

@@ -22,7 +22,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
     - `git lb-checkout`
     - `git lb-push`
     - `git lb-clone-pkg`
-  - `lb-generate-compiler-wrappers`
+  - `lb-gen-compiler-wrapper`
 - Generic makefiles for CMT and CMake
 - CMake support modules (from [Gaudi v30r2][])
 

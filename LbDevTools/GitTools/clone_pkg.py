@@ -36,7 +36,7 @@ def get_latest_tag(path):
                      stderr=PIPE, cwd=path)
     except CalledProcessError:
         logging.debug('no tag in current branch of %s', path)
-        from LbConfiguration.SP2.version import isValidVersion, versionKey
+        from LbEnv.ProjectEnv.version import isValidVersion, versionKey
         all_tags = [v for v in git_o(['tag'], cwd=path).split()
                     if isValidVersion('', v)]
         all_tags.sort(key=versionKey)
@@ -98,7 +98,6 @@ def main():
                        old_xml_env)
 
         # guess version aliases
-        # FIXME: we should use LbNightlyTools.Configuration.Package
         version_aliases = ['v999r999']
         if exists(join(args.name, 'cmt', 'requirements')):
             for l in open(join(args.name, 'cmt', 'requirements')):

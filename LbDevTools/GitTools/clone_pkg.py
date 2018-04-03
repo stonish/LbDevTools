@@ -10,37 +10,26 @@
 ###############################################################################
 __author__ = 'Marco Clemencic <marco.clemencic@cern.ch>'
 
+import git
 import logging
 from subprocess import CalledProcessError
-from LbDevTools.GitTools import git, git_o
+from LbDevTools.GitTools.common import (add_protocol_argument,
+                                        handle_protocol_argument,
+                                        add_verbosity_argument,
+                                        handle_verbosity_argument,
+                                        add_version_argument,
+                                        package_url)
 
 
-BASE_URLS = {
-    'ssh': 'ssh://git@gitlab.cern.ch:7999',
-    'krb5':  'https://:@gitlab.cern.ch:8443',
-    'https': 'https://gitlab.cern.ch',
-}
-
-
-def get_default_protocol():
+def get_latest_tag(repo):
     try:
-        return git_o(['config', '--get', 'lb-use.protocol'])
-    except CalledProcessError:
-        return 'krb5'
-
-
-def get_latest_tag(path):
-    from subprocess import PIPE
-    try:
-        return git_o(['describe', '--match', '*', '--abbrev=0', '--tags'],
-                     stderr=PIPE, cwd=path)
-    except CalledProcessError:
-        logging.debug('no tag in current branch of %s', path)
+        return repo.git.describe(match='v*', abbrev=0, tags=True)
+    except git.GitCommandError:
         from LbEnv.ProjectEnv.version import isValidVersion, versionKey
-        all_tags = [v for v in git_o(['tag'], cwd=path).split()
-                    if isValidVersion('', v)]
-        all_tags.sort(key=versionKey)
+        logging.debug('no tag in current branch of %s', repo.working_dir)
+        all_tags = [t.name for t in repo.tags if isValidVersion('', t.name)]
         if all_tags:
+            all_tags.sort(key=versionKey)
             return all_tags[-1]
         return None
 
@@ -51,6 +40,7 @@ def main():
     from argparse import ArgumentParser
     parser = ArgumentParser(description='wrapper around "git clone" to get '
                             'data packages')
+    add_version_argument(parser)
 
     parser.add_argument('url', nargs='?', help='git URL to use')
     parser.add_argument('name', help='name of the data package')
@@ -63,30 +53,22 @@ def main():
                            help='checkout BRANCH instead of the remote\'s '
                            'HEAD')
 
-    parser.add_argument('-v', '--verbose', action='store_const',
-                        const=logging.INFO, dest='log_level')
-    parser.add_argument('-d', '--debug', action='store_const',
-                        const=logging.DEBUG, dest='log_level')
+    add_protocol_argument(parser)
+    add_verbosity_argument(parser)
 
-    parser.set_defaults(log_level=logging.WARNING)
+    parser.set_defaults(branch='master')
 
     args = parser.parse_args()
-    logging.basicConfig(level=args.log_level)
+    handle_verbosity_argument(args)
+
+    handle_protocol_argument(args)
 
     if not args.url:
-        args.url = '{}/lhcb-datapkg/{}.git'.format(
-            BASE_URLS[get_default_protocol()],
-            args.name
-        )
+        args.url = package_url(args.name, args.protocol)
 
     try:
-        cmd = ['clone']
-        if args.log_level <= logging.INFO:
-            cmd.append('-v')
-        if args.branch:
-            cmd.append('--branch=' + args.branch)
-        cmd.extend([args.url, args.name])
-        git(cmd)
+        logging.info('cloning %s@%s to %s', args.url, args.branch, args.name)
+        repo = git.Repo.clone_from(args.url, args.name, branch=args.branch)
 
         logging.debug('initializing data package')
         old_xml_env = join(args.name,
@@ -108,7 +90,7 @@ def main():
                                            + 'r999')
                     break
         else:
-            version = get_latest_tag(args.name)
+            version = get_latest_tag(repo)
             if version:
                 version_aliases.append(version[:version.rfind('r')] + 'r999')
         logging.debug(' - creating links %s in %s', version_aliases, args.name)

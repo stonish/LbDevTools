@@ -20,7 +20,7 @@ from string import Template
 import LbEnv.ProjectEnv
 from LbEnv.ProjectEnv.version import DEFAULT_VERSION, expandVersionAlias
 from LbEnv import fixProjectCase
-from LbDevTools import createGitIgnore, DATA_DIR
+from LbDevTools import createGitIgnore, DATA_DIR, __version__
 
 
 def main():
@@ -34,7 +34,8 @@ def main():
     from LbEnv.ProjectEnv.lookup import findProject, MissingProjectError
     from subprocess import call
 
-    parser = OptionParser(usage='%prog [options] Project[/version]')
+    parser = OptionParser(usage='%prog [options] Project[/version]',
+                          version='%prog {}'.format(__version__))
 
     addSearchPath(parser)
     addOutputLevel(parser)

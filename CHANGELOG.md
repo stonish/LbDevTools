@@ -5,7 +5,15 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased][]
+### Added
+- Added `--version` option to Git subcommands (!4)
+
+### Changed
+- Replaced Git custom wrappers with [GitPython][] (#2)
+- Automatic commit of `git lb-checkout` metadata after `git lb-push` (!4)
+
 ### Fixed
+- Unused variable "pushurl" in LbDevTools.GitTool.push (#4)
 - Removed references to LbScripts (#5)
 
 ## [0.1.1][]
@@ -33,3 +41,4 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 [0.1.1]: https://gitlab.cern.ch/lhcb-core/LbDevTools/compare/0.1.0...0.1.1
 
 [Gaudi v30r2]: https://gitlab.cern.ch/gaudi/Gaudi/tags/v30r2
+[GitPython]: http://gitpython.readthedocs.io/en/stable/

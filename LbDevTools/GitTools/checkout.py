@@ -11,10 +11,12 @@
 __author__ = 'Marco Clemencic <marco.clemencic@cern.ch>'
 
 import os
+import git
 import logging
-from subprocess import (check_call, check_output, CalledProcessError,
-                        Popen, PIPE)
 from argparse import ArgumentParser
+from LbDevTools.GitTools.common import (add_verbosity_argument,
+                                        handle_verbosity_argument,
+                                        add_version_argument)
 
 
 def main():
@@ -23,6 +25,7 @@ def main():
     '''
 
     parser = ArgumentParser(prog='git lb-checkout')
+    add_version_argument(parser)
 
     parser.add_argument('commit', metavar='branch',
                         help='name of the branch/tag/commit used to get data '
@@ -38,24 +41,23 @@ def main():
                         dest='do_commit',
                         help='do not commit after checkout')
 
-    parser.add_argument('-q', '--quiet', action='store_const',
-                        dest='log_level', const=logging.WARNING,
-                        help='be more quiet')
-    parser.add_argument('-v', '--verbose', action='store_const',
-                        dest='log_level', const=logging.DEBUG,
-                        help='be more verbose')
+    add_verbosity_argument(parser)
 
-    parser.set_defaults(log_level=logging.INFO,
-                        do_commit=True)
+    parser.set_defaults(do_commit=True)
 
     args = parser.parse_args()
-    logging.basicConfig(level=args.log_level)
+    handle_verbosity_argument(args)
+
+    try:
+        repo = git.Repo(search_parent_directories=True)
+    except git.InvalidGitRepositoryError:
+        logging.error('current directory is not a Git repository')
+        exit(1)
 
     # check that the commit-ish is valid
-    proc = Popen(['git', 'rev-parse', '--verify', args.commit + '^{commit}'],
-                 stdout=PIPE, stderr=PIPE)
-    commit_id = proc.communicate()[0].strip()
-    if proc.returncode:
+    try:
+        commit = repo.commit(args.commit)
+    except git.BadName:
         logging.error("invalid reference: %s", args.commit)
         logging.error("did you forget to call 'git lb-use'?")
         exit(1)
@@ -68,13 +70,12 @@ def main():
         remotes = chain(
             # try with branches
             (l.strip().split('/', 1)[0]
-             for l in check_output(['git', 'branch', '--remotes',
-                                     '--contains', args.commit]).splitlines()
+             for l in repo.git.branch(remotes=True,
+                                      contains=args.commit).splitlines()
              if '/' in l),
             # try with tags
             (l.strip().split('/', 1)[0]
-             for l in check_output(['git', 'tag',
-                                    '--contains', args.commit]).splitlines()
+             for l in repo.git.tag(contains=args.commit).splitlines()
              if '/' in l),
         )
         try:
@@ -89,31 +90,42 @@ def main():
         #        the list can be obtained with
         #          git ls-tree --name-only -r LHCb/master | sed -n 's@/CMakeLists.txt@@p'
         args.path = args.path.rstrip('/')
-        check_call(['git', 'checkout', args.commit, '--', args.path])
 
         # get the qualified path (if checkout was called from a subdirectory)
-        prefix = check_output(['git', 'rev-parse', '--show-prefix']).strip()
-        full_path = prefix + args.path
-        root = check_output(['git', 'rev-parse', '--show-toplevel']).strip()
-        config_file = os.path.join(root, '.git-lb-checkout')
+        full_path = os.path.relpath(os.path.join(os.getcwd(), args.path),
+                                    repo.working_dir)
+        repo.git.checkout(args.commit, '--', full_path)
 
-        check_call(['git', 'config', '-f', config_file,
-                    'lb-checkout.{}.{}.base'.format(remote, full_path),
-                    check_output(['git', 'rev-parse', 'HEAD']).strip()])
-        check_call(['git', 'config', '-f', config_file,
-                    'lb-checkout.{}.{}.imported'.format(remote, full_path),
-                    commit_id])
-        check_call(['git', 'add', config_file])
+        configfile = os.path.join(repo.working_dir, '.git-lb-checkout')
+
+        with git.GitConfigParser(configfile, read_only=False) as conf:
+            section = 'lb-checkout "{}.{}"'.format(remote, full_path)
+            if not conf.has_section(section):
+                conf.add_section(section)
+            conf.set(section, 'base', repo.commit('HEAD').hexsha)
+            conf.set(section, 'imported', commit.hexsha)
+
+        repo.index.add([configfile])
+        diffs = repo.head.commit.diff()
+
+        if not diffs:
+            logging.warning('no change')
+            return
 
         if args.do_commit:
-            check_call(['git', 'commit', '-m',
-                        'added {path} from {remote} ({commit})'.format(
-                            path=full_path, remote=remote, commit=args.commit
-                        )])
+            repo.index.commit('added {path} from {remote} ({commit})'.format(
+                path=full_path, remote=remote, commit=args.commit
+            ))
 
-        if os.path.exists(os.path.join(root, 'CMakeLists.txt')):
+        logging.info('checked out %s from %s (%s)',
+                     full_path, remote, args.commit)
+        if args.log_level <= logging.DEBUG:
+            [logging.debug(' %s  %s', d.change_type, d.b_path) for d in diffs]
+
+        if os.path.exists(os.path.join(repo.working_dir, 'CMakeLists.txt')):
             # "touch" top CMakeLists.txt
-            os.utime(os.path.join(root, 'CMakeLists.txt'), None)
-    except CalledProcessError as err:
-        logging.error('command failed: %s', err.cmd)
-        exit(err.returncode)
+            os.utime(os.path.join(repo.working_dir, 'CMakeLists.txt'), None)
+
+    except Exception as err:
+        logging.error('%s: %s', type(err).__name__, err)
+        exit(1)

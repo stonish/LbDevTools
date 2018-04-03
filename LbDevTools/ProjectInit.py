@@ -20,7 +20,7 @@ def main():
     import logging
 
     from optparse import OptionParser
-    from LbDevTools import initProject
+    from LbDevTools import initProject, __version__
 
     parser = OptionParser(usage='%prog [options] [project_root_dir]',
                           description='Initialize a directory for building a '
@@ -29,7 +29,8 @@ def main():
                                       'with git). If the argument '
                                       'project_root_dir is not specified, the '
                                       'required files are created in the '
-                                      'current directory.')
+                                      'current directory.',
+                          version='%prog {}'.format(__version__))
     parser.add_option('--overwrite', action='store_true',
                       help='overwrite existing files [default: %default]')
     parser.add_option('-q', '--quiet',

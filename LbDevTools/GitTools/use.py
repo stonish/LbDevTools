@@ -10,29 +10,15 @@
 ###############################################################################
 __author__ = 'Marco Clemencic <marco.clemencic@cern.ch>'
 
+import git
 import logging
-from subprocess import call, check_call, check_output, CalledProcessError
 from argparse import ArgumentParser
-
-PROTOCOLS_URLS = {
-    'ssh': 'ssh://git@gitlab.cern.ch:7999/',
-    'krb5': 'https://:@gitlab.cern.ch:8443/',
-    'https': 'https://gitlab.cern.ch/',
-}
-DEFAULT_PROTOCOL = 'krb5'
-
-
-def project_url(project, protocol):
-    '''
-    Return the url to the Git repository of the project for a given protocol.
-    '''
-    from LbEnv import fixProjectCase
-    # FIXME: get source uri from SoftConfDB
-    uri = 'gitlab-cern:{}/{}'.format(
-        'lhcb' if project.lower() != 'gaudi' else 'gaudi',
-        fixProjectCase(project)
-    )
-    return PROTOCOLS_URLS[protocol] + uri.split(':', 1)[-1] + '.git'
+from LbDevTools.GitTools.common import (add_protocol_argument,
+                                        handle_protocol_argument,
+                                        add_verbosity_argument,
+                                        handle_verbosity_argument,
+                                        add_version_argument,
+                                        project_url)
 
 
 def main():
@@ -41,6 +27,7 @@ def main():
     '''
 
     parser = ArgumentParser(prog='git lb-use')
+    add_version_argument(parser)
 
     parser.add_argument('project', help='project which history to fetch')
     parser.add_argument('url', nargs='?',
@@ -48,31 +35,19 @@ def main():
                         help='alternative repository to use, instead of the '
                         'standard one')
 
-    parser.add_argument('-p', '--protocol',
-                        choices=PROTOCOLS_URLS,
-                        help='which protocol to use to connect to gitlab; '
-                        'the default is defined by the config option '
-                        'lb-use.protocol, or {} if not set'
-                        .format(DEFAULT_PROTOCOL))
-
-    parser.add_argument('-q', '--quiet', action='store_const',
-                        dest='log_level', const=logging.WARNING,
-                        help='be more quiet')
-    parser.add_argument('-v', '--verbose', action='store_const',
-                        dest='log_level', const=logging.DEBUG,
-                        help='be more verbose')
-
-    parser.set_defaults(log_level=logging.INFO)
+    add_protocol_argument(parser)
+    add_verbosity_argument(parser)
 
     args = parser.parse_args()
-    logging.basicConfig(level=args.log_level)
+    handle_verbosity_argument(args)
 
-    if not args.protocol:
-        try:
-            args.protocol = check_output(
-                ['git', 'config', '--get', 'lb-use.protocol']).strip()
-        except CalledProcessError:
-            args.protocol = DEFAULT_PROTOCOL
+    try:
+        repo = git.Repo(search_parent_directories=True)
+    except git.InvalidGitRepositoryError:
+        logging.error('current directory is not a Git repository')
+        exit(1)
+
+    handle_protocol_argument(args, repo)
 
     if not args.url:
         args.url = project_url(args.project, args.protocol)
@@ -80,32 +55,39 @@ def main():
     logging.info("calling: git remote add -f '%s' '%s'",
                  args.project, args.url)
 
+    # define a remote "$project", overwrite it if it already exists
     try:
-        # define a remote "$project", overwrite it if it already exists
-        old_remote = check_output(
-            ['git', 'config', '--get', 'remote.{}.url'.format(args.project)]
-        ).strip()
+        old_url = repo.remote(args.project).url
         # the remote is defined
         logging.warning("overwriting existing remote '%s' (was %s)",
-                        args.project, old_remote)
-        call(['git', 'remote', 'rm', args.project])
-    except CalledProcessError:
+                        args.project, old_url)
+        repo.delete_remote(args.project)
+    except ValueError:  # remote does not exist
         pass
 
     try:
-        check_call(['git', 'remote', 'add', args.project, args.url])
-        check_call(['git', 'config',
-                    'remote.{}.tagopt'.format(args.project), '--no-tags'])
-        check_call(['git', 'config', '--add',
-                    'remote.{}.fetch'.format(args.project),
-                    '+refs/tags/*:refs/tags/{}/*'.format(args.project)])
-        cmd = ['git', 'fetch']
-        if args.log_level < logging.INFO:
-            cmd.append('-v')
-        elif args.log_level > logging.INFO:
-            cmd.append('-q')
-        cmd.append(args.project)
-        check_call(cmd)
-    except CalledProcessError as err:
-        logging.error('command failed: %s', err.cmd)
-        exit(err.returncode)
+        remote = repo.create_remote(args.project, args.url)
+        with remote.config_writer as conf:
+            conf.set('tagopt', '--no-tags')
+        # FIXME 'git config --add' is not supported bug GitPython
+        repo.git.config('remote.{}.fetch'.format(args.project),
+                        '+refs/tags/*:refs/tags/{}/*'.format(args.project),
+                         add=True)
+        refs = remote.fetch()
+
+        TAGS = True
+        BRANCHES = False
+        groups = {TAGS: [], BRANCHES: []}
+        for ref in refs:
+            groups[hasattr(ref.ref, 'tag')].append(ref)
+        logging.info('fetched %d branches and %d tags',
+                     len(groups[BRANCHES]), len(groups[TAGS]))
+        if groups[BRANCHES]:
+            logging.debug('Branches:')
+            [logging.debug(' - %s', ref.name) for ref in groups[BRANCHES]]
+        if groups[TAGS]:
+            logging.debug('Tags:')
+            [logging.debug(' - %s', ref.name) for ref in groups[TAGS]]
+    except Exception as err:
+        logging.error('%s: %s', type(err).__name__, err)
+        exit(1)

@@ -54,7 +54,7 @@ python3.5:
   script:
     - python --version
     - pip install -e .
-    - python setup.py nosetests
+    - python setup.py nosetests --cover-package ${CI_PROJECT_NAME}
     - mkdir -p cover_report && mv -f build/lib/cover cover_report/$CI_JOB_NAME
   artifacts:
     paths:
@@ -67,7 +67,7 @@ python3.6:
   script:
     - python --version
     - pip install -e .
-    - python setup.py nosetests
+    - python setup.py nosetests --cover-package ${CI_PROJECT_NAME}
     - mkdir -p cover_report && mv -f build/lib/cover cover_report/$CI_JOB_NAME
     - python setup.py sdist --dist-dir public/${CI_PROJECT_NAME,,}
     - python setup.py bdist_wheel --dist-dir public/${CI_PROJECT_NAME,,}

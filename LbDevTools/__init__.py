@@ -13,6 +13,13 @@ from __future__ import print_function
 
 import os
 
+from pkg_resources import get_distribution, DistributionNotFound
+try:
+    __version__ = get_distribution(__name__).version
+except DistributionNotFound:  # pragma: no cover
+    # package is not installed
+    __version__ = 'unknown'
+
 
 DATA_DIR = os.path.join(os.path.dirname(__file__), 'data')
 

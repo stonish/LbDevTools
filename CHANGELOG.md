@@ -6,13 +6,19 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased][]
 ### Added
+- `git lb-checkout`
+  - added `--list` option to `git lb-checkout` (!5)
+  - print suggestions for misspelled branch or package name (!5)
 - Added `--version` option to Git subcommands (!4)
 
 ### Changed
+- Allow `git lb-checkout` only for packages and _hats_ (#3)
 - Replaced Git custom wrappers with [GitPython][] (#2)
 - Automatic commit of `git lb-checkout` metadata after `git lb-push` (!4)
 
 ### Fixed
+- Fixed missing import in `git lb-push` (!5)
+- Fixed project name case for remote name in `git lb-use` (!5)
 - Unused variable "pushurl" in LbDevTools.GitTool.push (#4)
 - Removed references to LbScripts (#5)
 

@@ -13,6 +13,7 @@ __author__ = 'Marco Clemencic <marco.clemencic@cern.ch>'
 import git
 import logging
 from argparse import ArgumentParser
+from LbEnv import fixProjectCase
 from LbDevTools.GitTools.common import (add_protocol_argument,
                                         handle_protocol_argument,
                                         add_verbosity_argument,
@@ -48,6 +49,12 @@ def main():
         exit(1)
 
     handle_protocol_argument(args, repo)
+
+    project = fixProjectCase(args.project)
+    if args.project != project:
+        logging.warnins('misspelled project name, using %s instead', project)
+        args.project = project
+    del project
 
     if not args.url:
         args.url = project_url(args.project, args.protocol)

@@ -16,11 +16,13 @@ import git
 import logging
 from collections import defaultdict
 from shutil import rmtree
+from subprocess import Popen, PIPE
 
 try:
     from tempfile import TemporaryDirectory
 except ImportError:
     import os as _os
+    import sys as _sys
     import warnings as _warnings
     from tempfile import mkdtemp
     # FIXME: backport from Python 3.2 (see http://stackoverflow.com/a/19299884)
@@ -170,7 +172,7 @@ def main():
     logging.info('using repository at %s', repo.working_dir)
 
     # find packages (directories) from the requested remote
-    configfile = '.git-lb-checkout'
+    configfile = os.path.join(repo.working_dir, '.git-lb-checkout')
     pkgs = {}
     remotes = set()
     with git.GitConfigParser([configfile], read_only=True) as conf:
@@ -313,7 +315,7 @@ def main():
                 conf.set(section, 'imported', new_imported)
         repo.index.add([configfile])
         repo.index.commit('updated {} after push of {}/{}'.format(
-            configfile, args.remote, args.branch))
+            os.path.basename(configfile), args.remote, args.branch))
     finally:
         if args.keep_temp:
             logging.warning('Keeping branch %s. It\'s up to you to delete it.',

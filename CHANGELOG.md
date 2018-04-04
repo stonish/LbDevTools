@@ -17,7 +17,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Automatic commit of `git lb-checkout` metadata after `git lb-push` (!4)
 
 ### Fixed
-- Fixed missing import in `git lb-push` (!5)
+- Fixed missing import in `git lb-push`, introduces with !4 (!5)
 - Fixed project name case for remote name in `git lb-use` (!5)
 - Unused variable "pushurl" in LbDevTools.GitTool.push (#4)
 - Removed references to LbScripts (#5)

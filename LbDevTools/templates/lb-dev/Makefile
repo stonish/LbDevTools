@@ -20,6 +20,6 @@ endif
 
 all:
 %:
-	@env CMTPROJECTPATH="$$(CMTPROJECTPATH)" $$(MAKE) -f $$(DEVTOOLS_DATADIR)/Makefile-cmt.mk $$*
+	@env CMTPROJECTPATH="$$(CMTPROJECTPATH)" DEVTOOLS_DATADIR="$$(DEVTOOLS_DATADIR)" $$(MAKE) -f $$(DEVTOOLS_DATADIR)/Makefile-cmt.mk $$*
 
 endif

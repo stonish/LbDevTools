@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Automatic commit of `git lb-checkout` metadata after `git lb-push` (!4)
 
 ### Fixed
+- `lb-env`: bail out if neither CMake nor CMT configuration is found (!9)
 - Fixed use of CMT Makefile wrapper (!8)
 - Fixed missing import in `git lb-push`, introduces with !4 (!5)
 - Fixed project name case for remote name in `git lb-use` (!5)

@@ -143,9 +143,14 @@ def main():
         logging.warning('%s %s does not seem a CMake project',
                         project, version)
 
-    # Check if it is a CMT-enabled projects
+    # Check if it is a CMT-enabled project
     use_cmt = os.path.exists(os.path.join(projectDir, os.pardir, os.pardir,
                                           'cmt', 'project.cmt'))
+
+    if not use_cmake and not use_cmt:
+        logging.error('neither CMake nor CMT configuration found '
+                      '(are you using the right CMTCONFIG?)')
+        exit(1)
 
     # Create the dev project
     if not os.path.exists(opts.dest_dir):

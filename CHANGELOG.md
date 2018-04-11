@@ -12,11 +12,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Added `--version` option to Git subcommands (!4)
 
 ### Changed
+- Renamed `LbDevTools.data_location` to `_print_data_location` (!7)
 - Allow `git lb-checkout` only for packages and _hats_ (#3)
 - Replaced Git custom wrappers with [GitPython][] (#2)
 - Automatic commit of `git lb-checkout` metadata after `git lb-push` (!4)
 
 ### Fixed
+- Fixed use of CMT Makefile wrapper (!8)
 - Fixed missing import in `git lb-push`, introduces with !4 (!5)
 - Fixed project name case for remote name in `git lb-use` (!5)
 - Unused variable "pushurl" in LbDevTools.GitTool.push (#4)

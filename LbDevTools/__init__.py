@@ -24,7 +24,7 @@ except DistributionNotFound:  # pragma: no cover
 DATA_DIR = os.path.join(os.path.dirname(__file__), 'data')
 
 
-def data_location():
+def _print_data_location():
     '''
     Print the location of the `data` folder.
     '''

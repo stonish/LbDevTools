@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Added `--version` option to Git subcommands (!4)
 
 ### Changed
+- Fix `lb-gen-compiler-wrapper` to handle SFT build of clang 6.0.0 (7a7450ad)
 - Renamed `LbDevTools.data_location` to `_print_data_location` (!7)
 - Allow `git lb-checkout` only for packages and _hats_ (#3)
 - Replaced Git custom wrappers with [GitPython][] (#2)

@@ -103,7 +103,7 @@ setup_clang() {
         fi
 
         _base_platform=${_platform}
-        for _gcc_version in 7 62 49 48 46 ; do
+        for _gcc_version in 7 62binutils 62 49 48 46 ; do
           _platform=${_base_platform}-gcc${_gcc_version}-opt
           set_prefix llvm ${_clang_version}
           if [ -n "${_prefix}" ] ; then
@@ -129,6 +129,7 @@ setup_clang() {
           48) _gcc_version=4.8.1 ;;
           49) _gcc_version=4.9.3 ;;
           62) _gcc_version=6.2.0 ;;
+          62binutils) _gcc_version=6.2.0binutils ;;
           7 ) _gcc_version=7.1.0 ;;
         esac
         setup_gcc ${_gcc_version} no-binutils

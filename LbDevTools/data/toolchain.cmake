@@ -23,4 +23,8 @@ if(NOT CMAKE_SOURCE_DIR MATCHES "CMakeTmp")
     message(FATAL_ERROR "Cannot find GaudiDefaultToolchain.cmake")
   endif()
 
+  # FIXME: make sure we do not pick up ninja from LCG (it requires LD_LIBRARY_PATH set)
+  if(CMAKE_PREFIX_PATH)
+    list(FILTER CMAKE_PREFIX_PATH EXCLUDE REGEX "LCG_.*ninja")
+  endif()
 endif()

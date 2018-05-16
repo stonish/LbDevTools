@@ -16,9 +16,8 @@ import git
 import logging
 from argparse import ArgumentParser
 from difflib import get_close_matches
-from LbDevTools.GitTools.common import (add_verbosity_argument,
-                                        handle_verbosity_argument,
-                                        add_version_argument)
+from LbDevTools.GitTools.common import (
+    add_verbosity_argument, handle_verbosity_argument, add_version_argument)
 
 
 def _checkout(repo, commit, remote, path, configfile):
@@ -41,23 +40,35 @@ def main():
     parser = ArgumentParser(prog='git lb-checkout')
     add_version_argument(parser)
 
-    parser.add_argument('commit', metavar='branch',
-                        help='name of the branch/tag/commit used to get data '
-                        'from (e.g. LHCb/master)')
-    parser.add_argument('path', nargs='?',
-                        help='name of a file or directory to checkout from '
-                        'the specified branch')
+    parser.add_argument(
+        'commit',
+        metavar='branch',
+        help='name of the branch/tag/commit used to get data '
+        'from (e.g. LHCb/master)')
+    parser.add_argument(
+        'path',
+        nargs='?',
+        help='name of a file or directory to checkout from '
+        'the specified branch')
 
-    parser.add_argument('-c', '--commit', action='store_true',
-                        dest='do_commit',
-                        help='commit immediately after checkout (default)')
-    parser.add_argument('--no-commit', action='store_false',
-                        dest='do_commit',
-                        help='do not commit after checkout')
+    parser.add_argument(
+        '-c',
+        '--commit',
+        action='store_true',
+        dest='do_commit',
+        help='commit immediately after checkout (default)')
+    parser.add_argument(
+        '--no-commit',
+        action='store_false',
+        dest='do_commit',
+        help='do not commit after checkout')
 
-    parser.add_argument('-l', '--list', action='store_true',
-                        help='print the list of packages available from the '
-                        'requested branch')
+    parser.add_argument(
+        '-l',
+        '--list',
+        action='store_true',
+        help='print the list of packages available from the '
+        'requested branch')
 
     add_verbosity_argument(parser)
 
@@ -80,11 +91,10 @@ def main():
         repo.commit(args.commit)
     except git.BadName:
         logging.error("invalid reference: %s", args.commit)
-        candidates = get_close_matches(
-            args.commit,
-            [r.name for r in repo.references
-             if isinstance(r, (git.TagReference, git.RemoteReference))]
-        )                               
+        candidates = get_close_matches(args.commit, [
+            r.name for r in repo.references
+            if isinstance(r, (git.TagReference, git.RemoteReference))
+        ])
         if candidates:
             logging.error('did you mean this?' if len(candidates) == 1 else
                           'did you mean one of these?')
@@ -100,10 +110,8 @@ def main():
         # try with branches and tags
         remotes = chain(
             # try with branches
-            (l.strip().split('/', 1)[0]
-             for l in repo.git.branch(remotes=True,
-                                      contains=args.commit).splitlines()
-             if '/' in l),
+            (l.strip().split('/', 1)[0] for l in repo.git.branch(
+                remotes=True, contains=args.commit).splitlines() if '/' in l),
             # try with tags
             (l.strip().split('/', 1)[0]
              for l in repo.git.tag(contains=args.commit).splitlines()
@@ -120,8 +128,7 @@ def main():
         pkgs = set(
             os.path.dirname(b.path)
             for b in repo.commit(args.commit).tree.traverse()
-            if b.path.endswith('/CMakeLists.txt')
-        )
+            if b.path.endswith('/CMakeLists.txt'))
 
         if args.list:
             print('\n'.join(sorted(pkgs)))
@@ -133,8 +140,8 @@ def main():
         args.path = args.path.rstrip('/')
 
         # get the qualified path (if checkout was called from a subdirectory)
-        full_path = os.path.relpath(os.path.join(os.getcwd(), args.path),
-                                    repo.working_dir)
+        full_path = os.path.relpath(
+            os.path.join(os.getcwd(), args.path), repo.working_dir)
 
         if full_path in pkgs:
             paths = [full_path]
@@ -169,17 +176,16 @@ def main():
         if args.do_commit:
             if len(paths) == 1:
                 msg = 'added {path} from {remote} ({commit})'.format(
-                    path=paths[0], remote=remote, commit=args.commit
-                )
+                    path=paths[0], remote=remote, commit=args.commit)
             else:
                 msg = 'added from {remote} ({commit}):\n - {paths}'.format(
-                    remote=remote, commit=args.commit,
-                    paths='\n - '.join(paths)
-                )
+                    remote=remote,
+                    commit=args.commit,
+                    paths='\n - '.join(paths))
             repo.index.commit(msg)
 
-        logging.info('checked out %s from %s (%s)',
-                     ', '.join(paths), remote, args.commit)
+        logging.info('checked out %s from %s (%s)', ', '.join(paths), remote,
+                     args.commit)
         if args.log_level <= logging.DEBUG:
             [logging.debug(' %s  %s', d.change_type, d.b_path) for d in diffs]
 

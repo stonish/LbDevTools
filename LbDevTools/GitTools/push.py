@@ -25,6 +25,7 @@ except ImportError:
     import sys as _sys
     import warnings as _warnings
     from tempfile import mkdtemp
+
     # FIXME: backport from Python 3.2 (see http://stackoverflow.com/a/19299884)
     class TemporaryDirectory(object):
         """Create and return a temporary directory.  This has the same
@@ -40,7 +41,7 @@ except ImportError:
 
         def __init__(self, suffix="", prefix="tmp", dir=None):
             self._closed = False
-            self.name = None # Handle mkdtemp raising an exception
+            self.name = None  # Handle mkdtemp raising an exception
             self.name = mkdtemp(suffix, prefix, dir)
 
         def __repr__(self):
@@ -59,8 +60,12 @@ except ImportError:
                     # up due to missing globals
                     if "None" not in str(ex):
                         raise
-                    print("ERROR: {0!r} while cleaning up {1!r}".format(ex, self,),
-                          file=_sys.stderr)
+                    print(
+                        "ERROR: {0!r} while cleaning up {1!r}".format(
+                            ex,
+                            self,
+                        ),
+                        file=_sys.stderr)
                     return
                 self._closed = True
                 if _warn:
@@ -93,7 +98,8 @@ except ImportError:
             for name in self._listdir(path):
                 fullname = self._path_join(path, name)
                 try:
-                    isdir = self._isdir(fullname) and not self._islink(fullname)
+                    isdir = self._isdir(
+                        fullname) and not self._islink(fullname)
                 except OSError:
                     isdir = False
                 if isdir:
@@ -147,12 +153,14 @@ def main():
 
     add_verbosity_argument(parser)
 
-    parser.add_argument('-k', '--keep-temp-branch',
-                        action='store_true',
-                        dest='keep_temp',
-                        default = False,
-                        help='keep temporary branch after push instead of '
-                        'deleting (default=off)')
+    parser.add_argument(
+        '-k',
+        '--keep-temp-branch',
+        action='store_true',
+        dest='keep_temp',
+        default=False,
+        help='keep temporary branch after push instead of '
+        'deleting (default=off)')
 
     args = parser.parse_args()
     handle_verbosity_argument(args)
@@ -165,9 +173,9 @@ def main():
 
     # convert paths to relative to repo workingn directory
     curdir = os.getcwd()
-    args.paths = set(os.path.relpath(os.path.join(curdir, path),
-                                     repo.working_dir)
-                     for path in args.paths)
+    args.paths = set(
+        os.path.relpath(os.path.join(curdir, path), repo.working_dir)
+        for path in args.paths)
 
     logging.info('using repository at %s', repo.working_dir)
 
@@ -214,11 +222,11 @@ def main():
     logging.info('considering directories %s', pkgs.keys())
 
     # dictionary of dictionaries of sets
-    commits_to_consider = defaultdict(lambda:defaultdict(set))
+    commits_to_consider = defaultdict(lambda: defaultdict(set))
     for pkg in pkgs:
         first = True
-        for commit in reversed(repo.iter_commits(pkgs[pkg]['base'] + '..',
-                                                 pkg)):
+        for commit in reversed(
+                repo.iter_commits(pkgs[pkg]['base'] + '..', pkg)):
             commits_to_consider[commit]['packages'].add(pkg)
             if first:
                 commits_to_consider[commit]['first'].add(pkg)
@@ -240,8 +248,10 @@ def main():
         logging.info('using temporary branch name %s', tmp_branch_name)
 
     with TemporaryDirectory() as tmpdir:
-        tmprepo = repo.clone(os.path.join(tmpdir, args.remote),
-                             no_checkout=True, reference=repo.working_dir)
+        tmprepo = repo.clone(
+            os.path.join(tmpdir, args.remote),
+            no_checkout=True,
+            reference=repo.working_dir)
 
         first = True
         logging.debug('sorting list of commits to consider')
@@ -256,8 +266,8 @@ def main():
             for pkg in commit_info['first']:
                 if first:
                     # it's the very first one, we create the branch
-                    tmprepo.create_head(
-                        tmp_branch_name, pkgs[pkg]['imported']).checkout()
+                    tmprepo.create_head(tmp_branch_name,
+                                        pkgs[pkg]['imported']).checkout()
                     first = False
                 else:
                     # merging is a way to get a uniform starting point
@@ -268,15 +278,18 @@ def main():
                 # checkout the local repo version of the pkg
                 tmprepo.git.checkout('--quiet', commit.hexsha, '--', pkg)
             # for all packages changed (not introduced) in this commit
-            pkgs_to_patch = list(commit_info['packages'] - commit_info['first'])
+            pkgs_to_patch = list(
+                commit_info['packages'] - commit_info['first'])
             if pkgs_to_patch:
                 # FIXME: we might use GitPython diffs, but it's not obvious
                 # diffs = commit.iter_parents().next().diff(commit)
                 patch = tmprepo.git.log('--no-color', '-p', '-n', '1',
                                         commit.hexsha, '--', *pkgs_to_patch)
                 if patch:
-                    proc = Popen(['git', 'apply', '--index'],
-                                 stdin=PIPE, cwd=tmprepo.working_dir)
+                    proc = Popen(
+                        ['git', 'apply', '--index'],
+                        stdin=PIPE,
+                        cwd=tmprepo.working_dir)
                     proc.communicate(patch)
                     if proc.returncode:
                         logging.error('failed to apply commit %s',
@@ -289,8 +302,8 @@ def main():
         tmprepo.remote('origin').push(tmp_branch_name)
 
     try:
-        repo.remote(args.remote).push(
-            '{0}:{1}'.format(tmp_branch_name, args.branch))
+        repo.remote(args.remote).push('{0}:{1}'.format(tmp_branch_name,
+                                                       args.branch))
     except Exception as err:
         logging.error("Failed to push to %s", args.remote)
         logging.error('%s: %s', type(err).__name__, err)

@@ -20,7 +20,6 @@ except DistributionNotFound:  # pragma: no cover
     # package is not installed
     __version__ = 'unknown'
 
-
 DATA_DIR = os.path.join(os.path.dirname(__file__), 'data')
 
 

@@ -10,7 +10,6 @@
 ###############################################################################
 __author__ = 'Marco Clemencic <marco.clemencic@cern.ch>'
 
-
 PROTOCOLS_URLS = {
     'ssh': 'ssh://git@gitlab.cern.ch:7999/',
     'krb5': 'https://:@gitlab.cern.ch:8443/',
@@ -32,10 +31,8 @@ def project_url(project, protocol):
     '''
     from LbEnv import fixProjectCase
     # FIXME: get source uri from SoftConfDB
-    uri = 'gitlab-cern:{}/{}'.format(
-        'lhcb' if project.lower() != 'gaudi' else 'gaudi',
-        fixProjectCase(project)
-    )
+    uri = 'gitlab-cern:{}/{}'.format('lhcb' if project.lower() != 'gaudi' else
+                                     'gaudi', fixProjectCase(project))
     group, name = uri.split(':', 1)[-1].split('/', 1)
     return gitlab_url(group, name, protocol)
 
@@ -55,10 +52,8 @@ def get_default_protocol(repo=None):
     # FIXME: GitPython does not provide direct access to global configuration
     from os.path import normpath, expanduser, join
     from git import GitConfigParser
-    conf_reader = (repo.config_reader() if repo
-                   else GitConfigParser(
-                       [normpath(expanduser(join('~', '.gitconfig')))],
-                       read_only=True))
+    conf_reader = (repo.config_reader() if repo else GitConfigParser(
+        [normpath(expanduser(join('~', '.gitconfig')))], read_only=True))
     with conf_reader as conf:
         return conf.get_value('lb-use', 'protocol', DEFAULT_PROTOCOL)
 
@@ -67,12 +62,13 @@ def add_protocol_argument(parser):
     '''
     Helper to share the definiton of the --protocol argument
     '''
-    parser.add_argument('-p', '--protocol',
-                        choices=PROTOCOLS_URLS,
-                        help='which protocol to use to connect to gitlab; '
-                        'the default is defined by the config option '
-                        'lb-use.protocol, or {} if not set'
-                        .format(DEFAULT_PROTOCOL))
+    parser.add_argument(
+        '-p',
+        '--protocol',
+        choices=PROTOCOLS_URLS,
+        help='which protocol to use to connect to gitlab; '
+        'the default is defined by the config option '
+        'lb-use.protocol, or {} if not set'.format(DEFAULT_PROTOCOL))
     return parser
 
 
@@ -83,15 +79,27 @@ def handle_protocol_argument(args, repo=None):
 
 def add_verbosity_argument(parser):
     import logging
-    parser.add_argument('-q', '--quiet', action='store_const',
-                        dest='log_level', const=logging.ERROR,
-                        help='be more quiet')
-    parser.add_argument('-v', '--verbose', action='store_const',
-                        dest='log_level', const=logging.INFO,
-                        help='be more verbose')
-    parser.add_argument('-d', '--debug', action='store_const',
-                        dest='log_level', const=logging.DEBUG,
-                        help='be very verbose')
+    parser.add_argument(
+        '-q',
+        '--quiet',
+        action='store_const',
+        dest='log_level',
+        const=logging.ERROR,
+        help='be more quiet')
+    parser.add_argument(
+        '-v',
+        '--verbose',
+        action='store_const',
+        dest='log_level',
+        const=logging.INFO,
+        help='be more verbose')
+    parser.add_argument(
+        '-d',
+        '--debug',
+        action='store_const',
+        dest='log_level',
+        const=logging.DEBUG,
+        help='be very verbose')
     parser.set_defaults(log_level=logging.WARNING)
     return parser
 
@@ -103,6 +111,8 @@ def handle_verbosity_argument(args):
 
 def add_version_argument(parser):
     from LbDevTools import __version__
-    parser.add_argument('--version', action='version',
-                        version='%(prog)s {}'.format(__version__))
+    parser.add_argument(
+        '--version',
+        action='version',
+        version='%(prog)s {}'.format(__version__))
     return parser

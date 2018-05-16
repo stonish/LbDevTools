@@ -13,12 +13,9 @@ __author__ = 'Marco Clemencic <marco.clemencic@cern.ch>'
 import git
 import logging
 from subprocess import CalledProcessError
-from LbDevTools.GitTools.common import (add_protocol_argument,
-                                        handle_protocol_argument,
-                                        add_verbosity_argument,
-                                        handle_verbosity_argument,
-                                        add_version_argument,
-                                        package_url)
+from LbDevTools.GitTools.common import (
+    add_protocol_argument, handle_protocol_argument, add_verbosity_argument,
+    handle_verbosity_argument, add_version_argument, package_url)
 
 
 def get_latest_tag(repo):
@@ -46,12 +43,17 @@ def main():
     parser.add_argument('name', help='name of the data package')
 
     git_group = parser.add_argument_group("'git clone' arguments")
-    git_group.add_argument('-o', '--origin', metavar='NAME',
-                           help="use NAME instead of 'origin' to track "
-                           "upstream")
-    git_group.add_argument('-b', '--branch',
-                           help='checkout BRANCH instead of the remote\'s '
-                           'HEAD')
+    git_group.add_argument(
+        '-o',
+        '--origin',
+        metavar='NAME',
+        help="use NAME instead of 'origin' to track "
+        "upstream")
+    git_group.add_argument(
+        '-b',
+        '--branch',
+        help='checkout BRANCH instead of the remote\'s '
+        'HEAD')
 
     add_protocol_argument(parser)
     add_verbosity_argument(parser)
@@ -75,9 +77,9 @@ def main():
                            args.name.replace('/', '_') + 'Environment.xml')
         if not exists(old_xml_env):
             logging.debug(' - adding %s', basename(old_xml_env))
-            os.symlink(basename(old_xml_env.replace('Environment.xml',
-                                                    '.xenv')),
-                       old_xml_env)
+            os.symlink(
+                basename(old_xml_env.replace('Environment.xml', '.xenv')),
+                old_xml_env)
 
         # guess version aliases
         version_aliases = ['v999r999']
@@ -86,8 +88,8 @@ def main():
                 l = l.strip()
                 if l.startswith('version'):
                     version = l.split()[1]
-                    version_aliases.append(version[:version.rfind('r')]
-                                           + 'r999')
+                    version_aliases.append(
+                        version[:version.rfind('r')] + 'r999')
                     break
         else:
             version = get_latest_tag(repo)

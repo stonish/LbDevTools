@@ -28,35 +28,41 @@ def main():
     Script to generate a local development project.
     '''
     from optparse import OptionParser
-    from LbEnv.ProjectEnv.options import (addSearchPath, addOutputLevel,
-                                          addPlatform, addListing,
-                                          checkPlatform)
+    from LbEnv.ProjectEnv.options import (
+        addSearchPath, addOutputLevel, addPlatform, addListing, checkPlatform)
     from LbEnv.ProjectEnv.lookup import findProject, MissingProjectError
     from subprocess import call
 
-    parser = OptionParser(usage='%prog [options] Project[/version]',
-                          version='%prog {}'.format(__version__))
+    parser = OptionParser(
+        usage='%prog [options] Project[/version]',
+        version='%prog {}'.format(__version__))
 
     addSearchPath(parser)
     addOutputLevel(parser)
     addPlatform(parser)
     addListing(parser)
 
-    parser.add_option('--name', action='store',
-                      help='Name of the local project '
-                      '[default: "<proj>Dev_<vers>"].')
+    parser.add_option(
+        '--name',
+        action='store',
+        help='Name of the local project [default: "<proj>Dev_<vers>"].')
 
-    parser.add_option('--dest-dir', action='store',
-                      help='Where to create the local project '
-                           '[default: %default].')
+    parser.add_option(
+        '--dest-dir',
+        action='store',
+        help='Where to create the local project [default: %default].')
 
-    parser.add_option('--git', action='store_true',
-                      help='Initialize git repository in the generated '
-                      'directory [default, if git is available].')
+    parser.add_option(
+        '--git',
+        action='store_true',
+        help='Initialize git repository in the generated directory [default, '
+        'if git is available].')
 
-    parser.add_option('--no-git', action='store_false',
-                      dest='git',
-                      help='Do not initialize the git local repository.')
+    parser.add_option(
+        '--no-git',
+        action='store_false',
+        dest='git',
+        help='Do not initialize the git local repository.')
 
     try:
         from LbEnv import which
@@ -64,8 +70,7 @@ def main():
     except ImportError:
         has_git = True
 
-    parser.set_defaults(dest_dir=os.curdir,
-                        git=has_git)
+    parser.set_defaults(dest_dir=os.curdir, git=has_git)
 
     opts, args = parser.parse_args()
 
@@ -80,13 +85,11 @@ def main():
             args.append(DEFAULT_VERSION)
     elif len(args) == 2:
         logging.warning('deprecated version specification: '
-                        'use "lb-dev ... %s/%s" instead',
-                        *args)
+                        'use "lb-dev ... %s/%s" instead', *args)
 
     try:
         project, version = args
-        version = expandVersionAlias(project, version,
-                                     opts.platform)
+        version = expandVersionAlias(project, version, opts.platform)
     except ValueError:
         parser.error('wrong number of arguments')
 
@@ -137,15 +140,15 @@ def main():
         parser.error(str(x))
 
     # Check if it is a CMake-enabled project
-    use_cmake = os.path.exists(os.path.join(
-        projectDir, project + 'Config.cmake'))
+    use_cmake = os.path.exists(
+        os.path.join(projectDir, project + 'Config.cmake'))
     if not use_cmake:
-        logging.warning('%s %s does not seem a CMake project',
-                        project, version)
+        logging.warning('%s %s does not seem a CMake project', project,
+                        version)
 
     # Check if it is a CMT-enabled project
-    use_cmt = os.path.exists(os.path.join(projectDir, os.pardir, os.pardir,
-                                          'cmt', 'project.cmt'))
+    use_cmt = os.path.exists(
+        os.path.join(projectDir, os.pardir, os.pardir, 'cmt', 'project.cmt'))
 
     if not use_cmake and not use_cmt:
         logging.error('neither CMake nor CMT configuration found '
@@ -163,26 +166,27 @@ def main():
     else:
         os.makedirs(devProjectDir)
 
-    data = dict(project=project,
-                version=version,
-                search_path=' '.join(
-                    ['"%s"' % p for p in LbEnv.ProjectEnv.path]),
-                search_path_repr=repr(LbEnv.ProjectEnv.path),
-                search_path_env=os.pathsep.join(LbEnv.ProjectEnv.path),
-                # we use cmake if available
-                build_tool=('cmake' if use_cmake else 'cmt'),
-                PROJECT=project.upper(),
-                local_project=local_project,
-                local_version=local_version,
-                cmt_project=opts.name,
-                datadir=DATA_DIR)
+    data = dict(
+        project=project,
+        version=version,
+        search_path=' '.join(['"%s"' % p for p in LbEnv.ProjectEnv.path]),
+        search_path_repr=repr(LbEnv.ProjectEnv.path),
+        search_path_env=os.pathsep.join(LbEnv.ProjectEnv.path),
+        # we use cmake if available
+        build_tool=('cmake' if use_cmake else 'cmt'),
+        PROJECT=project.upper(),
+        local_project=local_project,
+        local_version=local_version,
+        cmt_project=opts.name,
+        datadir=DATA_DIR)
 
     # FIXME: improve generation of searchPath files, so that they match the command line
-    templateDir = os.path.join(os.path.dirname(__file__),
-                               'templates', 'lb-dev')
-    templates = ['CMakeLists.txt', 'toolchain.cmake', 'Makefile',
-                 'searchPath.py',
-                 'build.conf', 'run']
+    templateDir = os.path.join(
+        os.path.dirname(__file__), 'templates', 'lb-dev')
+    templates = [
+        'CMakeLists.txt', 'toolchain.cmake', 'Makefile', 'searchPath.py',
+        'build.conf', 'run'
+    ]
     # generated files that need exec permissions
     execTemplates = set(['run'])
 
@@ -203,8 +207,8 @@ def main():
         with open(dest, 'w') as f:
             f.write(t.substitute(data))
         if templateName in execTemplates:
-            mode = (stat.S_IMODE(os.stat(dest).st_mode) |
-                    stat.S_IXUSR | stat.S_IXGRP)
+            mode = (stat.S_IMODE(os.stat(dest).st_mode) | stat.S_IXUSR
+                    | stat.S_IXGRP)
             os.chmod(dest, mode)
 
     # generate searchPath.cmake
@@ -232,22 +236,27 @@ def main():
         templateName = os.path.join(local_project + 'Sys', 'cmt/requirements')
         os.makedirs(os.path.dirname(os.path.join(devProjectDir, templateName)))
         logging.debug('creating "%s"', templateName)
-        open(os.path.join(devProjectDir, templateName),
-             'w').write(t.substitute(data))
+        open(os.path.join(devProjectDir, templateName), 'w').write(
+            t.substitute(data))
         if use_cmake:  # add a CMakeLists.txt to it
-            with open(os.path.join(devProjectDir, local_project + 'Sys',
-                                   'CMakeLists.txt'), 'w') as cml:
-                cml.write('gaudi_subdir({0} {1})\n'
-                          .format(local_project + 'Sys', local_version))
+            with open(
+                    os.path.join(devProjectDir, local_project + 'Sys',
+                                 'CMakeLists.txt'), 'w') as cml:
+                cml.write('gaudi_subdir({0} {1})\n'.format(
+                    local_project + 'Sys', local_version))
 
     if opts.git:
-        createGitIgnore(os.path.join(devProjectDir, '.gitignore'),
-                        selfignore=False)
+        createGitIgnore(
+            os.path.join(devProjectDir, '.gitignore'), selfignore=False)
         call(['git', 'add', '.'], cwd=devProjectDir)
-        call(['git', 'commit', '--quiet', '-m',
-              'initial version of satellite project\n\n'
-              'generated with:\n\n'
-              '    %s\n' % ' '.join(sys.argv)], cwd=devProjectDir)
+        call(
+            [
+                'git', 'commit', '--quiet', '-m',
+                'initial version of satellite project\n\n'
+                'generated with:\n\n'
+                '    %s\n' % ' '.join(sys.argv)
+            ],
+            cwd=devProjectDir)
 
     # Success report
     msg = '''

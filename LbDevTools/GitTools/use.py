@@ -14,12 +14,9 @@ import git
 import logging
 from argparse import ArgumentParser
 from LbEnv import fixProjectCase
-from LbDevTools.GitTools.common import (add_protocol_argument,
-                                        handle_protocol_argument,
-                                        add_verbosity_argument,
-                                        handle_verbosity_argument,
-                                        add_version_argument,
-                                        project_url)
+from LbDevTools.GitTools.common import (
+    add_protocol_argument, handle_protocol_argument, add_verbosity_argument,
+    handle_verbosity_argument, add_version_argument, project_url)
 
 
 def main():
@@ -31,10 +28,12 @@ def main():
     add_version_argument(parser)
 
     parser.add_argument('project', help='project which history to fetch')
-    parser.add_argument('url', nargs='?',
-                        metavar='repository_url',
-                        help='alternative repository to use, instead of the '
-                        'standard one')
+    parser.add_argument(
+        'url',
+        nargs='?',
+        metavar='repository_url',
+        help='alternative repository to use, instead of the '
+        'standard one')
 
     add_protocol_argument(parser)
     add_verbosity_argument(parser)
@@ -59,8 +58,8 @@ def main():
     if not args.url:
         args.url = project_url(args.project, args.protocol)
 
-    logging.info("calling: git remote add -f '%s' '%s'",
-                 args.project, args.url)
+    logging.info("calling: git remote add -f '%s' '%s'", args.project,
+                 args.url)
 
     # define a remote "$project", overwrite it if it already exists
     try:
@@ -77,9 +76,10 @@ def main():
         with remote.config_writer as conf:
             conf.set('tagopt', '--no-tags')
         # FIXME 'git config --add' is not supported bug GitPython
-        repo.git.config('remote.{}.fetch'.format(args.project),
-                        '+refs/tags/*:refs/tags/{}/*'.format(args.project),
-                         add=True)
+        repo.git.config(
+            'remote.{}.fetch'.format(args.project),
+            '+refs/tags/*:refs/tags/{}/*'.format(args.project),
+            add=True)
         refs = remote.fetch()
 
         TAGS = True
@@ -87,8 +87,8 @@ def main():
         groups = {TAGS: [], BRANCHES: []}
         for ref in refs:
             groups[hasattr(ref.ref, 'tag')].append(ref)
-        logging.info('fetched %d branches and %d tags',
-                     len(groups[BRANCHES]), len(groups[TAGS]))
+        logging.info('fetched %d branches and %d tags', len(groups[BRANCHES]),
+                     len(groups[TAGS]))
         if groups[BRANCHES]:
             logging.debug('Branches:')
             [logging.debug(' - %s', ref.name) for ref in groups[BRANCHES]]

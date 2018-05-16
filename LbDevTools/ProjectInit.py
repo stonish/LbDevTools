@@ -22,32 +22,43 @@ def main():
     from optparse import OptionParser
     from LbDevTools import initProject, __version__
 
-    parser = OptionParser(usage='%prog [options] [project_root_dir]',
-                          description='Initialize a directory for building a '
-                                      'project, useful when checking out a '
-                                      'project without using getpack (e.g. '
-                                      'with git). If the argument '
-                                      'project_root_dir is not specified, the '
-                                      'required files are created in the '
-                                      'current directory.',
-                          version='%prog {}'.format(__version__))
-    parser.add_option('--overwrite', action='store_true',
-                      help='overwrite existing files [default: %default]')
-    parser.add_option('-q', '--quiet',
-                      action='store_const', dest='loglevel',
-                      const=logging.WARNING,
-                      help='be quiet (default)')
-    parser.add_option('-v', '--verbose',
-                      action='store_const', dest='loglevel',
-                      const=logging.INFO,
-                      help='be more verbose')
-    parser.add_option('-d', '--debug',
-                      action='store_const', dest='loglevel',
-                      const=logging.DEBUG,
-                      help='print debug messages')
+    parser = OptionParser(
+        usage='%prog [options] [project_root_dir]',
+        description='Initialize a directory for building a '
+        'project, useful when checking out a '
+        'project without using getpack (e.g. '
+        'with git). If the argument '
+        'project_root_dir is not specified, the '
+        'required files are created in the '
+        'current directory.',
+        version='%prog {}'.format(__version__))
+    parser.add_option(
+        '--overwrite',
+        action='store_true',
+        help='overwrite existing files [default: %default]')
+    parser.add_option(
+        '-q',
+        '--quiet',
+        action='store_const',
+        dest='loglevel',
+        const=logging.WARNING,
+        help='be quiet (default)')
+    parser.add_option(
+        '-v',
+        '--verbose',
+        action='store_const',
+        dest='loglevel',
+        const=logging.INFO,
+        help='be more verbose')
+    parser.add_option(
+        '-d',
+        '--debug',
+        action='store_const',
+        dest='loglevel',
+        const=logging.DEBUG,
+        help='print debug messages')
 
-    parser.set_defaults(overwrite=False,
-                        loglevel=logging.WARNING)
+    parser.set_defaults(overwrite=False, loglevel=logging.WARNING)
 
     options, args = parser.parse_args()
 

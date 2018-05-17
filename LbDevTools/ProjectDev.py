@@ -150,26 +150,45 @@ def main():
         LbEnv.ProjectEnv.path[:] = opts.dev_dirs + LbEnv.ProjectEnv.path
 
     try:
-        projectDir = findProject(project, version, opts.platform)
-        logging.info('using %s %s from %s', project, version, projectDir)
-    except MissingProjectError, x:
-        parser.error(str(x))
+        try:
+            projectDir = findProject(project, version, opts.platform)
+            logging.info('using %s %s from %s', project, version, projectDir)
+        except MissingProjectError, x:
+            parser.error(str(x))
 
-    # Check if it is a CMake-enabled project
-    use_cmake = os.path.exists(
-        os.path.join(projectDir, project + 'Config.cmake'))
-    if not use_cmake:
-        logging.warning('%s %s does not seem a CMake project', project,
-                        version)
+        # Check if it is a CMake-enabled project
+        use_cmake = os.path.exists(
+            os.path.join(projectDir, project + 'Config.cmake'))
+        if not use_cmake:
+            logging.warning('%s %s does not seem a CMake project', project,
+                            version)
 
-    # Check if it is a CMT-enabled project
-    use_cmt = os.path.exists(
-        os.path.join(projectDir, os.pardir, os.pardir, 'cmt', 'project.cmt'))
+        # Check if it is a CMT-enabled project
+        use_cmt = os.path.exists(
+            os.path.join(projectDir, os.pardir, os.pardir, 'cmt',
+                         'project.cmt'))
 
-    if not use_cmake and not use_cmt:
-        logging.error('neither CMake nor CMT configuration found '
-                      '(are you using the right CMTCONFIG?)')
-        exit(1)
+        if not use_cmake and not use_cmt:
+            logging.error('neither CMake nor CMT configuration found '
+                          '(are you using the right CMTCONFIG?)')
+            exit(1)
+    except SystemExit as err:
+        if opts.nightly:
+            try:
+                from LbEnv.ProjectEnv.lookup import InvalidNightlySlotError
+                from LbEnv.ProjectEnv.script import localNightlyHelp
+                sys.stderr.write(
+                    localNightlyHelp(
+                        parser.prog or os.path.basename(sys.argv[0]),
+                        InvalidNightlySlotError(opts.nightly[0],
+                                                opts.nightly[1], []), project,
+                        opts.platform if opts.platform not in ('best', None)
+                        else '$CMTCONFIG', sys.argv[1:]))
+            except ImportError:
+                # old version of LbEnv
+                # (before https://gitlab.cern.ch/lhcb-core/LbEnv/merge_requests/19)
+                pass
+        sys.exit(err.code)
 
     # Create the dev project
     if not os.path.exists(opts.dest_dir):

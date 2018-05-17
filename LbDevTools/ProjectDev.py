@@ -106,6 +106,23 @@ def main():
                     if opts.platform not in ('best', None) else '$CMTCONFIG',
                     sys.argv[1:]))
             sys.exit(64)
+        if opts.help_nightly_local:
+            if not opts.nightly:
+                parser.error('--help-nightly-local must be specified in '
+                             'conjunction with --nightly')
+            sys.stdout.write(
+                localNightlyHelp(
+                    parser.prog or os.path.basename(sys.argv[0]),
+                    InvalidNightlySlotError(opts.nightly[0], opts.nightly[1],
+                                            []),
+                    project,
+                    opts.platform
+                    if opts.platform not in ('best', None) else '$CMTCONFIG', [
+                        a for a in sys.argv[1:]
+                        if not '--help-nightly-local'.startswith(a)
+                    ],
+                    error=False))
+            sys.exit()
     except ImportError:
         # old version of LbEnv
         # (before https://gitlab.cern.ch/lhcb-core/LbEnv/merge_requests/19)

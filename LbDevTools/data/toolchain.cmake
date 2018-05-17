@@ -25,6 +25,6 @@ if(NOT CMAKE_SOURCE_DIR MATCHES "CMakeTmp")
 
   # FIXME: make sure we do not pick up ninja from LCG (it requires LD_LIBRARY_PATH set)
   if(CMAKE_PREFIX_PATH)
-    list(FILTER CMAKE_PREFIX_PATH EXCLUDE REGEX "LCG_.*ninja")
+    list(FILTER CMAKE_PREFIX_PATH EXCLUDE REGEX "(LCG_|lcg/nightlies).*ninja")
   endif()
 endif()

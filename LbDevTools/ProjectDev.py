@@ -95,6 +95,22 @@ def main():
 
     project = fixProjectCase(project)
 
+    try:
+        from LbEnv.ProjectEnv.lookup import InvalidNightlySlotError
+        from LbEnv.ProjectEnv.script import localNightlyHelp
+        if isinstance(opts.nightly, InvalidNightlySlotError):
+            sys.stderr.write(
+                localNightlyHelp(
+                    parser.prog or os.path.basename(sys.argv[0]), opts.nightly,
+                    project, opts.platform
+                    if opts.platform not in ('best', None) else '$CMTCONFIG',
+                    sys.argv[1:]))
+            sys.exit(64)
+    except ImportError:
+        # old version of LbEnv
+        # (before https://gitlab.cern.ch/lhcb-core/LbEnv/merge_requests/19)
+        pass
+
     if opts.user_area and not opts.no_user_area:
         from LbEnv.ProjectEnv import EnvSearchPathEntry, SearchPathEntry
         if os.environ['User_release_area'] == opts.user_area:

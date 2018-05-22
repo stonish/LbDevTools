@@ -5,13 +5,17 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased][]
+
+## [0.1.2][] - 2018-05-22
 ### Added
+- Provide instructions for local installation of nightly slots (!13, !14)
 - `git lb-checkout`
   - added `--list` option to `git lb-checkout` (!5)
   - print suggestions for misspelled branch or package name (!5)
 - Added `--version` option to Git subcommands (!4)
 
 ### Changed
+- Reformatted with yapf 0.21.0 (!11)
 - Fix `lb-gen-compiler-wrapper` to handle SFT build of clang 6.0.0 (7a7450ad)
 - Renamed `LbDevTools.data_location` to `_print_data_location` (!7)
 - Allow `git lb-checkout` only for packages and _hats_ (#3)
@@ -19,6 +23,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Automatic commit of `git lb-checkout` metadata after `git lb-push` (!4)
 
 ### Fixed
+- Make sure we do not use ninja from LCG (!10, !12)
 - `lb-env`: bail out if neither CMake nor CMT configuration is found (!9)
 - Fixed use of CMT Makefile wrapper (!8)
 - Fixed missing import in `git lb-push`, introduces with !4 (!5)
@@ -26,7 +31,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Unused variable "pushurl" in LbDevTools.GitTool.push (#4)
 - Removed references to LbScripts (#5)
 
-## [0.1.1][]
+## [0.1.1][] - 2018-03-26
 ### Added
 - Script to generate compiler wrappers (`lb-gen-compiler-wrapper`)
 
@@ -47,7 +52,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - CMake support modules (from [Gaudi v30r2][])
 
 
-[Unreleased]: https://gitlab.cern.ch/lhcb-core/LbDevTools/compare/0.1.1...master
+[Unreleased]: https://gitlab.cern.ch/lhcb-core/LbDevTools/compare/0.1.2...master
+[0.1.2]: https://gitlab.cern.ch/lhcb-core/LbDevTools/compare/0.1.1...0.1.2
 [0.1.1]: https://gitlab.cern.ch/lhcb-core/LbDevTools/compare/0.1.0...0.1.1
 
 [Gaudi v30r2]: https://gitlab.cern.ch/gaudi/Gaudi/tags/v30r2

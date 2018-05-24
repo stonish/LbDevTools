@@ -335,4 +335,4 @@ def main():
             logging.warning('Keeping branch %s. It\'s up to you to delete it.',
                             tmp_branch_name)
         else:
-            repo.delete_head(tmp_branch_name)
+            repo.git.branch('-D', tmp_branch_name)

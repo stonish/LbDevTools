@@ -225,8 +225,9 @@ def main():
     commits_to_consider = defaultdict(lambda: defaultdict(set))
     for pkg in pkgs:
         first = True
-        for commit in reversed(
-                repo.iter_commits(pkgs[pkg]['base'] + '..', pkg)):
+        all_commits = list(repo.iter_commits(pkgs[pkg]['base'] + '..', pkg))
+        all_commits.reverse()
+        for commit in all_commits:
             commits_to_consider[commit]['packages'].add(pkg)
             if first:
                 commits_to_consider[commit]['first'].add(pkg)
@@ -334,4 +335,4 @@ def main():
             logging.warning('Keeping branch %s. It\'s up to you to delete it.',
                             tmp_branch_name)
         else:
-            repo.delete_head(tmp_branch_name)
+            repo.git.branch('-D', tmp_branch_name)

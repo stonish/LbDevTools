@@ -103,7 +103,7 @@ setup_clang() {
         fi
 
         _base_platform=${_platform}
-        for _gcc_version in 7 62binutils 62 49 48 46 ; do
+        for _gcc_version in 7 62{binutils,} 49 48 46 ; do
           _platform=${_base_platform}-gcc${_gcc_version}-opt
           set_prefix llvm ${_clang_version}
           if [ -n "${_prefix}" ] ; then
@@ -124,15 +124,18 @@ setup_clang() {
         local _llvm_prefix=${_prefix}
 
         _platform=${_base_platform}
+        local _use_binutils=no-binutils
+        if [[ "${_gcc_version}" = *binutils ]] ; then
+          _use_binutils=
+        fi
         case ${_gcc_version} in
           46) _gcc_version=4.6.3 ;;
           48) _gcc_version=4.8.1 ;;
-          49) _gcc_version=4.9.3 ;;
-          62) _gcc_version=6.2.0 ;;
-          62binutils) _gcc_version=6.2.0binutils ;;
+          49*) _gcc_version=4.9.3 ;;
+          62*) _gcc_version=6.2.0 ;;
           7 ) _gcc_version=7.1.0 ;;
         esac
-        setup_gcc ${_gcc_version} no-binutils
+        setup_gcc ${_gcc_version} ${_use_binutils}
 
 
         _bin="${_llvm_prefix}/bin"
@@ -162,7 +165,9 @@ case ${_self} in
                 setup_clang $_version
                 _self=${_self%-*}
                 _self=${_self#*-}
-                _self="${_self} --gcc-toolchain=${GCC_TOOLCHAIN}"
+                if [ "${_self}" = "clang" -o "${_self}" = "clang++" ] ; then
+                  _self="${_self} --gcc-toolchain=${GCC_TOOLCHAIN}"
+                fi
                 ;;
 
         *)

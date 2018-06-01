@@ -22,7 +22,7 @@ fi
 __git_lb_projects=
 __git_lb_compute_projects ()
 {
-  : ${__git_lb_projects:=$(python -c 'from LbEnv import getProjectNames as ps; print " ".join(p for p in sorted(ps()) if p.upper()!=p)')}
+  : ${__git_lb_projects:=$(python -c 'from LbEnv import getProjectNames as ps; print(" ".join(p for p in sorted(ps()) if p.upper()!=p))')}
 }
 
 _git_lb_use ()

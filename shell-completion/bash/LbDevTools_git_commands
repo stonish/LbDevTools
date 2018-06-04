@@ -1,4 +1,4 @@
-from __future__ import print_function
+# -*- shell-script -*-
 ###############################################################################
 # (c) Copyright 2018 CERN                                                     #
 #                                                                             #
@@ -9,21 +9,17 @@ from __future__ import print_function
 # granted to it by virtue of its status as an Intergovernmental Organization  #
 # or submit itself to any jurisdiction.                                       #
 ###############################################################################
-__author__ = 'Marco Clemencic <marco.clemencic@cern.ch>'
-
-
-CODE = r'''
 if ! declare -F _git >/dev/null ; then
-  if [ -e ] ; then
+  # RedHat style
+  if [ -e /etc/bash_completion.d/git ] ; then
     source /etc/bash_completion.d/git
+  else
+    # Debian/Ubuntu style
+    if [ -e /usr/share/bash-completion/completions/git ] ; then
+      source /usr/share/bash-completion/completions/git
+    fi
   fi
 fi
-
-__git_lb_projects=
-__git_lb_compute_projects ()
-{
-  : ${__git_lb_projects:=$(python -c 'from LbEnv import getProjectNames as ps; print(" ".join(p for p in sorted(ps()) if p.upper()!=p))')}
-}
 
 _git_lb_use ()
 {
@@ -48,7 +44,7 @@ _git_lb_use ()
   *)
     case "$b" in
       0)
-        __git_lb_compute_projects
+        __lb_compute_projects
         __gitcomp "$__git_lb_projects" ;;
       # FIXME: this is not really working
       # 1)
@@ -124,15 +120,3 @@ _git_lb_push ()
     esac
   esac
 }
-'''
-
-
-def main():
-    '''
-    Print a shell script that enables shell completion.
-    '''
-    print(CODE)
-
-
-if __name__ == '__main__':
-    main()

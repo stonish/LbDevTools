@@ -1,0 +1,54 @@
+#compdef git-lb-checkout
+
+###############################################################################
+# (c) Copyright 2018 CERN                                                     #
+#                                                                             #
+# This software is distributed under the terms of the GNU General Public      #
+# Licence version 3 (GPL Version 3), copied verbatim in the file "COPYING".   #
+#                                                                             #
+# In applying this licence, CERN does not waive the privileges and immunities #
+# granted to it by virtue of its status as an Intergovernmental Organization  #
+# or submit itself to any jurisdiction.                                       #
+###############################################################################
+
+# should be
+#    > git lb-checkout Stripping/master                    Phys/StrippingSelections
+#                      <remote>/<branch(or commit or tag)> <directory(or file)>
+#
+# while tempting to build from
+#    > git remote show -n
+#    Stripping
+#    DaVinci
+#
+# afterwards one anyhow needs to figure out remote branch names instead of remotes
+# -> can be looked up in the git-checkout function
+#
+# packagelookup copied from _git-ls-tree
+# projectlookup *not* copied from _git-ls-tree, to get *only* remote tree-ish things
+
+local curcontext=$curcontext state line ret=1
+declare -A opt_args
+_arguments '(-c --commit --no-commit)'{-c,--commit}'[commit immediately after checkout(default)]' \
+           '(-c --commit --no-commit)--no-commit[do not commit after checkout]' \
+           '(-v --verbose -q --quiet -d --debug)'{-d,--debug}'[be very verbose]' \
+           '(-v --verbose -q --quiet -d --debug)'{-v,--verbose}'[be more verbose]' \
+           '(-q --quiet -v --verbose -d --debug)'{-q,--quiet}'[be more quiet]' \
+           '(: -)--version[display version information]' \
+           '(: -)--help[display help message]' \
+           '(-)1:project:->projectlookup' \
+           '(-)2:packages:->packagelookup' \
+           && ret=0
+
+case $state in
+	(packagelookup)
+		if __git_ignore_line __git_tree_files ${PREFIX:-.} $line[1]; then
+			ret=0
+		else
+			__git_ignore_line __git_tree_files ${PREFIX:-.}/ $line[1] && ret=0 || _message "maybe add a trailing slash: /"
+		fi
+		;;
+	(projectlookup)
+		_alternative 'branches::__git_remote_branch_names' 'tags::__git_tags' && ret=0  ;;
+esac
+
+return ret

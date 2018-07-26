@@ -6,7 +6,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased][]
 
-## [0.1.3][] - 2018-05-22
+## [0.1.3][] - 2018-07-26
 ### Added
 - Preliminary support for shell completion (!18)
 

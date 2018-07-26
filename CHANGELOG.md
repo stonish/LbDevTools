@@ -6,6 +6,18 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased][]
 
+## [0.1.3][] - 2018-05-22
+### Added
+- Preliminary support for shell completion (!18)
+
+### Changed
+- Updated `lb-gen-compiler-wrapper` with latest LbScritps (!19, !21)
+
+### Fixed
+- Fixed exclusion of LCG Ninja (!17)
+- Fixed to `git-lb-push` (!15, !16)
+
+
 ## [0.1.2][] - 2018-05-22
 ### Added
 - Provide instructions for local installation of nightly slots (!13, !14)
@@ -52,7 +64,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - CMake support modules (from [Gaudi v30r2][])
 
 
-[Unreleased]: https://gitlab.cern.ch/lhcb-core/LbDevTools/compare/0.1.2...master
+[Unreleased]: https://gitlab.cern.ch/lhcb-core/LbDevTools/compare/0.1.3...master
+[0.1.3]: https://gitlab.cern.ch/lhcb-core/LbDevTools/compare/0.1.2...0.1.3
 [0.1.2]: https://gitlab.cern.ch/lhcb-core/LbDevTools/compare/0.1.1...0.1.2
 [0.1.1]: https://gitlab.cern.ch/lhcb-core/LbDevTools/compare/0.1.0...0.1.1
 

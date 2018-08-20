@@ -178,6 +178,7 @@ setup(
             'lb-project-init=LbDevTools.ProjectInit:main',
             'lb-dev=LbDevTools.ProjectDev:main',
             'lb-devtools-datadir=LbDevTools:_print_data_location',
+            'lb-gen-release-notes=LbDevTools.ReleaseNotes:main',
             'git-lb-use=LbDevTools.GitTools.use:main',
             'git-lb-checkout=LbDevTools.GitTools.checkout:main',
             'git-lb-push=LbDevTools.GitTools.push:main',

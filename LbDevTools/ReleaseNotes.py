@@ -114,7 +114,7 @@ def find_merge_requests_git(project, repo, since, until=''):
     iids = [iid for iid in iids if iid]
     # .list(iids=iids) produces a wrong query, so do it semi-manually:
     # TODO fix this in a future version of python-gitlab
-    return project.mergerequests.list(**{'iids[]': iids})
+    return project.mergerequests.list(**{'iids[]': iids}) if iids else []
 
 
 def find_project_name(repo):
@@ -262,6 +262,8 @@ Example:
     project = server.projects.get(project_fullname)
     git_mrs = find_merge_requests_git(project, args.repo, args.previous)
     gitlab_mrs = find_merge_requests(project, args.target)
+    logging.debug('Found these MRs in git history: {}'.format(git_mrs))
+    logging.debug('Found these MRs in GitLab: {}'.format(gitlab_mrs))
 
     if not gitlab_mrs:
         logging.warning('No merge requests found with {} milestone'

@@ -297,6 +297,18 @@ def main():
                 cml.write('gaudi_subdir({0} {1})\n'.format(
                     local_project + 'Sys', local_version))
 
+    # add a default .clang-format file
+    upstream_style_file = os.path.join(projectDir, os.pardir, os.pardir, 'cmt',
+                                       '.clang-format')
+    dev_style_file = os.path.join(devProjectDir, '.clang-format')
+    if os.path.exists(upstream_style_file):
+        with open(dev_style_file, 'w') as f:
+            f.write('# Copied from {}\n'.format(upstream_style_file))
+            f.writelines(open(upstream_style_file))
+    else:
+        # use default
+        createClangFormat(upstream_style_file)
+
     if opts.git:
         createGitIgnore(
             os.path.join(devProjectDir, '.gitignore'), selfignore=False)

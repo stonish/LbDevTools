@@ -87,6 +87,21 @@ def createGitIgnore(dest, overwrite=False, extra=None, selfignore=True):
     return False
 
 
+def createClangFormat(dest, overwrite=False):
+    '''Add `.clang-format` file.
+    @param dest: destination filename
+    @param overwrite: flag to decide if an already present file has to be kept
+                      or not (default is False)
+    '''
+    import logging
+    if overwrite or not os.path.exists(dest):
+        logging.debug("Creating '%s'", dest)
+        with open(dest, "w") as f:
+            f.writelines(open(os.path.join(DATA_DIR, 'default.clang-format')))
+        return True
+    return False
+
+
 def initProject(path, overwrite=False):
     '''
     Initialize the sources for an LHCb project for building.
@@ -105,6 +120,7 @@ def initProject(path, overwrite=False):
         ('.gitignore',
          lambda dest, overwrite: createGitIgnore(dest, overwrite, extraignore)
          ),
+        ('.clang-format', createClangFormat),
     ]
 
     # handle the possible values of overwrite to always have a set of names

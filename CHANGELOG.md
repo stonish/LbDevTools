@@ -5,6 +5,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased][]
+### Added
+- Create `.clang-format` file in `lb-project-init` and `lb-dev` (!24)
+
 
 ## [0.1.3][] - 2018-07-26
 ### Added

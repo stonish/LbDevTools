@@ -202,17 +202,16 @@ def get_template(template, template_paths):
 
 def main():
     parser = argparse.ArgumentParser(
-        prog='gen_release_notes',
         description='Generate release notes draft.',
         epilog='''
 Example:
   Change directory to a full project clone, checkout the release branch
-  and call gen_release_notes:
+  and call %(prog)s:
 
     $ git clone https://:@gitlab.cern.ch:8443/lhcb/Hlt.git
     $ cd Hlt
     $ git checkout -b v27r0-release master  # assuming release from master
-    $ gen_release_notes v26r6 v27r0
+    $ %(prog)s v26r6 v27r0
 
   The project template `ReleaseNotes/release_notes_template.md` is used
   if it exists and otherwise a default template is taken. The draft

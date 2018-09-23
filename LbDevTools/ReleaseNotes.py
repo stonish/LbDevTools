@@ -28,6 +28,9 @@ from jinja2 import Environment, FileSystemLoader
 
 import subprocess
 
+from LbDevTools import __version__
+
+
 def getOutput(*args, **kwargs):
     '''
     Helper function to get the standard output of a command.
@@ -228,6 +231,8 @@ Example:
   release notes are written under `ReleaseNotes/` by default.
 ''',
         formatter_class=argparse.RawDescriptionHelpFormatter)
+    parser.add_argument('--version', action='version',
+                        version='%(prog)s {}'.format(__version__))
     parser.add_argument('previous', help='Previous (base) release')
     parser.add_argument('target', help='Target release')
     parser.add_argument('-t', '--template',

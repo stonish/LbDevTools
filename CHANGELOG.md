@@ -5,8 +5,17 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased][]
+
+
+## [0.2.0][] - 2018-09-26
 ### Added
+- Port script for generating release notes from LbScripts (!23)
 - Create `.clang-format` file in `lb-project-init` and `lb-dev` (!24)
+
+
+## [0.1.4][] - 2018-09-26
+### Fixed
+- Use `MYSITEROOT` to find binutils in `gen-compiler-wrapper` (!22)
 
 
 ## [0.1.3][] - 2018-07-26
@@ -67,7 +76,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - CMake support modules (from [Gaudi v30r2][])
 
 
-[Unreleased]: https://gitlab.cern.ch/lhcb-core/LbDevTools/compare/0.1.3...master
+[Unreleased]: https://gitlab.cern.ch/lhcb-core/LbDevTools/compare/0.2.0...master
+[0.2.0]: https://gitlab.cern.ch/lhcb-core/LbDevTools/compare/0.1.4...0.2.0
+[0.1.4]: https://gitlab.cern.ch/lhcb-core/LbDevTools/compare/0.1.3...0.1.4
 [0.1.3]: https://gitlab.cern.ch/lhcb-core/LbDevTools/compare/0.1.2...0.1.3
 [0.1.2]: https://gitlab.cern.ch/lhcb-core/LbDevTools/compare/0.1.1...0.1.2
 [0.1.1]: https://gitlab.cern.ch/lhcb-core/LbDevTools/compare/0.1.0...0.1.1

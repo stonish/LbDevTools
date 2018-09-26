@@ -128,7 +128,8 @@ setup(
     #
     # For an analysis of "install_requires" vs pip's requirements files see:
     # https://packaging.python.org/en/latest/requirements.html
-    install_requires=['LbEnv', 'LbPlatformUtils', 'GitPython'],
+    install_requires=['LbEnv', 'LbPlatformUtils', 'GitPython', 'python-gitlab',
+                      'jinja2'],
 
     # List additional groups of dependencies here (e.g. development
     # dependencies). Users will be able to install these using the "extras"
@@ -178,6 +179,7 @@ setup(
             'lb-project-init=LbDevTools.ProjectInit:main',
             'lb-dev=LbDevTools.ProjectDev:main',
             'lb-devtools-datadir=LbDevTools:_print_data_location',
+            'lb-gen-release-notes=LbDevTools.ReleaseNotes:main',
             'git-lb-use=LbDevTools.GitTools.use:main',
             'git-lb-checkout=LbDevTools.GitTools.checkout:main',
             'git-lb-push=LbDevTools.GitTools.push:main',

@@ -90,12 +90,8 @@ def report(filenames, porcelain=False, inverted=False):
              ).format(len(filenames), '' if inverted else 'do not '),
             end='')
         print('\n- '.join(filenames))
-        print('\nadd the following lines as a comment at the top of each of '
-              'them:\n~~~')
-        print(COPYRIGHT_STATEMENT.format(date.today().year).strip())
-        print('~~~\nexcluding the "~~~"')
-        print('Note: you may use the script "ci-utils/add_copyright.py" to do '
-              'it')
+        if not inverted:
+            print('\nyou can fix them with the command lb-add-copyright')
 
 
 def to_comment(text, lang_family='#', width=80):

@@ -21,7 +21,7 @@ from datetime import date
 
 COPYRIGHT_SIGNATURE = re.compile(r'Copyright\s*(\(c\)\s*)?\d+(-\d+)?', re.I)
 CHECKED_FILES = re.compile(
-    r'.*(\.(i?[ch](pp|xx)?|cc|hh|py|C|cmake|[yx]ml|qm[ts]|dtd|bat|[cz]?sh|opts)|'
+    r'.*(\.(i?[ch](pp|xx)?|cc|hh|py|C|cmake|[yx]ml|qm[ts]|dtd|bat|[cz]?sh)|'
     r'CMakeLists.txt)$')
 
 COPYRIGHT_STATEMENT = '''

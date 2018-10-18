@@ -100,6 +100,7 @@ setup(
         'Programming Language :: Python :: 3',
         'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
+        'Programming Language :: Python :: 3.7',
     ],
 
     python_requires='>=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*, <4',
@@ -180,6 +181,8 @@ setup(
             'lb-dev=LbDevTools.ProjectDev:main',
             'lb-devtools-datadir=LbDevTools:_print_data_location',
             'lb-gen-release-notes=LbDevTools.ReleaseNotes:main',
+            'lb-check-copyright=LbDevTools.CopyrightCheck:check_copyright',
+            'lb-add-copyright=LbDevTools.CopyrightCheck:add_copyright',
             'git-lb-use=LbDevTools.GitTools.use:main',
             'git-lb-checkout=LbDevTools.GitTools.checkout:main',
             'git-lb-push=LbDevTools.GitTools.push:main',

@@ -5,6 +5,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased][]
+### Added
+- Scripts to check and add copyright statements in files (!25, [LBCORE-1619][])
+  - `lb-check-copyright`
+  - `lb-add-copyright`
 
 
 ## [0.2.0][] - 2018-09-26
@@ -85,3 +89,4 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 [Gaudi v30r2]: https://gitlab.cern.ch/gaudi/Gaudi/tags/v30r2
 [GitPython]: http://gitpython.readthedocs.io/en/stable/
+[LBCORE-1619]: https://its.cern.ch/jira/browse/LBCORE-1619

@@ -235,7 +235,7 @@ def add_copyright():
         if has_copyright(path):
             print('warning: {} already has a copyright statement'.format(path))
         else:
-            add_copyright(path, args.year)
+            add_copyright_to_file(path, args.year)
 
 
 if __name__ == '__main__':

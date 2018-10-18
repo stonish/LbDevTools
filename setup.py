@@ -180,6 +180,8 @@ setup(
             'lb-dev=LbDevTools.ProjectDev:main',
             'lb-devtools-datadir=LbDevTools:_print_data_location',
             'lb-gen-release-notes=LbDevTools.ReleaseNotes:main',
+            'lb-check-copyright=LbDevTools.CopyrightHandling:check_copyright',
+            'lb-add-copyright=LbDevTools.CopyrightHandling:add_copyright',
             'git-lb-use=LbDevTools.GitTools.use:main',
             'git-lb-checkout=LbDevTools.GitTools.checkout:main',
             'git-lb-push=LbDevTools.GitTools.push:main',

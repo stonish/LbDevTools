@@ -12,7 +12,7 @@ from __future__ import print_function
 
 from os.path import join, dirname
 
-import LbDevTools.CopyrightHandling as C
+import LbDevTools.CopyrightCheck as C
 
 
 DATA_DIR = join(dirname(__file__), 'data')

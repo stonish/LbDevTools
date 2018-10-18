@@ -91,7 +91,7 @@ def report(filenames, porcelain=False, inverted=False):
             end='')
         print('\n- '.join(filenames))
         if not inverted:
-            print('\nyou can fix them with the command lb-add-copyright')
+            print('\nyou can fix them with the command lb-add-copyright\n')
 
 
 def to_comment(text, lang_family='#', width=80):
@@ -236,3 +236,8 @@ def add_copyright():
             print('warning: {} already has a copyright statement'.format(path))
         else:
             add_copyright(path, args.year)
+
+
+if __name__ == '__main__':
+    # when invoked as a script, check for copyright
+    check_copyright()

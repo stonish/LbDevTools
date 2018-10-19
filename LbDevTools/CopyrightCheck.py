@@ -49,7 +49,8 @@ def to_check(path):
     '''
     Check if path is meant to contain a copyright statement.
     '''
-    return bool(CHECKED_FILES.match(path)) or is_script(path)
+    return os.path.isfile(path) and (bool(CHECKED_FILES.match(path))
+                                     or is_script(path))
 
 
 def has_copyright(path):

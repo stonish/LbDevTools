@@ -5,6 +5,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased][]
+
+
+## [0.3.0][] - 2018-10-19
 ### Added
 - Scripts to check and add copyright statements in files (!25, [LBCORE-1619][])
   - `lb-check-copyright`
@@ -84,7 +87,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - CMake support modules (from [Gaudi v30r2][])
 
 
-[Unreleased]: https://gitlab.cern.ch/lhcb-core/LbDevTools/compare/0.2.0...master
+[Unreleased]: https://gitlab.cern.ch/lhcb-core/LbDevTools/compare/0.3.0...master
+[0.2.0]: https://gitlab.cern.ch/lhcb-core/LbDevTools/compare/0.2.0...0.3.0
 [0.2.0]: https://gitlab.cern.ch/lhcb-core/LbDevTools/compare/0.1.4...0.2.0
 [0.1.4]: https://gitlab.cern.ch/lhcb-core/LbDevTools/compare/0.1.3...0.1.4
 [0.1.3]: https://gitlab.cern.ch/lhcb-core/LbDevTools/compare/0.1.2...0.1.3

@@ -309,7 +309,7 @@ def main():
             f.writelines(open(upstream_style_file))
     else:
         # use default
-        createClangFormat(upstream_style_file)
+        createClangFormat(dev_style_file)
 
     if opts.git:
         createGitIgnore(

@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 ###############################################################################
 # (c) Copyright 2018 CERN                                                     #
 #                                                                             #
@@ -239,5 +240,9 @@ def add_copyright():
 
 
 if __name__ == '__main__':
-    # when invoked as a script, check for copyright
-    check_copyright()
+    # when invoked as a script, call the function with the same name
+    # (check_copyright if no match)
+    import sys
+    name = os.path.splitext(os.path.basename(sys.argv[0]))[0]
+    main = globals().get(name, check_copyright)
+    main()

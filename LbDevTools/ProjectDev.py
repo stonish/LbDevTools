@@ -300,7 +300,7 @@ def main():
                     local_project + 'Sys', local_version))
 
     # add a default .clang-format file
-    upstream_style_file = os.path.join(projectDir, os.pardir, os.pardir, 'cmt',
+    upstream_style_file = os.path.join(projectDir, os.pardir, os.pardir,
                                        '.clang-format')
     dev_style_file = os.path.join(devProjectDir, '.clang-format')
     if os.path.exists(upstream_style_file):

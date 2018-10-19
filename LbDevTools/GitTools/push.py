@@ -279,27 +279,21 @@ def main():
                 # checkout the local repo version of the pkg
                 tmprepo.git.checkout('--quiet', commit.hexsha, '--', pkg)
             # for all packages changed (not introduced) in this commit
-            pkgs_to_patch = list(
-                commit_info['packages'] - commit_info['first'])
+            pkgs_to_patch = list(commit_info['packages'] -
+                                 commit_info['first'])
             if pkgs_to_patch:
-                # FIXME: we might use GitPython diffs, but it's not obvious
-                # diffs = commit.iter_parents().next().diff(commit)
-                patch = tmprepo.git.log('--no-color', '-p', '-n', '1',
-                                        commit.hexsha, '--', *pkgs_to_patch)
+                patch = tmprepo.git.format_patch(
+                    '--stdout', '{0}~..{0}'.format(commit.hexsha), '--',
+                    *pkgs_to_patch)
                 if patch:
-                    proc = Popen(
-                        ['git', 'apply', '--index'],
-                        stdin=PIPE,
-                        cwd=tmprepo.working_dir)
+                    proc = Popen(['git', 'am'],
+                                 stdin=PIPE,
+                                 cwd=tmprepo.working_dir)
                     proc.communicate(patch)
                     if proc.returncode:
                         logging.error('failed to apply commit %s',
                                       commit.hexsha)
                         exit(proc.returncode)
-            if tmprepo.head.commit.diff():
-                tmprepo.index.commit(commit.message)
-            else:
-                logging.info('no changes')
         tmprepo.remote('origin').push(tmp_branch_name)
 
     try:

@@ -66,33 +66,31 @@ def get_files(reference=None):
     '''
     from subprocess import check_output
     if reference is None:
-        all = check_output(['git', 'ls-files']).splitlines()
+        all = check_output(['git', 'ls-files',
+                            '-z']).rstrip('\x00').split('\x00')
     else:
         prefix_len = len(
             check_output(['git', 'rev-parse', '--show-prefix']).strip())
         all = (path[prefix_len:] for path in check_output([
-            'git', 'diff', '--name-only', '--no-renames', '--diff-filter',
-            'MA', reference + '...', '.'
-        ]).splitlines())
+            'git', 'diff', '--name-only', '--no-renames', '--diff-filter=MA',
+            '-z', reference + '...', '.'
+        ]).rstrip('\x00').split('\x00'))
     return (path for path in all if to_check(path))
 
 
-def report(filenames, porcelain=False, inverted=False):
+def report(filenames, inverted=False):
     '''
     Print a report with the list of filenames.
 
     If porcelain is True, print only the names without descriptive message.
     '''
-    if porcelain:
-        print('\n'.join(filenames))
-    else:
-        print(
-            ('The following {} files {}contain a copyright statement:\n- '
-             ).format(len(filenames), '' if inverted else 'do not '),
-            end='')
-        print('\n- '.join(filenames))
-        if not inverted:
-            print('\nyou can fix them with the command lb-add-copyright\n')
+    print(
+        ('The following {} files {}contain a copyright statement:\n- ').format(
+            len(filenames), '' if inverted else 'do not '),
+        end='')
+    print('\n- '.join(filenames))
+    if not inverted:
+        print('\nyou can fix them with the command lb-add-copyright\n')
 
 
 def to_comment(text, lang_family='#', width=80):
@@ -205,10 +203,16 @@ def check_copyright():
         action='store_true',
         help='only print the list of files w/o copyright')
     parser.add_argument(
+        '-z',
+        action='store_const',
+        dest='separator',
+        const='\x00',
+        help='when using --porcelain, paths are separated with NUL character')
+    parser.add_argument(
         '--inverted',
         action='store_true',
         help='list files w/ copyright, instead of w/o (Default)')
-    parser.set_defaults(inverted=False)
+    parser.set_defaults(inverted=False, separator='\n')
 
     args = parser.parse_args()
 
@@ -218,7 +222,10 @@ def check_copyright():
     ]
     if missing:
         missing.sort()
-        report(missing, args.porcelain, args.inverted)
+        if not args.porcelain:
+            report(missing, args.inverted)
+        else:
+            print(args.separator.join(missing), end=args.separator)
         exit(1)
 
 

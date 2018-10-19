@@ -20,7 +20,8 @@ from string import Template
 import LbEnv.ProjectEnv
 from LbEnv.ProjectEnv.version import DEFAULT_VERSION, expandVersionAlias
 from LbEnv import fixProjectCase
-from LbDevTools import createGitIgnore, DATA_DIR, __version__
+from LbDevTools import (createGitIgnore, createClangFormat, DATA_DIR,
+                        __version__)
 
 
 def main():
@@ -84,8 +85,9 @@ def main():
         else:
             args.append(DEFAULT_VERSION)
     elif len(args) == 2:
-        logging.warning('deprecated version specification: '
-                        'use "lb-dev ... %s/%s" instead', *args)
+        logging.warning(
+            'deprecated version specification: '
+            'use "lb-dev ... %s/%s" instead', *args)
 
     try:
         project, version = args

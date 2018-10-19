@@ -20,7 +20,8 @@ from string import Template
 import LbEnv.ProjectEnv
 from LbEnv.ProjectEnv.version import DEFAULT_VERSION, expandVersionAlias
 from LbEnv import fixProjectCase
-from LbDevTools import createGitIgnore, DATA_DIR, __version__
+from LbDevTools import (createGitIgnore, createClangFormat, DATA_DIR,
+                        __version__)
 
 
 def main():
@@ -84,8 +85,9 @@ def main():
         else:
             args.append(DEFAULT_VERSION)
     elif len(args) == 2:
-        logging.warning('deprecated version specification: '
-                        'use "lb-dev ... %s/%s" instead', *args)
+        logging.warning(
+            'deprecated version specification: '
+            'use "lb-dev ... %s/%s" instead', *args)
 
     try:
         project, version = args
@@ -298,7 +300,7 @@ def main():
                     local_project + 'Sys', local_version))
 
     # add a default .clang-format file
-    upstream_style_file = os.path.join(projectDir, os.pardir, os.pardir, 'cmt',
+    upstream_style_file = os.path.join(projectDir, os.pardir, os.pardir,
                                        '.clang-format')
     dev_style_file = os.path.join(devProjectDir, '.clang-format')
     if os.path.exists(upstream_style_file):
@@ -307,7 +309,7 @@ def main():
             f.writelines(open(upstream_style_file))
     else:
         # use default
-        createClangFormat(upstream_style_file)
+        createClangFormat(dev_style_file)
 
     if opts.git:
         createGitIgnore(

@@ -10,6 +10,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   - `lb-check-copyright`
   - `lb-add-copyright`
 
+### Fixed
+- Fix generation of .clang-format in lb-dev (!27)
+- Improved handling of diffs in `git lb-push` (!28)
+
 
 ## [0.2.0][] - 2018-09-26
 ### Added

@@ -10,7 +10,7 @@
 ###############################################################################
 from __future__ import print_function
 
-from os.path import join, dirname
+from os.path import join, dirname, splitext
 
 import LbDevTools.CopyrightCheck as C
 
@@ -28,10 +28,11 @@ def test_to_check():
                            (False, 'not_a_script'),
                            (True, 'source.py'),
                            (True, 'source.cpp'),
-                           (True, 'source.xml')):
+                           (True, 'source.xml'),
+                           (False, '.')):
         assert C.to_check(join(DATA_DIR, name)) is to_check
 
 
 def test_has_copyright():
-    assert C.has_copyright(__file__)
+    assert C.has_copyright(splitext(__file__)[0] + '.py')
     assert not C.has_copyright(join(DATA_DIR, 'a_script'))

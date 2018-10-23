@@ -1,10 +1,9 @@
 stages:
   - test
+  - package
   - deploy
 
 centos7:
-  except:
-    - tags
   image: gitlab-registry.cern.ch/lhcb-docker/python-deployment:centos7
   script:
     - python --version
@@ -48,8 +47,6 @@ python2.7:
     expire_in: 1 week
 
 python3.5:
-  except:
-    - tags
   image: gitlab-registry.cern.ch/lhcb-docker/python-deployment:python-3.5
   script:
     - python --version
@@ -76,22 +73,47 @@ python3.6:
     expire_in: 1 week
 
 python3.7:
-  except:
-    - tags
   image: gitlab-registry.cern.ch/lhcb-docker/python-deployment:python-3.7
   script:
     - python --version
     - pip install -e .
     - python setup.py nosetests --cover-package ${CI_PROJECT_NAME}
     - mkdir -p cover_report && mv -f build/lib/cover cover_report/$CI_JOB_NAME
+  artifacts:
+    paths:
+      - cover_report
+    when: always
+    expire_in: 1 week
+
+
+# Packaging step
+pack-py3:
+  stage: package
+  only: [tags]
+  dependencies: []
+  image: gitlab-registry.cern.ch/lhcb-docker/python-deployment:python-3.7
+  script:
     - python setup.py sdist --dist-dir public/${CI_PROJECT_NAME,,}
     - python setup.py bdist_wheel --dist-dir public/${CI_PROJECT_NAME,,}
   artifacts:
     paths:
-      - cover_report
       - public
     when: always
     expire_in: 1 week
+
+pack-py2:
+  stage: package
+  only: [tags]
+  dependencies: []
+  image: gitlab-registry.cern.ch/lhcb-docker/python-deployment:python-2.7
+  script:
+    - python setup.py bdist_wheel --dist-dir public/${CI_PROJECT_NAME,,}
+  artifacts:
+    paths:
+      - public
+    when: always
+    expire_in: 1 week
+
 
 # see https://gitlab.cern.ch/gitlabci-examples/deploy_eos for the details
 # of the configuration
@@ -100,8 +122,8 @@ deploy-packages:
   only:
     - tags
   dependencies:
-    - python3.7
-    - python2.7
+    - pack-py3
+    - pack-py2
   image: gitlab-registry.cern.ch/ci-tools/ci-web-deployer:latest
   script:
     - test -z "$EOS_ACCOUNT_USERNAME" -o -z "$EOS_ACCOUNT_PASSWORD" -o -z "$EOS_PATH" && exit 0 || true

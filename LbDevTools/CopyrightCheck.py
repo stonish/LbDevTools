@@ -194,7 +194,7 @@ def add_copyright_to_file(path, year=None):
     elif data[0].startswith('#!'):
         offset = 1
     elif lang == 'xml':
-        offset = 1
+        offset = 1 if not path.endswith('.ent') else 0
         for l in data:
             if l.strip():
                 # lcgdict selection files are a bit special

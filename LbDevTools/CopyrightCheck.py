@@ -268,5 +268,7 @@ if __name__ == '__main__':
     # (check_copyright if no match)
     import sys
     name = os.path.splitext(os.path.basename(sys.argv[0]))[0]
+    if name == 'lb-add-copyright':  # special case
+        name = 'add_copyright'
     main = globals().get(name, check_copyright)
     main()

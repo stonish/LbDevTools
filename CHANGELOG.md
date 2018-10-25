@@ -5,6 +5,17 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased][]
+### Added
+- Build of compiler wrappers RPM in Gitlab-CI job (!32)
+
+### Changed
+- Improved the report of `lb-check-copyright` to better fit Gitlab-CI failure
+  report (#13)
+
+### Fixed
+- Make sure Python source encoding declaration
+  ([PEP-263](https://www.python.org/dev/peps/pep-0263/)) is preserved by
+  `lb-add-copyright`(#14)
 
 
 ## [0.3.0][] - 2018-10-19

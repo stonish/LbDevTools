@@ -82,7 +82,7 @@ def get_files(reference=None):
     return (path for path in all if to_check(path))
 
 
-def report(filenames, inverted=False):
+def report(filenames, inverted=False, target=None):
     '''
     Print a report with the list of filenames.
 
@@ -94,7 +94,12 @@ def report(filenames, inverted=False):
         end='')
     print('\n- '.join(filenames))
     if not inverted:
-        print('\nyou can fix them with the command lb-add-copyright\n')
+        if target:
+            print('\nYou can fix the {} files without copyright statement '
+                  'with:\n\n  $ lb-check-copyright --porcelain {} '
+                  '| xargs -r lb-add-copyright\n'.format(len(filenames), target))
+        else:
+            print('\nyou can fix them with the command lb-add-copyright\n')
 
 
 def to_comment(text, lang_family='#', width=80):
@@ -240,7 +245,7 @@ def check_copyright():
     if missing:
         missing.sort()
         if not args.porcelain:
-            report(missing, args.inverted)
+            report(missing, args.inverted, args.reference)
         else:
             print(args.separator.join(missing), end=args.separator)
         exit(1)

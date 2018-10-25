@@ -22,7 +22,7 @@ from datetime import date
 
 COPYRIGHT_SIGNATURE = re.compile(r'Copyright\s*(\(c\)\s*)?\d+(-\d+)?', re.I)
 CHECKED_FILES = re.compile(
-    r'.*(\.(i?[ch](pp|xx)?|cc|hh|py|C|cmake|[yx]ml|qm[ts]|dtd|bat|[cz]?sh)|'
+    r'.*(\.(i?[ch](pp|xx)?|cc|hh|py|C|cmake|[yx]ml|qm[ts]|dtd|xsd|ent|bat|[cz]?sh)|'
     r'CMakeLists.txt)$')
 
 COPYRIGHT_STATEMENT = '''
@@ -157,7 +157,7 @@ def lang_family(path):
     '''
     Detect language family of a file.
     '''
-    if re.match(r'.*\.(xml|dtd|html?|qm[ts])$', path):
+    if re.match(r'.*\.(xml|xsd|dtd|html?|qm[ts]|ent)$', path):
         return 'xml'
     elif re.match(r'.*\.(i?[ch](pp|xx)?|cc|hh|C|opts)$', path):
         return 'c'

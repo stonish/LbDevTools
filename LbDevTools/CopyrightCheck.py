@@ -36,6 +36,9 @@ granted to it by virtue of its status as an Intergovernmental Organization
 or submit itself to any jurisdiction.
 '''
 
+# see https://www.python.org/dev/peps/pep-0263 for the regex
+ENCODING_DECLARATION = re.compile(r'^[ \t\f]*#.*?coding[:=][ \t]*([-_.a-zA-Z0-9]+)')
+
 
 def is_script(path):
     '''
@@ -157,6 +160,16 @@ def lang_family(path):
         return '#'
 
 
+def find_encoding_declaration_line(lines, limit=2):
+    '''
+    Look for encoding declaration line (PEP-263) in a file and return the index
+    of the line containing it, or None if not found.
+    '''
+    for i, l in enumerate(islice(lines, limit)):
+        if ENCODING_DECLARATION.match(l):
+            return i
+
+
 def add_copyright_to_file(path, year=None):
     '''
     Add copyright statement to the given file for the specified year (or range
@@ -170,7 +183,10 @@ def add_copyright_to_file(path, year=None):
         data = f.readlines()
 
     offset = 0
-    if data[0].startswith('#!'):
+    encoding_offset = find_encoding_declaration_line(data)
+    if encoding_offset is not None:
+        offset = encoding_offset + 1
+    elif data[0].startswith('#!'):
         offset = 1
     elif lang == 'xml':
         offset = 1

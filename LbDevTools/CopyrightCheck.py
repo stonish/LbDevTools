@@ -20,7 +20,7 @@ import re
 from itertools import islice
 from datetime import date
 
-COPYRIGHT_SIGNATURE = re.compile(r'Copyright\s*(\(c\)\s*)?\d+(-\d+)?', re.I)
+COPYRIGHT_SIGNATURE = re.compile(r'\bcopyright\b', re.I)
 CHECKED_FILES = re.compile(
     r'.*(\.(i?[ch](pp|xx)?|cc|hh|py|C|cmake|[yx]ml|qm[ts]|dtd|xsd|ent|bat|[cz]?sh)|'
     r'CMakeLists.txt)$')

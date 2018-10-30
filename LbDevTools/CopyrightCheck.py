@@ -20,7 +20,7 @@ import re
 from itertools import islice
 from datetime import date
 
-COPYRIGHT_SIGNATURE = re.compile(r'Copyright\s*(\(c\)\s*)?\d+(-\d+)?', re.I)
+COPYRIGHT_SIGNATURE = re.compile(r'\bcopyright\b', re.I)
 CHECKED_FILES = re.compile(
     r'.*(\.(i?[ch](pp|xx)?|cc|hh|py|C|cmake|[yx]ml|qm[ts]|dtd|xsd|ent|bat|[cz]?sh)|'
     r'CMakeLists.txt)$')
@@ -258,11 +258,18 @@ def add_copyright():
     parser.add_argument('files', nargs='+', help='files to modify')
     parser.add_argument(
         '--year', help='copyright year specification (default: current year)')
+    parser.add_argument(
+        '--force',
+        action='store_true',
+        help='add copyright also to non supported file types')
 
     args = parser.parse_args()
 
     for path in args.files:
-        if has_copyright(path):
+        if not args.force and not to_check(path):
+            print('warning: cannot add copyright to {} (file type not '
+                  'supported)'.format(path))
+        elif has_copyright(path):
             print('warning: {} already has a copyright statement'.format(path))
         else:
             add_copyright_to_file(path, args.year)

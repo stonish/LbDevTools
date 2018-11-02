@@ -1,6 +1,6 @@
 Name:       CompilerWrappers
 Version:    1
-Release:    1
+Release:    2
 Vendor:     LHCb
 Summary:    Wrappers for available compiler versions.
 License:    GPLv3

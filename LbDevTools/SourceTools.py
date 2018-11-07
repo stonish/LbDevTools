@@ -10,7 +10,9 @@
 # or submit itself to any jurisdiction.                                       #
 ###############################################################################
 '''
-Backward compatibility copy of SourceTools.
+Helpers to manipulate source files
+Check that each git tracked source file in the current directory contains a
+copyright statement.
 '''
 from __future__ import print_function
 
@@ -18,10 +20,6 @@ import os
 import re
 from itertools import islice
 from datetime import date
-
-import warnings
-warnings.warn('Deprecated module CopyrightCheck, use SourceTools',
-              DeprecationWarning)
 
 COPYRIGHT_SIGNATURE = re.compile(r'\bcopyright\b', re.I)
 CHECKED_FILES = re.compile(

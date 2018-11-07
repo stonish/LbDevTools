@@ -353,7 +353,6 @@ def format():
         args.files = get_files(args.files[0])
 
     for path in args.files:
-        print(path)
         lang = lang_family(path) if to_check(path) else None
         if clang_format_cmd and lang == 'c':
             call([clang_format_cmd, '-i', '--style=file', path])

@@ -20,75 +20,80 @@ from string import Template
 import LbEnv.ProjectEnv
 from LbEnv.ProjectEnv.version import DEFAULT_VERSION, expandVersionAlias
 from LbEnv import fixProjectCase
-from LbDevTools import (createGitIgnore, createClangFormat, DATA_DIR,
-                        __version__)
+from LbDevTools import createGitIgnore, createClangFormat, DATA_DIR
 
 
 def main():
     '''
     Script to generate a local development project.
     '''
-    from optparse import OptionParser
+    from argparse import ArgumentParser, SUPPRESS
     from LbEnv.ProjectEnv.options import (
         addSearchPath, addOutputLevel, addPlatform, addListing, checkPlatform)
     from LbEnv.ProjectEnv.lookup import findProject, MissingProjectError
+    from LbDevTools.GitTools.common import add_version_argument
     from subprocess import call
 
-    parser = OptionParser(
-        usage='%prog [options] Project[/version]',
-        version='%prog {}'.format(__version__))
+    parser = ArgumentParser()
+
+    parser.add_argument('project',
+                        metavar='Project[/version]',
+                        help='Name and optional version of the project to use')
+    parser.add_argument('version',
+                        nargs='?',
+                        help=SUPPRESS)
 
     addSearchPath(parser)
     addOutputLevel(parser)
     addPlatform(parser)
     addListing(parser)
 
-    parser.add_option(
+    parser.add_argument(
         '--name',
-        action='store',
         help='Name of the local project [default: "<proj>Dev_<vers>"].')
 
-    parser.add_option(
+    parser.add_argument(
         '--dest-dir',
-        action='store',
-        help='Where to create the local project [default: %default].')
+        help='Where to create the local project [default: %(default)s].',
+        default=os.curdir)
 
-    parser.add_option(
+    parser.add_argument(
         '--git',
         action='store_true',
         help='Initialize git repository in the generated directory [default, '
         'if git is available].')
 
-    parser.add_option(
+    parser.add_argument(
         '--no-git',
         action='store_false',
         dest='git',
         help='Do not initialize the git local repository.')
 
+    add_version_argument(parser)
+
     from whichcraft import which
-    has_git = bool(which('git'))
+    parser.set_defaults(git=bool(which('git')))
 
-    parser.set_defaults(dest_dir=os.curdir, git=has_git)
+    args = parser.parse_args()
 
-    opts, args = parser.parse_args()
+    logging.basicConfig(level=args.log_level)
 
-    logging.basicConfig(level=opts.log_level)
+    args.platform = checkPlatform(parser, args.platform)
 
-    opts.platform = checkPlatform(parser, opts.platform)
-
-    if len(args) == 1:
-        if '/' in args[0]:
-            args[0:1] = args[0].split('/')
-        else:
-            args.append(DEFAULT_VERSION)
-    elif len(args) == 2:
+    if args.version:
         logging.warning(
             'deprecated version specification: '
-            'use "lb-dev ... %s/%s" instead', *args)
+            'use "lb-dev ... %s/%s" instead', args.project, args.version)
+        args.project = '/'.join((args.project, args.version))
+
+    if '/' in args.project:
+        args.project = tuple(args.project.split('/', 1))
+    else:
+        args.project = (args.project, DEFAULT_VERSION)
 
     try:
-        project, version = args
-        version = expandVersionAlias(project, version, opts.platform)
+        project, version = args.project
+        version = expandVersionAlias(project, version, args.platform)
     except ValueError:
         parser.error('wrong number of arguments')
 
@@ -97,26 +102,26 @@ def main():
     try:
         from LbEnv.ProjectEnv.lookup import InvalidNightlySlotError
         from LbEnv.ProjectEnv.script import localNightlyHelp
-        if isinstance(opts.nightly, InvalidNightlySlotError):
+        if isinstance(args.nightly, InvalidNightlySlotError):
             sys.stderr.write(
                 localNightlyHelp(
-                    parser.prog or os.path.basename(sys.argv[0]), opts.nightly,
-                    project, opts.platform
-                    if opts.platform not in ('best', None) else '$CMTCONFIG',
+                    parser.prog or os.path.basename(sys.argv[0]), args.nightly,
+                    project, args.platform
+                    if args.platform not in ('best', None) else '$CMTCONFIG',
                     sys.argv[1:]))
             sys.exit(64)
-        if opts.help_nightly_local:
-            if not opts.nightly:
+        if args.help_nightly_local:
+            if not args.nightly:
                 parser.error('--help-nightly-local must be specified in '
                              'conjunction with --nightly')
             sys.stdout.write(
                 localNightlyHelp(
                     parser.prog or os.path.basename(sys.argv[0]),
-                    InvalidNightlySlotError(opts.nightly[0], opts.nightly[1],
+                    InvalidNightlySlotError(args.nightly[0], args.nightly[1],
                                             []),
                     project,
-                    opts.platform
-                    if opts.platform not in ('best', None) else '$CMTCONFIG', [
+                    args.platform
+                    if args.platform not in ('best', None) else '$CMTCONFIG', [
                         a for a in sys.argv[1:]
                         if not '--help-nightly-local'.startswith(a)
                     ],
@@ -127,34 +132,34 @@ def main():
         # (before https://gitlab.cern.ch/lhcb-core/LbEnv/merge_requests/19)
         pass
 
-    if opts.user_area and not opts.no_user_area:
+    if args.user_area and not args.no_user_area:
         from LbEnv.ProjectEnv import EnvSearchPathEntry, SearchPathEntry
-        if os.environ['User_release_area'] == opts.user_area:
-            opts.dev_dirs.insert(0, EnvSearchPathEntry('User_release_area'))
+        if os.environ['User_release_area'] == args.user_area:
+            args.dev_dirs.insert(0, EnvSearchPathEntry('User_release_area'))
         else:
-            opts.dev_dirs.insert(0, SearchPathEntry(opts.user_area))
+            args.dev_dirs.insert(0, SearchPathEntry(args.user_area))
 
     # FIXME: we need to handle common options like --list in a single place
-    if opts.list:
+    if args.list:
         from LbEnv.ProjectEnv.lookup import listVersions
-        for entry in listVersions(project, opts.platform):
+        for entry in listVersions(project, args.platform):
             print '%s in %s' % entry
         sys.exit(0)
-    if opts.list_platforms:
+    if args.list_platforms:
         from LbEnv.ProjectEnv.lookup import listPlatforms
         platforms = listPlatforms(project, version)
         if platforms:
             print '\n'.join(platforms)
         sys.exit(0)
 
-    if not opts.name:
-        opts.name = '{project}Dev_{version}'.format(
+    if not args.name:
+        args.name = '{project}Dev_{version}'.format(
             project=project, version=version)
         local_project, local_version = project + 'Dev', version
     else:
-        local_project, local_version = opts.name, 'HEAD'
+        local_project, local_version = args.name, 'HEAD'
 
-    devProjectDir = os.path.join(opts.dest_dir, opts.name)
+    devProjectDir = os.path.join(args.dest_dir, args.name)
 
     if os.path.exists(devProjectDir):
         parser.error('directory "%s" already exist' % devProjectDir)
@@ -162,12 +167,12 @@ def main():
     # ensure that the project we want to use can be found
 
     # prepend dev dirs to the search path
-    if opts.dev_dirs:
-        LbEnv.ProjectEnv.path[:] = opts.dev_dirs + LbEnv.ProjectEnv.path
+    if args.dev_dirs:
+        LbEnv.ProjectEnv.path[:] = args.dev_dirs + LbEnv.ProjectEnv.path
 
     try:
         try:
-            projectDir = findProject(project, version, opts.platform)
+            projectDir = findProject(project, version, args.platform)
             logging.info('using %s %s from %s', project, version, projectDir)
         except MissingProjectError, x:
             parser.error(str(x))
@@ -189,16 +194,16 @@ def main():
                           '(are you using the right CMTCONFIG?)')
             exit(1)
     except SystemExit as err:
-        if opts.nightly:
+        if args.nightly:
             try:
                 from LbEnv.ProjectEnv.lookup import InvalidNightlySlotError
                 from LbEnv.ProjectEnv.script import localNightlyHelp
                 sys.stderr.write(
                     localNightlyHelp(
                         parser.prog or os.path.basename(sys.argv[0]),
-                        InvalidNightlySlotError(opts.nightly[0],
-                                                opts.nightly[1], []), project,
-                        opts.platform if opts.platform not in ('best', None)
+                        InvalidNightlySlotError(args.nightly[0],
+                                                args.nightly[1], []), project,
+                        args.platform if args.platform not in ('best', None)
                         else '$CMTCONFIG', sys.argv[1:]))
             except ImportError:
                 # old version of LbEnv
@@ -207,12 +212,12 @@ def main():
         sys.exit(err.code)
 
     # Create the dev project
-    if not os.path.exists(opts.dest_dir):
-        logging.debug('creating destination directory "%s"', opts.dest_dir)
-        os.makedirs(opts.dest_dir)
+    if not os.path.exists(args.dest_dir):
+        logging.debug('creating destination directory "%s"', args.dest_dir)
+        os.makedirs(args.dest_dir)
 
     logging.debug('creating directory "%s"', devProjectDir)
-    if opts.git:
+    if args.git:
         call(['git', 'init', '--quiet', devProjectDir])
     else:
         os.makedirs(devProjectDir)
@@ -228,7 +233,7 @@ def main():
         PROJECT=project.upper(),
         local_project=local_project,
         local_version=local_version,
-        cmt_project=opts.name,
+        cmt_project=args.name,
         datadir=DATA_DIR)
 
     # FIXME: improve generation of searchPath files, so that they match the command line
@@ -241,8 +246,8 @@ def main():
     # generated files that need exec permissions
     execTemplates = set(['run'])
 
-    if opts.nightly:
-        data['slot'], data['day'], data['base'] = opts.nightly
+    if args.nightly:
+        data['slot'], data['day'], data['base'] = args.nightly
     else:
         data['slot'] = data['day'] = data['base'] = ''
 
@@ -263,21 +268,21 @@ def main():
             os.chmod(dest, mode)
 
     # generate searchPath.cmake
-    if opts.dev_dirs and use_cmake:
+    if args.dev_dirs and use_cmake:
         logging.debug('creating "%s"', 'searchPath.cmake')
         dest = os.path.join(devProjectDir, 'searchPath.cmake')
         with open(dest, 'w') as f:
             f.write('# Search path defined from lb-dev command line\n')
-            f.write(opts.dev_dirs.toCMake())
+            f.write(args.dev_dirs.toCMake())
 
-    if opts.dev_dirs and use_cmt:
+    if args.dev_dirs and use_cmt:
         for shell in ('sh', 'csh'):
             build_env_name = 'build_env.' + shell
             logging.debug('creating "%s"', build_env_name)
             dest = os.path.join(devProjectDir, build_env_name)
             with open(dest, 'w') as f:
                 f.write('# Search path defined from lb-dev command line\n')
-                f.write(opts.dev_dirs.toCMT(shell))
+                f.write(args.dev_dirs.toCMT(shell))
 
     # When the project name is not the same as the local project name, we need a
     # fake *Sys package for SetupProject (CMT only).
@@ -308,7 +313,7 @@ def main():
         # use default
         createClangFormat(dev_style_file)
 
-    if opts.git:
+    if args.git:
         createGitIgnore(
             os.path.join(devProjectDir, '.gitignore'), selfignore=False)
         call(['git', 'add', '.'], cwd=devProjectDir)
@@ -344,4 +349,4 @@ You can customize the configuration by editing the files 'build.conf' and
 'CMakeLists.txt' (see http://cern.ch/gaudi/CMake for details).
 '''
 
-    print msg.format(opts.name, opts.dest_dir, devProjectDir, project)
+    print msg.format(args.name, args.dest_dir, devProjectDir, project)

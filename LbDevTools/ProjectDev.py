@@ -65,11 +65,8 @@ def main():
         dest='git',
         help='Do not initialize the git local repository.')
 
-    try:
-        from LbEnv import which
-        has_git = bool(which('git'))
-    except ImportError:
-        has_git = True
+    from whichcraft import which
+    has_git = bool(which('git'))
 
     parser.set_defaults(dest_dir=os.curdir, git=has_git)
 

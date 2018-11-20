@@ -38,7 +38,7 @@ def paths(project, version):
         yield root
 
 
-def main():
+def search():
     parser = ArgumentParser(
         description='run the glimpse command on the project specified on the '
         'command line and on all the projects it depends on')
@@ -89,4 +89,4 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    search()

@@ -20,11 +20,13 @@ import os
 import logging
 from subprocess import call
 from optparse import OptionParser
-from LbConfiguration.SP2.lookup import walkProjectDeps, PREFERRED_PLATFORM
-from LbConfiguration.SP2.version import expandVersionAlias
+from LbEnv.ProjectEnv.lookup import walkProjectDeps, PREFERRED_PLATFORM
+from LbEnv.ProjectEnv.version import expandVersionAlias
 
-# FIXME: this differs from the original Lbglimpse because it searched depth first
-#        but to fix it it's better to have a proper dep scan in SP2.lookup
+
+# FIXME: this differs from the original Lbglimpse because it searched depth
+#        first but to fix it it's better to have a proper dep scan in
+#        LbEnv.ProjectEnv.lookup
 def paths(project, version):
     processed = set()
     for _, root, deps in walkProjectDeps(project, version):
@@ -32,6 +34,7 @@ def paths(project, version):
         deps.sort()
         processed.update(deps)
         yield root
+
 
 def main():
     parser = OptionParser(usage='%prog [options] pattern [<project>/<version>|<project> <version>]',

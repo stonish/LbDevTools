@@ -17,8 +17,10 @@ its dependencies.
 '''
 
 import os
+import sys
 import logging
 from subprocess import call
+from whichcraft import which
 from argparse import ArgumentParser
 from LbEnv.ProjectEnv.lookup import walkProjectDeps, PREFERRED_PLATFORM
 from LbEnv.ProjectEnv.version import expandVersionAlias
@@ -72,6 +74,9 @@ def main():
         args.project, args.version = args.project.split('/', 1)
     except ValueError:
         parser.error('invalid format for project/version: %r' % args.project)
+
+    if not which('glimpse'):
+        sys.exit('error: glimpse command not available, check the environment')
 
     if PREFERRED_PLATFORM:
         args.version = expandVersionAlias(args.project, args.version,

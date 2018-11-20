@@ -19,7 +19,7 @@ its dependencies.
 import os
 import logging
 from subprocess import call
-from optparse import OptionParser
+from argparse import ArgumentParser
 from LbEnv.ProjectEnv.lookup import walkProjectDeps, PREFERRED_PLATFORM
 from LbEnv.ProjectEnv.version import expandVersionAlias
 
@@ -37,37 +37,50 @@ def paths(project, version):
 
 
 def main():
-    parser = OptionParser(usage='%prog [options] pattern [<project>/<version>|<project> <version>]',
-                          description='run the glimpse command on the project '
-                                      'specified on the command line and on all '
-                                      'the projects it depends on')
+    parser = ArgumentParser(
+        description='run the glimpse command on the project specified on the '
+        'command line and on all the projects it depends on')
 
-    parser.add_option('-v', '--verbose', action='store_const',
-                      dest='log_level', const=logging.INFO,
-                      help='increase verbosity')
-    parser.add_option('-d', '--debug', action='store_const',
-                      dest='log_level', const=logging.DEBUG,
-                      help='print debug messages')
+    parser.add_argument('pattern', help='what to search in the projects')
+    parser.add_argument(
+        'project',
+        metavar='project/version',
+        help='which project/version to start the search from, descending its '
+        'dependencies')
+
+    parser.add_argument(
+        '-v',
+        '--verbose',
+        action='store_const',
+        dest='log_level',
+        const=logging.INFO,
+        help='increase verbosity')
+    parser.add_argument(
+        '-d',
+        '--debug',
+        action='store_const',
+        dest='log_level',
+        const=logging.DEBUG,
+        help='print debug messages')
 
     parser.set_defaults(log_level=logging.WARNING)
 
-    opts, args = parser.parse_args()
-    logging.basicConfig(level=opts.log_level)
+    args = parser.parse_args()
+    logging.basicConfig(level=args.log_level)
 
     try:
-        pattern = args.pop(0)
-        if len(args) == 1:
-            args = args[0].split('/')
-        project, version = args
-    except (IndexError, ValueError):
-        parser.error('wrong number of arguments')
+        args.project, args.version = args.project.split('/', 1)
+    except ValueError:
+        parser.error('invalid format for project/version: %r' % args.project)
 
-    version = expandVersionAlias(project, version, PREFERRED_PLATFORM)
+    if PREFERRED_PLATFORM:
+        args.version = expandVersionAlias(args.project, args.version,
+                                          PREFERRED_PLATFORM)
 
-    for path in paths(project, version):
+    for path in paths(args.project, args.version):
         if os.path.exists(os.path.join(path, '.glimpse_filenames')):
             logging.info('running glimpse in %s', path)
-            call(['glimpse', '-y', '-H', path, pattern])
+            call(['glimpse', '-y', '-H', path, args.pattern])
 
 
 if __name__ == '__main__':

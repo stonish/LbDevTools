@@ -127,7 +127,11 @@ def find_merge_requests_git(project, repo, since, until=''):
     iids = [iid for iid in iids if iid]
     # .list(iids=iids) produces a wrong query, so do it semi-manually:
     # TODO fix this in a future version of python-gitlab
-    return project.mergerequests.list(**{'iids[]': iids}) if iids else []
+    mrs = project.mergerequests.list(all=True, **{'iids[]': iids}) if iids else []
+    if len(mrs) != len(iids):
+        raise RuntimeError("Could not list all {} MRs, got {}"
+                           .format(len(iids), len(mrs)))
+    return mrs
 
 
 def find_project_name(repo):

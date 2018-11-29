@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased][]
 
+## [0.4.2][] - 2018-11-29
+### Added
+- Add `lb-glimpse` command (!41)
+
 
 ## [0.4.1][] - 2018-11-26
 ### Fixed
@@ -115,7 +119,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - CMake support modules (from [Gaudi v30r2][])
 
 
-[Unreleased]: https://gitlab.cern.ch/lhcb-core/LbDevTools/compare/0.4.1...master
+[Unreleased]: https://gitlab.cern.ch/lhcb-core/LbDevTools/compare/0.4.2...master
+[0.4.2]: https://gitlab.cern.ch/lhcb-core/LbDevTools/compare/0.4.1...0.4.2
 [0.4.1]: https://gitlab.cern.ch/lhcb-core/LbDevTools/compare/0.4.0...0.4.1
 [0.4.0]: https://gitlab.cern.ch/lhcb-core/LbDevTools/compare/0.3.1...0.4.0
 [0.3.1]: https://gitlab.cern.ch/lhcb-core/LbDevTools/compare/0.3.0...0.3.1

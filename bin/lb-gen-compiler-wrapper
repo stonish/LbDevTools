@@ -75,9 +75,14 @@ setup_gcc() {
           set_prefix gcc ${_version}
         fi
 
+        if [ -e "$_prefix/version.txt" ] ; then
+            _binutils_version=$(tr '/' '\n' < "$_prefix/version.txt" | grep binutils | cut -d= -f2 | head -1)
+        fi
+        # default (if not set)
+        : ${_binutils_version:=2.28}
         # FIXME: we have to hardcode the path to the latest binutils, just in case
-        new_LIB_PATH=${MYSITEROOT}/lcg/releases/binutils/2.28/${_platform}/lib${new_LIB_PATH:+:${new_LIB_PATH}}
-        new_BIN_PATH=${MYSITEROOT}/lcg/releases/binutils/2.28/${_platform}/bin${new_BIN_PATH:+:${new_BIN_PATH}}
+        new_LIB_PATH=${MYSITEROOT}/lcg/releases/binutils/${_binutils_version}/${_platform}/lib${new_LIB_PATH:+:${new_LIB_PATH}}
+        new_BIN_PATH=${MYSITEROOT}/lcg/releases/binutils/${_binutils_version}/${_platform}/bin${new_BIN_PATH:+:${new_BIN_PATH}}
 
         _bin="${_prefix}/bin"
         _lib="${_prefix}/lib64"
@@ -105,14 +110,16 @@ setup_clang() {
         _base_platform=${_platform}
         for _gcc_version in 7{binutils,} 62{binutils,} 49 48 46 ; do
           _platform=${_base_platform}-gcc${_gcc_version}-opt
-          set_prefix llvm ${_clang_version}
-          if [ -n "${_prefix}" ] ; then
-            break;
-          fi
+          for name in clang llvm ; do
+            set_prefix $name ${_clang_version}
+            if [ -n "${_prefix}" ] ; then
+              break 2
+            fi
+          done
         done
+        _platform=${_base_platform}
 
         if [ -z "${_prefix}" ] ; then
-          _platform=${_base_platform}
           set_prefix llvm ${_clang_version}
           case ${_clang_version} in
             3.2) _gcc_version=46 ;;
@@ -123,19 +130,26 @@ setup_clang() {
 
         local _llvm_prefix=${_prefix}
 
-        _platform=${_base_platform}
-        local _use_binutils=no-binutils
-        if [[ "${_gcc_version}" = *binutils ]] ; then
-          _use_binutils=
+        if [ -e "$_prefix/version.txt" ] ; then
+            _gcc_full_version=$(tr '/' '\n' < "$_prefix/version.txt" | grep ^gcc | cut -d= -f2 | head -1)
         fi
-        case ${_gcc_version} in
-          46) _gcc_version=4.6.3 ;;
-          48) _gcc_version=4.8.1 ;;
-          49*) _gcc_version=4.9.3 ;;
-          62*) _gcc_version=6.2.0 ;;
-          7* ) _gcc_version=7.3.0 ;;
-        esac
-        setup_gcc ${_gcc_version} ${_use_binutils}
+
+        if [ -z "${_gcc_full_version}" ] ; then
+            local _use_binutils=no-binutils
+            if [[ "${_gcc_version}" = *binutils ]] ; then
+            _use_binutils=
+            fi
+            case ${_gcc_version} in
+            46) _gcc_full_version=4.6.3 ;;
+            48) _gcc_full_version=4.8.1 ;;
+            49*) _gcc_full_version=4.9.3 ;;
+            62*) _gcc_full_version=6.2.0 ;;
+            7* ) _gcc_full_version=7.3.0 ;;
+            esac
+        fi
+        if [ -n "${_gcc_full_version}" ] ; then
+            setup_gcc ${_gcc_full_version} ${_use_binutils}
+        fi
 
 
         _bin="${_llvm_prefix}/bin"

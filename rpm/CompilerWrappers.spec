@@ -1,6 +1,7 @@
 Name:       CompilerWrappers
-Version:    1
-Release:    2
+# IMPORTANT: update version and/or release to deploy a new RPM
+Version:    2
+Release:    1
 Vendor:     LHCb
 Summary:    Wrappers for available compiler versions.
 License:    GPLv3
@@ -37,9 +38,9 @@ for host_os in x86_64-slc6 x86_64-centos7 ; do
     done
   done
   for command in clang clang++ \
-            clang-{apply-replacements,check,format,include-fixer,modernize,query,rename,tidy} ; do
+            clang-{apply-replacements,check,format,include-fixer,modernize,query,refactor,rename,tidy} ; do
     for version in 2.{7,8} 3.{0,1,2,3,4,5,6,7} 3.7.{0,1} 3.8 3.8.0 3.9 3.9.0 \
-                   5.0.0 6.0.0 ; do
+                   5.0.0 6.0.0 7.0.0 ; do
       echo generating bin/$host_os/lcg-${command}-${version}
       lb-gen-compiler-wrapper $host_os bin/$host_os/lcg-${command}-${version} || true
     done

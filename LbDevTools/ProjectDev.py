@@ -48,8 +48,18 @@ def main():
     addPlatform(parser)
     addListing(parser)
 
+    def project_name(name):
+        'make sure name is a valid identifier'
+        import re
+        if not re.match(r'^[a-z_][0-9a-z_]*$', name, re.IGNORECASE):
+            raise ValueError('invalid name')
+        return name
+
+    project_name.__name__ = 'project name'  # nicer printout for errors
+
     parser.add_argument(
         '--name',
+        type=project_name,
         help='Name of the local project [default: "<proj>Dev_<vers>"].')
 
     parser.add_argument(

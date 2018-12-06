@@ -24,6 +24,7 @@ from whichcraft import which
 from argparse import ArgumentParser
 from LbEnv.ProjectEnv.lookup import walkProjectDeps, PREFERRED_PLATFORM
 from LbEnv.ProjectEnv.version import expandVersionAlias
+from LbEnv.ProjectEnv.options import addOutputLevel
 
 
 # FIXME: this differs from the original Lbglimpse because it searched depth
@@ -50,22 +51,7 @@ def search():
         help='which project/version to start the search from, descending its '
         'dependencies')
 
-    parser.add_argument(
-        '-v',
-        '--verbose',
-        action='store_const',
-        dest='log_level',
-        const=logging.INFO,
-        help='increase verbosity')
-    parser.add_argument(
-        '-d',
-        '--debug',
-        action='store_const',
-        dest='log_level',
-        const=logging.DEBUG,
-        help='print debug messages')
-
-    parser.set_defaults(log_level=logging.WARNING)
+    addOutputLevel(parser)
 
     args = parser.parse_args()
     logging.basicConfig(level=args.log_level)

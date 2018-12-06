@@ -74,7 +74,8 @@ def createGitIgnore(dest, overwrite=False, extra=None, selfignore=True):
     import logging
     if overwrite or not os.path.exists(dest):
         logging.debug("Creating '%s'", dest)
-        patterns = ['/InstallArea/', '/build.*/', '*.pyc', '*~', '.*.swp']
+        patterns = ['/InstallArea/', '/build.*/', '*.pyc', '*~', '.*.swp',
+                    '/.clang-format']
         if selfignore:
             patterns.insert(0, '/.gitignore')  # I like it as first entry
         if extra:

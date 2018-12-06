@@ -5,6 +5,14 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased][]
+### Changed
+- Replace `optparse` with `argparse` (#9, !6)
+
+### Fixed
+- Sanity check for `lb-dev` project name (!45, [LBCORE-1533](https://its.cern.ch/jira/browse/LBCORE-1533))
+- Use common output level options from `LbEnv` in `lb-glimpse` (#15, !46)
+- Remove stray printout in `lb-format` (!44)
+
 
 ## [0.4.2][] - 2018-11-29
 ### Added

@@ -5,6 +5,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased][]
+
+
+## [0.4.3][] - 2018-12-07
 ### Changed
 - Replace `optparse` with `argparse` (#9, !6)
 
@@ -128,7 +131,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - CMake support modules (from [Gaudi v30r2][])
 
 
-[Unreleased]: https://gitlab.cern.ch/lhcb-core/LbDevTools/compare/0.4.2...master
+[Unreleased]: https://gitlab.cern.ch/lhcb-core/LbDevTools/compare/0.4.3...master
+[0.4.3]: https://gitlab.cern.ch/lhcb-core/LbDevTools/compare/0.4.2...0.4.3
 [0.4.2]: https://gitlab.cern.ch/lhcb-core/LbDevTools/compare/0.4.1...0.4.2
 [0.4.1]: https://gitlab.cern.ch/lhcb-core/LbDevTools/compare/0.4.0...0.4.1
 [0.4.0]: https://gitlab.cern.ch/lhcb-core/LbDevTools/compare/0.3.1...0.4.0

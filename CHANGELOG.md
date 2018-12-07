@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Replace `optparse` with `argparse` (#9, !6)
 
 ### Fixed
+- Add `.clang-format` to generated `.gitignore` (#16, !47)
 - Sanity check for `lb-dev` project name (!45, [LBCORE-1533](https://its.cern.ch/jira/browse/LBCORE-1533))
 - Use common output level options from `LbEnv` in `lb-glimpse` (#15, !46)
 - Remove stray printout in `lb-format` (!44)

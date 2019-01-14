@@ -355,7 +355,10 @@ def format():
     for path in args.files:
         lang = lang_family(path) if to_check(path) else None
         if clang_format_cmd and lang == 'c':
-            call([clang_format_cmd, '-i', '--style=file', path])
+            call([
+                clang_format_cmd, '-i', '-style=file', '-fallback-style=none',
+                path
+            ])
         elif yapf_cmd and lang == 'py':
             call([yapf_cmd, '-i', path])
         else:

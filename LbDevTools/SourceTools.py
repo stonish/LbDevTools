@@ -287,7 +287,10 @@ def format():
     from argparse import ArgumentParser
     import logging
     parser = ArgumentParser(description='Reformat C++ and Python files.')
-    parser.add_argument('files', nargs='+', help='files to modify')
+    parser.add_argument(
+        'files',
+        nargs='*',
+        help='files to modify (empty list means all git tracked files)')
     parser.add_argument(
         '--clang-format-version',
         help='version of clang-format to use '
@@ -306,6 +309,7 @@ def format():
         'in this mode the first file argument is interpreted '
         'as reference branch')
     parser.set_defaults(
+        files=[],
         clang_format_version=CLANG_FORMAT_VERSION,
         yapf_version=YAPF_VERSION,
         log_level=logging.WARNING)
@@ -314,8 +318,8 @@ def format():
     logging.basicConfig(level=args.log_level)
 
     if args.format_patch and len(args.files) != 1:
-        parser.error('wrong number of arguments: only one can be provided '
-                     'when using --format-patch')
+        parser.error('wrong number of arguments: exactly one argument must be '
+                     'provided when using --format-patch')
 
     from logging import debug, warning
     from subprocess import call, check_output, Popen, PIPE
@@ -349,23 +353,32 @@ def format():
                 args.yapf_version)
             yapf_cmd = None
 
+    def can_format(path):
+        if to_check(path):
+            lang = lang_family(path)
+            if ((clang_format_cmd and lang == 'c')
+                    or (yapf_cmd and lang == 'py')):
+                return lang
+        return None
+
     if args.format_patch:
-        args.files = get_files(args.files[0])
+        args.files = filter(can_format, get_files(args.files[0]))
+    elif not args.files:
+        args.files = filter(can_format, get_files())
 
     for path in args.files:
-        lang = lang_family(path) if to_check(path) else None
-        if clang_format_cmd and lang == 'c':
+        lang = can_format(path)
+        if lang == 'c':
             call([
                 clang_format_cmd, '-i', '-style=file', '-fallback-style=none',
                 path
             ])
-        elif yapf_cmd and lang == 'py':
+        elif lang == 'py':
             call([yapf_cmd, '-i', path])
         else:
-            # silently ignore unsupported files in --format-patch mode
-            if not args.format_patch:
-                print('warning: cannot format {} (file type not supported)'.
-                      format(path))
+            print('warning: cannot format {} (file type not supported)'.format(
+                path))
+
     if args.format_patch:
         # check if there are differences
         if Popen(['git', 'diff', '--quiet', '--exit-code']).wait():

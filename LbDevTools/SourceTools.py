@@ -229,6 +229,56 @@ def call_formatter(cmd, input):
     return out
 
 
+def get_git_root(path):
+    from subprocess import Popen, PIPE
+    if not os.path.isdir(path):
+        path = os.path.dirname(path)
+    p = Popen(['git', 'rev-parse', '--show-toplevel'],
+              cwd=path,
+              stdout=PIPE,
+              stderr=PIPE)
+    out, _ = p.communicate()
+    if p.returncode == 0:
+        return out.strip()
+    else:
+        return None
+
+
+def find_clang_format(path):
+    while not os.path.isdir(path):
+        path = os.path.dirname(path)
+    while True:
+        parent = os.path.dirname(path)
+        if os.path.exists(os.path.join(path, '.clang-format')):
+            return path
+        elif parent != path:
+            path = parent
+        else:
+            return None  # root dir reached
+
+
+_found_clang_format_dirs = []
+
+
+def ensure_clang_format_style(path):
+    from logging import debug
+    path = os.path.abspath(path)
+    global _found_clang_format_dirs
+    if not any(
+            os.path.commonprefix([d, path]) for d in _found_clang_format_dirs):
+        base = find_clang_format(path)
+        if base:
+            debug('found .clang-format in %s', base)
+            _found_clang_format_dirs.append(base)
+        else:
+            base = get_git_root(path)
+            debug('found .git top dir in %s', base)
+            if base:
+                from LbDevTools import createClangFormat
+                createClangFormat(os.path.join(base, '.clang-format'))
+                _found_clang_format_dirs.append(base)
+
+
 # --- Scripts
 
 
@@ -295,7 +345,6 @@ def add_copyright():
             print('warning: {} already has a copyright statement'.format(path))
         else:
             add_copyright_to_file(path, args.year)
-
 
 
 def format():
@@ -402,17 +451,25 @@ def format():
 
     if args.pipe:
         import sys
-        cmd = ([clang_format_cmd, '-style=file', '-fallback-style=none']
-               if args.pipe == 'c' else yapf_cmd)
+        if args.pipe == 'c':
+            ensure_clang_format_style(os.getcwd())
+            cmd = [clang_format_cmd, '-style=file', '-fallback-style=none']
+        else:
+            cmd = yapf_cmd
+        debug('cmd %s', cmd)
         print(call_formatter(cmd, sys.stdin.read()), end='')
     patch = []
     for path in args.files:
         lang = can_format(path)
         if lang:
-            cmd = ([
-                clang_format_cmd, '-style=file', '-fallback-style=none',
-                '-assume-filename=' + path
-            ] if lang == 'c' else yapf_cmd)
+            if lang == 'c':
+                ensure_clang_format_style(path)
+                cmd = [
+                    clang_format_cmd, '-style=file', '-fallback-style=none',
+                    '-assume-filename=' + path
+                ]
+            else:
+                cmd = yapf_cmd
             try:
                 with open(path) as f:
                     input = f.read()

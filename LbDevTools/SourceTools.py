@@ -389,18 +389,21 @@ def format():
                 clang_format_cmd, '-style=file', '-fallback-style=none',
                 '-assume-filename=' + path
             ] if lang == 'c' else yapf_cmd)
-            with open(path) as f:
-                input = f.read()
-            output = call_formatter(cmd, input)
-            if args.format_patch:
-                patch.extend(
-                    unified_diff(
-                        input.splitlines(True), output.splitlines(True),
-                        os.path.join('a', path), os.path.join('b', path)))
-            elif output != input:
-                debug('%s changed', path)
-                with open(path, 'w') as f:
-                    f.write(output)
+            try:
+                with open(path) as f:
+                    input = f.read()
+                output = call_formatter(cmd, input)
+                if args.format_patch:
+                    patch.extend(
+                        unified_diff(
+                            input.splitlines(True), output.splitlines(True),
+                            os.path.join('a', path), os.path.join('b', path)))
+                elif output != input:
+                    debug('%s changed', path)
+                    with open(path, 'w') as f:
+                        f.write(output)
+            except CalledProcessError as err:
+                warning('could not format %r: %s', path, err)
         else:
             warning('cannot format %s (file type not supported)', path)
 

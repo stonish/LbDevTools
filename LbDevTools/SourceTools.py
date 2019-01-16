@@ -368,7 +368,7 @@ def format():
                       format(path))
     if args.format_patch:
         # check if there are differences
-        if Popen(['git', 'diff', '--stat', '--exit-code']).wait():
+        if Popen(['git', 'diff', '--quiet', '--exit-code']).wait():
             # git says there are, so we prepare a mail
             from email.message import Message
             from email.utils import formatdate

@@ -167,7 +167,8 @@ def lang_family(path):
         return 'xml'
     elif re.match(r'.*\.(i?[ch](pp|xx|c)?|cc|hh|C|opts)$', path):
         return 'c'
-    elif re.match(r'.*\.py$', path) or 'python' in open(path).readline(120):
+    elif re.match(r'.*\.py$', path) or re.match(r'^#!.*python',
+                                                open(path).readline(120)):
         return 'py'
     else:
         return '#'

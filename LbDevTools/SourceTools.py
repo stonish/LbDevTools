@@ -331,12 +331,12 @@ def format():
     args = parser.parse_args()
     logging.basicConfig(level=args.log_level)
 
-    if args.format_patch and len(args.files) != 1:
-        parser.error('wrong number of arguments: exactly one argument must be '
+    if args.format_patch and len(args.files) > 1:
+        parser.error('wrong number of arguments: at most one argument must be '
                      'provided when using --format-patch')
 
     from logging import debug, warning
-    from subprocess import check_output
+    from subprocess import check_output, CalledProcessError
     from whichcraft import which
     from difflib import unified_diff
 
@@ -376,10 +376,11 @@ def format():
                 return lang
         return None
 
-    if args.format_patch:
-        args.files = filter(can_format, get_files(args.files[0]))
-    elif not args.files:
+    if not args.files:
         args.files = filter(can_format, get_files())
+    elif args.format_patch:
+        # if we have args for --format-patch, it's a reference commit
+        args.files = filter(can_format, get_files(args.files[0]))
 
     patch = []
     for path in args.files:

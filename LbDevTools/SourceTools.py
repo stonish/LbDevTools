@@ -318,6 +318,8 @@ def format():
         dest='log_level',
         help='print debug messages')
     parser.add_argument(
+        '-n', '--dry-run', action='store_true', help='do not modify the files')
+    parser.add_argument(
         '--format-patch',
         help='create a patch file with the changes, '
         'in this mode the first file argument is interpreted '
@@ -400,9 +402,12 @@ def format():
                             input.splitlines(True), output.splitlines(True),
                             os.path.join('a', path), os.path.join('b', path)))
                 elif output != input:
-                    debug('%s changed', path)
-                    with open(path, 'w') as f:
-                        f.write(output)
+                    if args.dry_run:
+                        print(path, 'should be changed')
+                    else:
+                        debug('%s changed', path)
+                        with open(path, 'w') as f:
+                            f.write(output)
             except CalledProcessError as err:
                 warning('could not format %r: %s', path, err)
         else:

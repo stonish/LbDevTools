@@ -422,23 +422,26 @@ def format():
                     **os.environ) if 'CI' in os.environ else 'standalone job'),
             '', '', ''.join(patch)
         ]))
-        if (os.path.dirname(args.format_patch)
-                and not os.path.isdir(os.path.dirname(args.format_patch))):
-            os.makedirs(os.path.dirname(args.format_patch))
-        with open(args.format_patch, 'wb') as patchfile:
-            patchfile.write(msg.as_string())
-        print(
-            '=======================================',
-            ' You can fix formatting with:',
-            '',
-            sep='\n')
-        if 'CI' in os.environ:
-            print('   curl {CI_PROJECT_URL}/-/jobs/{CI_JOB_ID}/'
-                  'artifacts/raw/{0} | '
-                  'git am'.format(args.format_patch, **os.environ))
+        if args.format_patch == '-':
+            print(msg.as_string())
         else:
-            print('   git am {}'.format(args.format_patch))
-        print('', '=======================================', sep='\n')
+            if (os.path.dirname(args.format_patch)
+                    and not os.path.isdir(os.path.dirname(args.format_patch))):
+                os.makedirs(os.path.dirname(args.format_patch))
+            with open(args.format_patch, 'wb') as patchfile:
+                patchfile.write(msg.as_string())
+            print(
+                '=======================================',
+                ' You can fix formatting with:',
+                '',
+                sep='\n')
+            if 'CI' in os.environ:
+                print('   curl {CI_PROJECT_URL}/-/jobs/{CI_JOB_ID}/'
+                      'artifacts/raw/{0} | '
+                      'git am'.format(args.format_patch, **os.environ))
+            else:
+                print('   git am {}'.format(args.format_patch))
+            print('', '=======================================', sep='\n')
         exit(1)
 
 

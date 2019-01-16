@@ -43,6 +43,7 @@ ENCODING_DECLARATION = re.compile(
 
 CLANG_FORMAT_VERSION = '7'
 YAPF_VERSION = '0.24.0'
+FORMATTABLE_LANGUAGES = ['c', 'py']
 
 
 def is_script(path):
@@ -324,6 +325,13 @@ def format():
         help='create a patch file with the changes, '
         'in this mode the first file argument is interpreted '
         'as reference branch')
+    parser.add_argument(
+        '-P',
+        '--pipe',
+        metavar='LANGUAGE',
+        choices=FORMATTABLE_LANGUAGES,
+        help='format from stdin to stdout (allowed values: %s)' %
+        FORMATTABLE_LANGUAGES)
     parser.set_defaults(
         files=[],
         clang_format_version=CLANG_FORMAT_VERSION,
@@ -333,9 +341,15 @@ def format():
     args = parser.parse_args()
     logging.basicConfig(level=args.log_level)
 
+    if args.format_patch and args.pipe:
+        parser.error('incompatible options --format-patch and -P/--pipe')
+
     if args.format_patch and len(args.files) > 1:
         parser.error('wrong number of arguments: at most one argument must be '
                      'provided when using --format-patch')
+
+    if args.pipe and args.files:
+        parser.error('cannot process explicit files in --pipe mode')
 
     from logging import debug, warning
     from subprocess import check_output, CalledProcessError
@@ -353,21 +367,22 @@ def format():
             debug('using clang-format: %s', clang_format_cmd)
             break
     else:
-        warning('clang-format-%s not found: C/C++ formatting not available',
-                args.clang_format_version)
+        (parser.error if args.pipe == 'c' else warning)(
+            'clang-format-%s not found: C/C++ formatting not available' %
+            args.clang_format_version)
 
     yapf_cmd = which('yapf')
+    bad_yapf = (parser.error if args.pipe == 'py' else warning)
     if not yapf_cmd:
-        warning('yapf not found: Python formatting not available')
+        bad_yapf('yapf not found: Python formatting not available')
     else:
         yapf_found_version = check_output([yapf_cmd, '--version']).split()[-1]
         if yapf_found_version == args.yapf_version:
             debug('using yapf: %s', yapf_cmd)
         else:
-            warning(
-                'wrong yapf version %s (%s required): '
-                'Python formatting not available', yapf_found_version,
-                args.yapf_version)
+            bad_yapf('wrong yapf version %s (%s required): '
+                     'Python formatting not available' % (yapf_found_version,
+                                                          args.yapf_version))
             yapf_cmd = None
 
     def can_format(path):
@@ -378,12 +393,18 @@ def format():
                 return lang
         return None
 
-    if not args.files:
-        args.files = filter(can_format, get_files())
-    elif args.format_patch:
-        # if we have args for --format-patch, it's a reference commit
-        args.files = filter(can_format, get_files(args.files[0]))
+    if not args.pipe:
+        if not args.files:
+            args.files = filter(can_format, get_files())
+        elif args.format_patch:
+            # if we have args for --format-patch, it's a reference commit
+            args.files = filter(can_format, get_files(args.files[0]))
 
+    if args.pipe:
+        import sys
+        cmd = ([clang_format_cmd, '-style=file', '-fallback-style=none']
+               if args.pipe == 'c' else yapf_cmd)
+        print(call_formatter(cmd, sys.stdin.read()), end='')
     patch = []
     for path in args.files:
         lang = can_format(path)

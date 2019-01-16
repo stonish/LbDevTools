@@ -377,8 +377,7 @@ def format():
         elif lang == 'py':
             call([yapf_cmd, '-i', path])
         else:
-            print('warning: cannot format {} (file type not supported)'.format(
-                path))
+            warning('cannot format %s (file type not supported)', path)
 
     if args.format_patch:
         # check if there are differences

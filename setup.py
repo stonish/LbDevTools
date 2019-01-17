@@ -184,6 +184,7 @@ setup(
             'lb-check-copyright=LbDevTools.SourceTools:check_copyright',
             'lb-add-copyright=LbDevTools.SourceTools:add_copyright',
             'lb-format=LbDevTools.SourceTools:format',
+            'lb-clang-format=LbDevTools.SourceTools:clang_format',
             'lb-glimpse=LbDevTools.Indexing:search',
             'git-lb-use=LbDevTools.GitTools.use:main',
             'git-lb-checkout=LbDevTools.GitTools.checkout:main',

@@ -552,6 +552,17 @@ def format():
         exit(1)
 
 
+def clang_format():
+    '''
+    Simple wrapper to redirect calls to the required clang-format version.
+    '''
+    import sys
+    try:
+        os.execv(get_clang_format_cmd(), sys.argv)
+    except CommandNotFound as err:
+        exit('%s: internal command %s' % (os.path.basename(sys.argv[0]), err))
+
+
 if __name__ == '__main__':
     # when invoked as a script, call the function with the same name
     # (check_copyright if no match)

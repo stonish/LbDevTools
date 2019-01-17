@@ -279,6 +279,43 @@ def ensure_clang_format_style(path):
                 _found_clang_format_dirs.append(base)
 
 
+def find_command(names):
+    from whichcraft import which
+    from itertools import imap, ifilter
+    try:
+        return next(ifilter(None, imap(which, names)))
+    except StopIteration:
+        return None
+
+
+class CommandNotFound(RuntimeError):
+    def __init__(self, message):
+        super(CommandNotFound, self).__init__(message)
+
+
+def get_clang_format_cmd(version=CLANG_FORMAT_VERSION):
+    cmd = find_command(
+        cmd.format(version) for cmd in [
+            'clang-format-{}', 'lcg-clang-format-{}', 'lcg-clang-format-{}.0',
+            'lcg-clang-format-{}.0.0'
+        ])
+    if not cmd:
+        raise CommandNotFound('clang-format-%s not found' % version)
+    return cmd
+
+
+def get_yapf_format_cmd(version=YAPF_VERSION):
+    from subprocess import check_output
+    cmd = find_command(['yapf'])
+    if not cmd:
+        raise CommandNotFound('yapf not found')
+    found_version = check_output([cmd, '--version']).split()[-1]
+    if found_version != version:
+        raise CommandNotFound(
+            'wrong yapf version %s (%s required)' % (found_version, version))
+    return cmd
+
+
 # --- Scripts
 
 
@@ -401,38 +438,24 @@ def format():
         parser.error('cannot process explicit files in --pipe mode')
 
     from logging import debug, warning
-    from subprocess import check_output, CalledProcessError
-    from whichcraft import which
+    from subprocess import CalledProcessError
     from difflib import unified_diff
 
     # look for the required commands
-    for clang_format_cmd in [
-            'clang-format-{}', 'lcg-clang-format-{}', 'lcg-clang-format-{}.0',
-            'lcg-clang-format-{}.0.0'
-    ]:
-        clang_format_cmd = which(
-            clang_format_cmd.format(args.clang_format_version))
-        if clang_format_cmd:
-            debug('using clang-format: %s', clang_format_cmd)
-            break
-    else:
+    clang_format_cmd = yapf_cmd = None
+    try:
+        clang_format_cmd = get_clang_format_cmd(args.clang_format_version)
+        debug('using clang-format: %s', clang_format_cmd)
+    except CommandNotFound as err:
         (parser.error if args.pipe == 'c' else warning)(
-            'clang-format-%s not found: C/C++ formatting not available' %
-            args.clang_format_version)
+            '%s: C/C++ formatting not available' % err)
 
-    yapf_cmd = which('yapf')
-    bad_yapf = (parser.error if args.pipe == 'py' else warning)
-    if not yapf_cmd:
-        bad_yapf('yapf not found: Python formatting not available')
-    else:
-        yapf_found_version = check_output([yapf_cmd, '--version']).split()[-1]
-        if yapf_found_version == args.yapf_version:
-            debug('using yapf: %s', yapf_cmd)
-        else:
-            bad_yapf('wrong yapf version %s (%s required): '
-                     'Python formatting not available' % (yapf_found_version,
-                                                          args.yapf_version))
-            yapf_cmd = None
+    try:
+        yapf_cmd = get_yapf_format_cmd(args.yapf_version)
+        debug('using yapf: %s', yapf_cmd)
+    except CommandNotFound as err:
+        (parser.error if args.pipe == 'py' else warning)(
+            '%s: Python formatting not available' % err)
 
     def can_format(path):
         if to_check(path):

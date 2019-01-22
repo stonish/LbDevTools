@@ -43,6 +43,7 @@ ENCODING_DECLARATION = re.compile(
 
 CLANG_FORMAT_VERSION = '7'
 YAPF_VERSION = '0.24.0'
+FORMATTABLE_LANGUAGES = ['c', 'py']
 
 
 def is_script(path):
@@ -167,7 +168,8 @@ def lang_family(path):
         return 'xml'
     elif re.match(r'.*\.(i?[ch](pp|xx|c)?|cc|hh|C|opts)$', path):
         return 'c'
-    elif re.match(r'.*\.py$', path) or 'python' in open(path).readline(120):
+    elif re.match(r'.*\.py$', path) or re.match(r'^#!.*python',
+                                                open(path).readline(120)):
         return 'py'
     else:
         return '#'
@@ -213,6 +215,105 @@ def add_copyright_to_file(path, year=None):
     data.insert(offset, text)
     with open(path, 'wb') as f:
         f.writelines(data)
+
+
+def call_formatter(cmd, input):
+    '''
+    Return the formatted version of the given file.
+    '''
+    from subprocess import Popen, PIPE, CalledProcessError
+    p = Popen(cmd, stdout=PIPE, stdin=PIPE)
+    out, _ = p.communicate(input)
+    if p.returncode:
+        raise CalledProcessError(p.returncode, cmd)
+    return out
+
+
+def get_git_root(path):
+    from subprocess import Popen, PIPE
+    if not os.path.isdir(path):
+        path = os.path.dirname(path)
+    p = Popen(['git', 'rev-parse', '--show-toplevel'],
+              cwd=path,
+              stdout=PIPE,
+              stderr=PIPE)
+    out, _ = p.communicate()
+    if p.returncode == 0:
+        return out.strip()
+    else:
+        return None
+
+
+def find_clang_format(path):
+    while not os.path.isdir(path):
+        path = os.path.dirname(path)
+    while True:
+        parent = os.path.dirname(path)
+        if os.path.exists(os.path.join(path, '.clang-format')):
+            return path
+        elif parent != path:
+            path = parent
+        else:
+            return None  # root dir reached
+
+
+_found_clang_format_dirs = []
+
+
+def ensure_clang_format_style(path):
+    from logging import debug
+    path = os.path.abspath(path)
+    global _found_clang_format_dirs
+    if not any(
+            os.path.commonprefix([d, path]) for d in _found_clang_format_dirs):
+        base = find_clang_format(path)
+        if base:
+            debug('found .clang-format in %s', base)
+            _found_clang_format_dirs.append(base)
+        else:
+            base = get_git_root(path)
+            debug('found .git top dir in %s', base)
+            if base:
+                from LbDevTools import createClangFormat
+                createClangFormat(os.path.join(base, '.clang-format'))
+                _found_clang_format_dirs.append(base)
+
+
+def find_command(names):
+    from whichcraft import which
+    from itertools import imap, ifilter
+    try:
+        return next(ifilter(None, imap(which, names)))
+    except StopIteration:
+        return None
+
+
+class CommandNotFound(RuntimeError):
+    def __init__(self, message):
+        super(CommandNotFound, self).__init__(message)
+
+
+def get_clang_format_cmd(version=CLANG_FORMAT_VERSION):
+    cmd = find_command(
+        cmd.format(version) for cmd in [
+            'clang-format-{}', 'lcg-clang-format-{}', 'lcg-clang-format-{}.0',
+            'lcg-clang-format-{}.0.0'
+        ])
+    if not cmd:
+        raise CommandNotFound('clang-format-%s not found' % version)
+    return cmd
+
+
+def get_yapf_format_cmd(version=YAPF_VERSION):
+    from subprocess import check_output
+    cmd = find_command(['yapf'])
+    if not cmd:
+        raise CommandNotFound('yapf not found')
+    found_version = check_output([cmd, '--version']).split()[-1]
+    if found_version != version:
+        raise CommandNotFound(
+            'wrong yapf version %s (%s required)' % (found_version, version))
+    return cmd
 
 
 # --- Scripts
@@ -287,7 +388,10 @@ def format():
     from argparse import ArgumentParser
     import logging
     parser = ArgumentParser(description='Reformat C++ and Python files.')
-    parser.add_argument('files', nargs='+', help='files to modify')
+    parser.add_argument(
+        'files',
+        nargs='*',
+        help='files to modify (empty list means all git tracked files)')
     parser.add_argument(
         '--clang-format-version',
         help='version of clang-format to use '
@@ -301,11 +405,21 @@ def format():
         dest='log_level',
         help='print debug messages')
     parser.add_argument(
+        '-n', '--dry-run', action='store_true', help='do not modify the files')
+    parser.add_argument(
         '--format-patch',
         help='create a patch file with the changes, '
         'in this mode the first file argument is interpreted '
         'as reference branch')
+    parser.add_argument(
+        '-P',
+        '--pipe',
+        metavar='LANGUAGE',
+        choices=FORMATTABLE_LANGUAGES,
+        help='format from stdin to stdout (allowed values: %s)' %
+        FORMATTABLE_LANGUAGES)
     parser.set_defaults(
+        files=[],
         clang_format_version=CLANG_FORMAT_VERSION,
         yapf_version=YAPF_VERSION,
         log_level=logging.WARNING)
@@ -313,78 +427,116 @@ def format():
     args = parser.parse_args()
     logging.basicConfig(level=args.log_level)
 
-    if args.format_patch and len(args.files) != 1:
-        parser.error('wrong number of arguments: only one can be provided '
-                     'when using --format-patch')
+    if args.format_patch and args.pipe:
+        parser.error('incompatible options --format-patch and -P/--pipe')
+
+    if args.format_patch and len(args.files) > 1:
+        parser.error('wrong number of arguments: at most one argument must be '
+                     'provided when using --format-patch')
+
+    if args.pipe and args.files:
+        parser.error('cannot process explicit files in --pipe mode')
 
     from logging import debug, warning
-    from subprocess import call, check_output, Popen, PIPE
-    from whichcraft import which
+    from subprocess import CalledProcessError
+    from difflib import unified_diff
 
     # look for the required commands
-    for clang_format_cmd in [
-            'clang-format-{}', 'lcg-clang-format-{}', 'lcg-clang-format-{}.0',
-            'lcg-clang-format-{}.0.0'
-    ]:
-        clang_format_cmd = which(
-            clang_format_cmd.format(args.clang_format_version))
-        if clang_format_cmd:
-            debug('using clang-format: %s', clang_format_cmd)
-            break
-    else:
-        warning('clang-format-%s not found: C/C++ formatting not available',
-                args.clang_format_version)
+    clang_format_cmd = yapf_cmd = None
+    try:
+        clang_format_cmd = get_clang_format_cmd(args.clang_format_version)
+        debug('using clang-format: %s', clang_format_cmd)
+    except CommandNotFound as err:
+        (parser.error if args.pipe == 'c' else warning)(
+            '%s: C/C++ formatting not available' % err)
 
-    yapf_cmd = which('yapf')
-    if not yapf_cmd:
-        warning('yapf not found: Python formatting not available')
-    else:
-        yapf_found_version = check_output([yapf_cmd, '--version']).split()[-1]
-        if yapf_found_version == args.yapf_version:
-            debug('using yapf: %s', yapf_cmd)
+    try:
+        yapf_cmd = get_yapf_format_cmd(args.yapf_version)
+        debug('using yapf: %s', yapf_cmd)
+    except CommandNotFound as err:
+        (parser.error if args.pipe == 'py' else warning)(
+            '%s: Python formatting not available' % err)
+
+    def can_format(path):
+        if to_check(path):
+            lang = lang_family(path)
+            if ((clang_format_cmd and lang == 'c')
+                    or (yapf_cmd and lang == 'py')):
+                return lang
+        return None
+
+    if not args.pipe:
+        if not args.files:
+            args.files = filter(can_format, get_files())
+        elif args.format_patch:
+            # if we have args for --format-patch, it's a reference commit
+            args.files = filter(can_format, get_files(args.files[0]))
+
+    if args.pipe:
+        import sys
+        if args.pipe == 'c':
+            ensure_clang_format_style(os.getcwd())
+            cmd = [clang_format_cmd, '-style=file', '-fallback-style=none']
         else:
-            warning(
-                'wrong yapf version %s (%s required): '
-                'Python formatting not available', yapf_found_version,
-                args.yapf_version)
-            yapf_cmd = None
-
-    if args.format_patch:
-        args.files = get_files(args.files[0])
-
+            cmd = yapf_cmd
+        debug('cmd %s', cmd)
+        print(call_formatter(cmd, sys.stdin.read()), end='')
+    patch = []
     for path in args.files:
-        lang = lang_family(path) if to_check(path) else None
-        if clang_format_cmd and lang == 'c':
-            call([clang_format_cmd, '-i', '--style=file', path])
-        elif yapf_cmd and lang == 'py':
-            call([yapf_cmd, '-i', path])
+        lang = can_format(path)
+        if lang:
+            if lang == 'c':
+                ensure_clang_format_style(path)
+                cmd = [
+                    clang_format_cmd, '-style=file', '-fallback-style=none',
+                    '-assume-filename=' + path
+                ]
+            else:
+                cmd = yapf_cmd
+            try:
+                with open(path) as f:
+                    input = f.read()
+                output = call_formatter(cmd, input)
+                if args.format_patch:
+                    patch.extend(
+                        unified_diff(
+                            input.splitlines(True), output.splitlines(True),
+                            os.path.join('a', path), os.path.join('b', path)))
+                elif output != input:
+                    if args.dry_run:
+                        print(path, 'should be changed')
+                    else:
+                        debug('%s changed', path)
+                        with open(path, 'w') as f:
+                            f.write(output)
+            except CalledProcessError as err:
+                warning('could not format %r: %s', path, err)
         else:
-            # silently ignore unsupported files in --format-patch mode
-            if not args.format_patch:
-                print('warning: cannot format {} (file type not supported)'.
-                      format(path))
-    if args.format_patch:
-        # check if there are differences
-        if Popen(['git', 'diff', '--stat', '--exit-code']).wait():
-            # git says there are, so we prepare a mail
-            from email.message import Message
-            from email.utils import formatdate
-            msg = Message()
-            msg.add_header('From', 'Gitlab CI <noreply@cern.ch>')
-            msg.add_header('Date', formatdate())
-            msg.add_header('Subject', '[PATCH] Fixed formatting')
-            msg.set_payload('\n'.join([
-                'patch generated by {}'.
-                format('{CI_PROJECT_URL}/-/jobs/{CI_JOB_ID}'.format(
+            warning('cannot format %s (file type not supported)', path)
+
+    # check if we need to create a patch file
+    if patch:
+        # we found some
+        from email.message import Message
+        from email.utils import formatdate
+        msg = Message()
+        msg.add_header('From', 'Gitlab CI <noreply@cern.ch>')
+        msg.add_header('Date', formatdate())
+        msg.add_header('Subject', '[PATCH] Fixed formatting')
+        msg.set_payload('\n'.join([
+            'patch generated by {}'.format(
+                '{CI_PROJECT_URL}/-/jobs/{CI_JOB_ID}'.format(
                     **os.environ) if 'CI' in os.environ else 'standalone job'),
-                '', '',
-                Popen(['git', 'diff'], stdout=PIPE).communicate()[0]
-            ]))
+            '', '', ''.join(patch)
+        ]))
+        if args.format_patch == '-':
+            print(msg.as_string())
+        else:
             if (os.path.dirname(args.format_patch)
                     and not os.path.isdir(os.path.dirname(args.format_patch))):
                 os.makedirs(os.path.dirname(args.format_patch))
-            with open(args.format_patch, 'wb') as patch:
-                patch.write(msg.as_string())
+            with open(args.format_patch, 'wb') as patchfile:
+                patchfile.write(msg.as_string())
             print(
                 '=======================================',
                 ' You can fix formatting with:',
@@ -397,7 +549,18 @@ def format():
             else:
                 print('   git am {}'.format(args.format_patch))
             print('', '=======================================', sep='\n')
-            exit(1)
+        exit(1)
+
+
+def clang_format():
+    '''
+    Simple wrapper to redirect calls to the required clang-format version.
+    '''
+    import sys
+    try:
+        os.execv(get_clang_format_cmd(), sys.argv)
+    except CommandNotFound as err:
+        exit('%s: internal command %s' % (os.path.basename(sys.argv[0]), err))
 
 
 if __name__ == '__main__':

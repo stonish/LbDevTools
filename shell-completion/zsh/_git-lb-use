@@ -13,7 +13,7 @@
 
 __lb_use_projects () {
   local -a projects
-  projects=(${(s: :)"$(lb-completion-helper list_project)"}) 2> /dev/null
+  projects=($(lb-completion-helper list_projects 2> /dev/null))
   if [[ $? -ne 0 ]]; then
     _message "could not determine list of projects, falling back to hard coded list"
     projects=(Gaudi LHCb Lbcom Rec Boole Brunel Gauss Phys Analysis Hlt Alignment Moore Online Euler Geant4 DaVinci Bender Orwell Panoramix LbScripts Dirac LHCbGrid Panoptes Curie Vetra VetraTB Compat VanDerMeer Ganga LHCbDirac Integration Erasmus Feicim Stripping LHCbExternals Urania VMDirac LHCbVMDirac Noether Tesla MooreOnline BeautyDirac Kepler AlignmentOnline Lovell L0MuonTools Calibration)

@@ -1,0 +1,23 @@
+#compdef -value-,NINJAFLAGS,-default-
+
+# Copyright (C) 2019  CERN for the benefit of the LHCb collaboration
+
+# This software is distributed under the terms of the GNU General Public
+# Licence version 3 (GPL Version 3), copied verbatim in the file "LICENSE".
+
+# In applying this licence, CERN does not waive the privileges and immunities
+# granted to it by virtue of its status as an Intergovernmental Organization
+# or submit itself to any jurisdiction.
+
+if [[ "$service" = -value-* ]]; then
+  compset -q
+  words=( ninja "$words[@]" )
+  (( CURRENT++ ))
+fi
+
+_arguments \
+  '-j+[Run N jobs in parallel (default=number of CPUs available)]:number of jobs:' \
+  '-l+[Do not start new jobs if the load average is greater than N]:maximum load:' \
+  '-k+[Keep going until N jobs fail (default=1)]:maximum number of failures:' \
+  '-n[Dry run (do not run commands but act like they succeeded)]' \
+  '-v[Show all command lines while building]'

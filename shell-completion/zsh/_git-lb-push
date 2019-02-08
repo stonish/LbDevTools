@@ -14,6 +14,52 @@
 # should be
 #    > git lb-push <project> <remote branch name>
 
+
+###############################################################################
+# backporting zsh git completion helpers from zsh 5.7 to older zsh versions
+# (defining __git functions only if they aren't defined already)
+
+(( $+functions[__git_describe_branch] )) ||
+__git_describe_branch () {
+  local __commits_in=$1
+  local __tag=$2
+  local __desc=$3
+  shift 3
+
+  integer maxverbose
+  if zstyle -s :completion:$curcontext: max-verbose maxverbose &&
+    (( ${compstate[nmatches]} <= maxverbose )); then
+    local __c
+    local -a __commits
+    for __c in ${(P)__commits_in}; do
+      __commits+=("${__c}:${$(_call_program describe git log -1 --oneline $__c)//:/\\:}")
+    done
+    _describe -t $__tag $__desc __commits "$@"
+  else
+    local expl
+    _wanted $__tag expl $__desc compadd "$@" -a - $__commits_in
+  fi
+}
+
+(( $+functions[__git_describe_commit] )) ||
+__git_describe_commit () {
+  __git_describe_branch $1 $2 $3 -M 'r:|/=* r:|=*' "${(@)argv[4,-1]}"
+}
+
+(( $+functions[__git_remote_branch_names_noprefix] )) ||
+__git_remote_branch_names_noprefix () {
+  declare -a heads
+
+  branch_names=(${${${${(f)"$(_call_program remote-branch-refs-noprefix git for-each-ref --format='"%(refname)"' refs/remotes 2>/dev/null)"}#refs/remotes/}#*/}:#HEAD})
+  __git_command_successful $pipestatus || return 1
+
+  __git_describe_commit branch_names remote-branch-names-noprefix 'remote branch name' "$@"
+}
+
+###############################################################################
+# end of backports, start of actual git-lb-push completion
+
+
 local -a arguments
 arguments=(
     '(-v --verbose -q --quiet -d --debug)'{-d,--debug}'[be very verbose]'

@@ -27,22 +27,7 @@ dest_name=$1
 
 _self=${dest_name##*/}
 
-hostos() {
-    local arch=$(uname -i)
-    local os vers
-    case $(lsb_release -si) in
-        ScientificCERNSLC)
-            os=slc
-            vers=$(lsb_release -sr | cut -d. -f1)
-            ;;
-        *)
-            os=$(lsb_release -si | tr '[:upper:]' '[:lower:]')
-            vers=$(lsb_release -sr)
-    esac
-    echo $arch-$os$vers
-}
-
-_platform=${LCG_hostos:-$(hostos)}
+_platform=${LCG_hostos:-$(host-binary-tag | cut -d- -f1,2)}
 
 set_prefix() {
     local _dirname=$1

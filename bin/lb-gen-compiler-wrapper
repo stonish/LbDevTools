@@ -61,7 +61,7 @@ setup_gcc() {
         fi
 
         if [ -e "$_prefix/version.txt" ] ; then
-            _binutils_version=$(tr '/' '\n' < "$_prefix/version.txt" | grep binutils | cut -d= -f2 | head -1)
+            _binutils_version=$(tr '/' '\n' < "$_prefix/version.txt" | grep binutils | cut -d= -f2 | head -1 | cut -d: -f1)
         fi
         # default (if not set)
         : ${_binutils_version:=2.28}

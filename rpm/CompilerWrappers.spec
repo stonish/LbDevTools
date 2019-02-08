@@ -14,6 +14,7 @@ Prefix: /opt/LHCbSoft
 Provides: /bin/sh
 Provides: /bin/bash
 
+%define _buildshell /bin/bash
 
 %description
 Wrappers for available compiler versions.

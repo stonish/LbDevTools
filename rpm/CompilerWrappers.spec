@@ -1,7 +1,7 @@
 Name:       CompilerWrappers
 # IMPORTANT: update version and/or release to deploy a new RPM
 Version:    2
-Release:    1
+Release:    2
 Vendor:     LHCb
 Summary:    Wrappers for available compiler versions.
 License:    GPLv3
@@ -14,6 +14,7 @@ Prefix: /opt/LHCbSoft
 Provides: /bin/sh
 Provides: /bin/bash
 
+%define _buildshell /bin/bash
 
 %description
 Wrappers for available compiler versions.

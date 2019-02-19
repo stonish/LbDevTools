@@ -155,7 +155,7 @@ ganga-input-sandbox:
 	    fi ; \
 	done
 	echo '#!/bin/sh' > build.$(CMTCONFIG)/ganga/run
-	echo 'exec lb-run --user-area $$(cd $$(dirname $$0) && pwd) $(subst _, ,$(cmt_project)) "$$@"' >> build.$(CMTCONFIG)/ganga/run
+	echo 'exec lb-run --use-sp --user-area $$(cd $$(dirname $$0) && pwd) $(subst _,/,$(cmt_project)) "$$@"' >> build.$(CMTCONFIG)/ganga/run
 	chmod a+x build.$(CMTCONFIG)/ganga/run
 	tar -c -z -f build.$(CMTCONFIG)/ganga/input-sandbox.tgz -C build.$(CMTCONFIG)/ganga \
 	    --exclude .svn --exclude .git --exclude '*.[ao]' --exclude manifest.xml \

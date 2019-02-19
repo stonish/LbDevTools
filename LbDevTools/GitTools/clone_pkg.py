@@ -31,6 +31,12 @@ def get_latest_tag(repo):
         return None
 
 
+XENV_DELEGATION = '''<?xml version="1.0" encoding="UTF-8"?>
+<env:config xmlns:env="EnvSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="EnvSchema EnvSchema.xsd ">
+  <env:include>../{name}</env:include>
+</env:config>'''
+
+
 def main():
     import os
     from os.path import join, exists, basename
@@ -73,13 +79,12 @@ def main():
         repo = git.Repo.clone_from(args.url, args.name, branch=args.branch)
 
         logging.debug('initializing data package')
+        xml_env = args.name.replace('/', '_') + '.xenv'
         old_xml_env = join(args.name,
                            args.name.replace('/', '_') + 'Environment.xml')
         if not exists(old_xml_env):
             logging.debug(' - adding %s', basename(old_xml_env))
-            os.symlink(
-                basename(old_xml_env.replace('Environment.xml', '.xenv')),
-                old_xml_env)
+            os.symlink(xml_env, old_xml_env)
 
         # guess version aliases
         version_aliases = ['v999r999']
@@ -88,16 +93,20 @@ def main():
                 l = l.strip()
                 if l.startswith('version'):
                     version = l.split()[1]
-                    version_aliases.append(
-                        version[:version.rfind('r')] + 'r999')
+                    version_aliases.append(version[:version.rfind('r')] +
+                                           'r999')
                     break
         else:
             version = get_latest_tag(repo)
             if version:
                 version_aliases.append(version[:version.rfind('r')] + 'r999')
-        logging.debug(' - creating links %s in %s', version_aliases, args.name)
+        logging.debug(' - creating fake entries in %s in %s', version_aliases,
+                      args.name)
         for version in version_aliases:
-            os.symlink(os.curdir, join(args.name, version))
+            os.makedirs(join(args.name, version))
+            for name in (xml_env, basename(old_xml_env)):
+                with open(join(args.name, version, name), 'w') as f:
+                    f.write(XENV_DELEGATION.format(name=name))
 
     except CalledProcessError as exc:
         exit(exc.returncode)

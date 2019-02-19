@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## [Unreleased][]
 
 
+## [0.4.4][] - 2019-02-19
+
+### Added
+- Usability tweaks to `lb-format` (!48)
+
+### Fixed
+- Modified git-lb-clone-pkg to avoid recursive symlinks (#18, !54)
+- Minor improvements to Ganga input sandbox generation (!53)
+- Minor improvements/fixes to compiler wrapper generator (!52)
+- Improvements/fixes to `zsh` completion (!50, !49)
+- Fixes to `lb-format` (!48)
+
+
 ## [0.4.3][] - 2018-12-07
 ### Changed
 - Replace `optparse` with `argparse` (#9, !6)
@@ -131,7 +144,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - CMake support modules (from [Gaudi v30r2][])
 
 
-[Unreleased]: https://gitlab.cern.ch/lhcb-core/LbDevTools/compare/0.4.3...master
+[Unreleased]: https://gitlab.cern.ch/lhcb-core/LbDevTools/compare/0.4.4...master
+[0.4.4]: https://gitlab.cern.ch/lhcb-core/LbDevTools/compare/0.4.3...0.4.4
 [0.4.3]: https://gitlab.cern.ch/lhcb-core/LbDevTools/compare/0.4.2...0.4.3
 [0.4.2]: https://gitlab.cern.ch/lhcb-core/LbDevTools/compare/0.4.1...0.4.2
 [0.4.1]: https://gitlab.cern.ch/lhcb-core/LbDevTools/compare/0.4.0...0.4.1

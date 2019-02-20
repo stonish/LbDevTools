@@ -7,8 +7,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## [Unreleased][]
 
 
-## [0.4.4][] - 2019-02-19
+## [0.4.5][] - 2019-02-20
+### Fixed
+- Better handling of (virtually) empty files in SourceTools (!55)
 
+
+## [0.4.4][] - 2019-02-19
 ### Added
 - Usability tweaks to `lb-format` (!48)
 
@@ -144,7 +148,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - CMake support modules (from [Gaudi v30r2][])
 
 
-[Unreleased]: https://gitlab.cern.ch/lhcb-core/LbDevTools/compare/0.4.4...master
+[Unreleased]: https://gitlab.cern.ch/lhcb-core/LbDevTools/compare/0.4.5...master
+[0.4.5]: https://gitlab.cern.ch/lhcb-core/LbDevTools/compare/0.4.4...0.4.5
 [0.4.4]: https://gitlab.cern.ch/lhcb-core/LbDevTools/compare/0.4.3...0.4.4
 [0.4.3]: https://gitlab.cern.ch/lhcb-core/LbDevTools/compare/0.4.2...0.4.3
 [0.4.2]: https://gitlab.cern.ch/lhcb-core/LbDevTools/compare/0.4.1...0.4.2

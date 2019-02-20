@@ -365,6 +365,10 @@ def check_copyright():
 
     missing = [
         path for path in get_files(args.reference)
+        # we only deal with non-empty files and we report as "missing"
+        # those without copyright, unless `args.inverted` is True, in which
+        # case we invert the answer of has_copyright, to report the file _with_
+        # copyright notice
         if not is_empty(path) and not (args.inverted ^ has_copyright(path))
     ]
     if missing:

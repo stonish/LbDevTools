@@ -501,7 +501,11 @@ def format():
     for path in args.files:
         lang = can_format(path)
         if lang:
-            if lang == 'c':
+            if is_empty(path):
+                # make sure virtually empty files are empty
+                with open(path, 'w'):
+                    continue
+            elif lang == 'c':
                 ensure_clang_format_style(path)
                 cmd = [
                     clang_format_cmd, '-style=file', '-fallback-style=none',

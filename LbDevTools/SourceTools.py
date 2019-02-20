@@ -62,6 +62,22 @@ def to_check(path):
                                      or is_script(path))
 
 
+def is_empty(path):
+    '''
+    Check if file is empty or virtually empty (only spaces).
+    '''
+
+    def only_blanks():
+        with open(path) as f:
+            for l in f:
+                if l.strip():
+                    return False
+        return True
+
+    zero_size = os.stat(path).st_size == 0
+    return zero_size or only_blanks()
+
+
 def has_copyright(path):
     '''
     Check if there's a copyright signature in the first 100 lines of a file.
@@ -349,7 +365,11 @@ def check_copyright():
 
     missing = [
         path for path in get_files(args.reference)
-        if os.stat(path).st_size and not (args.inverted ^ has_copyright(path))
+        # we only deal with non-empty files and we report as "missing"
+        # those without copyright, unless `args.inverted` is True, in which
+        # case we invert the answer of has_copyright, to report the file _with_
+        # copyright notice
+        if not is_empty(path) and not (args.inverted ^ has_copyright(path))
     ]
     if missing:
         missing.sort()
@@ -485,7 +505,11 @@ def format():
     for path in args.files:
         lang = can_format(path)
         if lang:
-            if lang == 'c':
+            if is_empty(path):
+                # make sure virtually empty files are empty
+                with open(path, 'w'):
+                    continue
+            elif lang == 'c':
                 ensure_clang_format_style(path)
                 cmd = [
                     clang_format_cmd, '-style=file', '-fallback-style=none',

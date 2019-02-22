@@ -214,19 +214,20 @@ def add_copyright_to_file(path, year=None):
         data = f.readlines()
 
     offset = 0
-    encoding_offset = find_encoding_declaration_line(data)
-    if encoding_offset is not None:
-        offset = encoding_offset + 1
-    elif data[0].startswith('#!'):
-        offset = 1
-    elif lang == 'xml':
-        offset = 1 if not path.endswith('.ent') else 0
-        for l in data:
-            if l.strip():
-                # lcgdict selection files are a bit special
-                if 'lcgdict' in l or '<!--' in l:
-                    offset = 0
-                break
+    if data:  # if the file is empty, the offset is 0
+        encoding_offset = find_encoding_declaration_line(data)
+        if encoding_offset is not None:
+            offset = encoding_offset + 1
+        elif data[0].startswith('#!'):
+            offset = 1
+        elif lang == 'xml':
+            offset = 1 if not path.endswith('.ent') else 0
+            for l in data:
+                if l.strip():
+                    # lcgdict selection files are a bit special
+                    if 'lcgdict' in l or '<!--' in l:
+                        offset = 0
+                    break
 
     data.insert(offset, text)
     with open(path, 'wb') as f:

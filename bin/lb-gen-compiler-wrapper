@@ -93,11 +93,10 @@ setup_clang() {
         fi
 
         _base_platform=${_platform}
-        for _gcc_version in 7{binutils,} 62{binutils,} 49 48 46 ; do
-          _platform=${_base_platform}-gcc${_gcc_version}-opt
+        for _platform in ${_base_platform} ${_base_platform}-{8,7{binutils,},62{binutils,},49,48,46}-opt ; do
           for name in clang llvm ; do
             set_prefix $name ${_clang_version}
-            if [ -n "${_prefix}" ] ; then
+            if [ -n "${_prefix}" -a -e "${_prefix}/version.txt" ] ; then
               break 2
             fi
           done
@@ -184,7 +183,7 @@ fi
 cat > ${dest_name} <<EOF
 #!/bin/sh
 export PATH=${new_BIN_PATH}\${PATH:+:\$PATH}
-LD_LIBRARY_PATH=\$(printenv LD_LIBRARY_PATH | sed 's-[^:]*/\(gcc\|llvm\)/[^:]*:\?--g')
+LD_LIBRARY_PATH=\$(printenv LD_LIBRARY_PATH | sed 's-[^:]*/\(gcc\|llvm\|clang\)/[^:]*:\?--g')
 export LD_LIBRARY_PATH=${new_LIB_PATH}\${LD_LIBRARY_PATH:+:\${LD_LIBRARY_PATH}}
 exec ${_bin}/${_self} "\$@"
 EOF

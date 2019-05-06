@@ -14,7 +14,7 @@ endif()
 #    gaudi_project(this_project this_version
 #                  USE dep_project_1 version_1 [project_2 version_2 ...]
 #                  [DATA pkg1 [VERSION vers1] [pkg2 ...])
-gaudi_project(${local_project} ${local_version}
+gaudi_project(${local_project} ${local_version}${with_fortran}
               USE ${project} ${version})
 
 # Enable Ganga integration

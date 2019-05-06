@@ -79,10 +79,22 @@ def main():
         dest='git',
         help='Do not initialize the git local repository.')
 
+    parser.add_argument(
+        '--with-fortran',
+        action='store_true',
+        help='enable FORTRAN support for the generated project')
+
+    parser.add_argument(
+        '--without-fortran',
+        action='store_false',
+        dest='with_fortran',
+        help='do not enable FORTRAN support for the generated project (default)'
+    )
+
     add_version_argument(parser)
 
     from whichcraft import which
-    parser.set_defaults(git=bool(which('git')))
+    parser.set_defaults(git=bool(which('git')), with_fortran=False)
 
     args = parser.parse_args()
 
@@ -243,6 +255,7 @@ def main():
         PROJECT=project.upper(),
         local_project=local_project,
         local_version=local_version,
+        with_fortran=' FORTRAN' if args.with_fortran else '',
         cmt_project=args.name,
         datadir=DATA_DIR)
 

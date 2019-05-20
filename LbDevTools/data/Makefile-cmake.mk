@@ -80,7 +80,7 @@ endif
 
 ifneq ($(NINJA),)
   ifeq ($(USE_MAKE),)
-    ifeq ($(shell grep "FORTRAN\|NO_NINJA" CMakeLists.txt),)
+    ifeq ($(shell grep "NO_NINJA" CMakeLists.txt),)
       USE_NINJA := 1
     endif
   endif

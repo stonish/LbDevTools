@@ -41,7 +41,7 @@ or submit itself to any jurisdiction.
 ENCODING_DECLARATION = re.compile(
     r'^[ \t\f]*#.*?coding[:=][ \t]*([-_.a-zA-Z0-9]+)')
 
-CLANG_FORMAT_VERSION = '7'
+CLANG_FORMAT_VERSION = '8'
 YAPF_VERSION = '0.24.0'
 FORMATTABLE_LANGUAGES = ['c', 'py']
 

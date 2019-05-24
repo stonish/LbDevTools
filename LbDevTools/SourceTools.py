@@ -238,10 +238,10 @@ def call_formatter(cmd, input):
     Return the formatted version of the given file.
     '''
     from subprocess import Popen, PIPE, CalledProcessError
-    p = Popen(cmd, stdout=PIPE, stdin=PIPE)
-    out, _ = p.communicate(input)
+    p = Popen(cmd, stdout=PIPE, stdin=PIPE, stderr=PIPE)
+    out, err = p.communicate(input)
     if p.returncode:
-        raise CalledProcessError(p.returncode, cmd)
+        raise CalledProcessError(p.returncode, cmd, err)
     return out
 
 
@@ -330,6 +330,63 @@ def get_yapf_format_cmd(version=YAPF_VERSION):
         raise CommandNotFound(
             'wrong yapf version %s (%s required)' % (found_version, version))
     return cmd
+
+
+class Formatter:
+    def __init__(self, clang_format_cmd, yapf_cmd):
+        self.clang_format_cmd = clang_format_cmd
+        self.yapf_cmd = yapf_cmd
+
+    def cmd(self, path, lang):
+        '''
+        Return the command to run to format the file 'path' for language
+        'lang'.
+        '''
+        if lang == 'c':
+            assert self.clang_format_cmd, ('tried to format C/C++ file but '
+                                           'clang-format is not available')
+            ensure_clang_format_style(path)
+            return [
+                self.clang_format_cmd, '-style=file', '-fallback-style=none',
+                '-assume-filename=' + path
+            ]
+        elif lang == 'py':
+            assert self.clang_format_cmd, ('tried to format Python file but '
+                                           'yapf is not available')
+            return self.yapf_cmd
+        else:
+            assert False, 'invalid language %r' % lang
+
+    def __call__(self, input, path, lang, retry=True):
+        '''
+        Apply formatting rules to a file.
+
+        :param input: content of the file to format
+        :param path: name of the file
+        :param lang: language ('c' or 'py')
+        :param retry: boolean flag to tell if we have to retry the formatting
+                      with a slightly modified name (see
+                      https://gitlab.cern.ch/lhcb-core/LbDevTools/issues/20)
+
+        :return: modified file, exception in case of problems
+        '''
+        import logging
+        from subprocess import CalledProcessError
+        try:
+            return call_formatter(self.cmd(path, lang), input)
+
+        except CalledProcessError:
+            if lang == 'c' and path.endswith('.h') and retry:
+                # this is a workaround for cases where clang-format does
+                # not correctly detect the language
+                try:
+                    alias = path + 'h'
+                    logging.debug('retry formatting of %s as %s', path, alias)
+                    return self(input, alias, lang, False)
+                except CalledProcessError:
+                    # ignore failures in the retry
+                    pass
+            raise  # raise original exception
 
 
 # --- Scripts
@@ -502,6 +559,7 @@ def format():
         debug('cmd %s', cmd)
         print(call_formatter(cmd, sys.stdin.read()), end='')
     patch = []
+    formatter = Formatter(clang_format_cmd, yapf_cmd)
     for path in args.files:
         lang = can_format(path)
         if lang:
@@ -509,18 +567,11 @@ def format():
                 # make sure virtually empty files are empty
                 with open(path, 'w'):
                     continue
-            elif lang == 'c':
-                ensure_clang_format_style(path)
-                cmd = [
-                    clang_format_cmd, '-style=file', '-fallback-style=none',
-                    '-assume-filename=' + path
-                ]
-            else:
-                cmd = yapf_cmd
+
             try:
                 with open(path) as f:
                     input = f.read()
-                output = call_formatter(cmd, input)
+                output = formatter(input, path, lang)
                 if args.format_patch:
                     patch.extend(
                         unified_diff(
@@ -534,7 +585,8 @@ def format():
                         with open(path, 'w') as f:
                             f.write(output)
             except CalledProcessError as err:
-                warning('could not format %r: %s', path, err)
+                warning('could not format %r: %s\n%s', path, err,
+                        err.output.rstrip())
         else:
             warning('cannot format %s (file type not supported)', path)
 

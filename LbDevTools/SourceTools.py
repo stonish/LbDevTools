@@ -353,9 +353,9 @@ class Formatter:
                 '-assume-filename=' + path
             ]
         elif lang == 'py':
-            assert self.clang_format_cmd, ('tried to format Python file but '
-                                           'yapf is not available')
-            return self.yapf_cmd
+            assert self.yapf_cmd, ('tried to format Python file but '
+                                   'yapf is not available')
+            return [self.yapf_cmd]
         else:
             assert False, 'invalid language %r' % lang
 
@@ -563,7 +563,7 @@ def format():
             ensure_clang_format_style(os.getcwd())
             cmd = [clang_format_cmd, '-style=file', '-fallback-style=none']
         else:
-            cmd = yapf_cmd
+            cmd = [yapf_cmd]
         debug('cmd %s', cmd)
         print(call_formatter(cmd, sys.stdin.read()), end='')
     patch = []

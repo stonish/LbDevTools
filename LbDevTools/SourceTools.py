@@ -238,6 +238,8 @@ def call_formatter(cmd, input):
     Return the formatted version of the given file.
     '''
     from subprocess import Popen, PIPE, CalledProcessError
+    import logging
+    logging.debug('calling %r', cmd)
     p = Popen(cmd, stdout=PIPE, stdin=PIPE, stderr=PIPE)
     out, err = p.communicate(input)
     if p.returncode:
@@ -381,7 +383,7 @@ class Formatter:
                 # not correctly detect the language
                 try:
                     alias = path + 'h'
-                    logging.debug('retry formatting of %s as %s', path, alias)
+                    logging.info('retry formatting of %s as %s', path, alias)
                     return self(input, alias, lang, False)
                 except CalledProcessError:
                     # ignore failures in the retry
@@ -476,6 +478,12 @@ def format():
     parser.add_argument(
         '--yapf-version', help='version of yapf to use (default: %(default)s)')
     parser.add_argument(
+        '--verbose',
+        action='store_const',
+        const=logging.INFO,
+        dest='log_level',
+        help='print info messages')
+    parser.add_argument(
         '--debug',
         action='store_const',
         const=logging.DEBUG,
@@ -514,7 +522,7 @@ def format():
     if args.pipe and args.files:
         parser.error('cannot process explicit files in --pipe mode')
 
-    from logging import debug, warning
+    from logging import debug, warning, info
     from subprocess import CalledProcessError
     from difflib import unified_diff
 
@@ -522,14 +530,14 @@ def format():
     clang_format_cmd = yapf_cmd = None
     try:
         clang_format_cmd = get_clang_format_cmd(args.clang_format_version)
-        debug('using clang-format: %s', clang_format_cmd)
+        info('using clang-format: %s', clang_format_cmd)
     except CommandNotFound as err:
         (parser.error if args.pipe == 'c' else warning)(
             '%s: C/C++ formatting not available' % err)
 
     try:
         yapf_cmd = get_yapf_format_cmd(args.yapf_version)
-        debug('using yapf: %s', yapf_cmd)
+        info('using yapf: %s', yapf_cmd)
     except CommandNotFound as err:
         (parser.error if args.pipe == 'py' else warning)(
             '%s: Python formatting not available' % err)
@@ -581,7 +589,7 @@ def format():
                     if args.dry_run:
                         print(path, 'should be changed')
                     else:
-                        debug('%s changed', path)
+                        info('%s changed', path)
                         with open(path, 'w') as f:
                             f.write(output)
             except CalledProcessError as err:

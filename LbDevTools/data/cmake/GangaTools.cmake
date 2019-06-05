@@ -44,9 +44,14 @@ function(ganga_create_job_runner)
     endif()
   endif()
 
+  if(ENV{MYSITEROOT} STREQUAL "")
+    set(default_siteroot /cvmfs/lhcb.cern.ch/lib)
+  else()
+    set(default_siteroot $ENV{MYSITEROOT})
+  endif()
   file(WRITE ${GANGA_BINARY_DIR}/run
        "#!/bin/sh
-exec lb-run ${nightly_base_opt} ${nightly_slot_opt} -c ${BINARY_TAG} --user-area \$(cd \$(dirname \$0) && pwd) ${CMAKE_PROJECT_NAME}/${CMAKE_PROJECT_VERSION} \"$@\"
+exec lb-run ${nightly_base_opt} ${nightly_slot_opt} --siteroot=\${MYSITEROOT:-${default_siteroot}} -c ${BINARY_TAG} --user-area \$(cd \$(dirname \$0) && pwd) ${CMAKE_PROJECT_NAME}/${CMAKE_PROJECT_VERSION} \"$@\"
 ")
   if(UNIX)
     execute_process(COMMAND chmod 755 ${GANGA_BINARY_DIR}/run)

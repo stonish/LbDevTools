@@ -30,7 +30,7 @@ COPYRIGHT_STATEMENT = '''
 (c) Copyright {} CERN for the benefit of the LHCb Collaboration
 
 This software is distributed under the terms of the GNU General Public
-Licence version 3 (GPL Version 3), copied verbatim in the file "COPYING".
+Licence version 3 (GPL Version 3), copied verbatim in the file "{}".
 
 In applying this licence, CERN does not waive the privileges and immunities
 granted to it by virtue of its status as an Intergovernmental Organization
@@ -201,15 +201,17 @@ def find_encoding_declaration_line(lines, limit=2):
             return i
 
 
-def add_copyright_to_file(path, year=None):
+def add_copyright_to_file(path, year=None, license_fn=None):
     '''
     Add copyright statement to the given file for the specified year (or range
     of years).  If the year argument is not specified, the current year is
     used.
     '''
     lang = lang_family(path)
-    text = to_comment(
-        COPYRIGHT_STATEMENT.format(year or date.today().year).strip(), lang)
+    text = to_comment(COPYRIGHT_STATEMENT.format(
+        year or date.today().year,
+        license_fn or 'COPYING'
+    ).strip(), lang)
     with open(path, 'rb') as f:
         data = f.readlines()
 
@@ -447,6 +449,8 @@ def add_copyright():
     parser.add_argument(
         '--year', help='copyright year specification (default: current year)')
     parser.add_argument(
+        '--license-fn', help='Name of the license file (default: COPYING)')
+    parser.add_argument(
         '--force',
         action='store_true',
         help='add copyright also to non supported file types')
@@ -460,7 +464,7 @@ def add_copyright():
         elif has_copyright(path):
             print('warning: {} already has a copyright statement'.format(path))
         else:
-            add_copyright_to_file(path, args.year)
+            add_copyright_to_file(path, args.year, args.license_fn)
 
 
 def format():

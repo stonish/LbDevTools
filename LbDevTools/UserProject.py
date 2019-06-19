@@ -22,7 +22,6 @@ from subprocess import call
 import LbEnv.ProjectEnv
 from LbEnv.ProjectEnv.version import DEFAULT_VERSION, expandVersionAlias
 from LbEnv.ProjectEnv.lookup import findProject
-from LbEnv.ProjectEnv import EnvSearchPathEntry
 from LbEnv import fixProjectCase
 from LbDevTools import createGitIgnore, createClangFormat, DATA_DIR
 
@@ -199,10 +198,25 @@ class UserProject:
                 ],
                 cwd=devProjectDir)
 
-        with open(os.path.join(devProjectDir, 'configuration.json'), 'w') as f:
-            json.dump(f, data)
+        with open(os.path.join(devProjectDir, 'configuration.json'), 'wt') as f:
+            json.dump(data, f)
+
+        # Now create the object itself
+        return UserProject(devProjectDir)
 
     def __init__(self, project_path):
         """ Constructor for the user project instance, loading data from disk """
-        None
+        self.project_path = project_path
 
+        # Loading the config file already created
+        conf_file = os.path.join(project_path,  'configuration.json')
+        with open(conf_file, "rt") as f:
+            data = json.load(f)
+
+        # Setting the dict directly in the class
+        for k, v in data.items():
+            setattr(self, k, v)
+
+    def build(self):
+        env=os.environ
+        call(['make'], cwd=self.project_path, env=env)

@@ -19,4 +19,8 @@ def test_creation():
     os.environ["CMAKE_PREFIX_PATH"] = "/cvmfs/lhcb.cern.ch/lib/lhcb:/cvmfs/lhcb.cern.ch/lib/lcg/releases:/cvmfs/lhcb.cern.ch/lib/lcg/app/releases:/cvmfs/lhcb.cern.ch/lib/lcg/external:/cvmfs/lhcb.cern.ch/lib/contrib:/cvmfs/lhcb.cern.ch/lib/var/lib/LbEnv/417/stable/x86_64-centos7/lib/python2.7/site-packages/LbDevTools/data/cmake"
     logging.getLogger().setLevel(logging.DEBUG)
     p = UserProject.create("DaVinci", "v50r4", "x86_64-centos7-gcc8-opt", path="/tmp")
-    assert True
+    assert os.path.exists(os.path.join("/tmp", "DaVinciDev_v50r4", "configuration.json"))
+
+    p2 = UserProject("/tmp/DaVinciDev_v50r4")
+
+    p.build()

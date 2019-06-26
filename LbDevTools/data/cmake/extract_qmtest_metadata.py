@@ -6,11 +6,16 @@ properties.
 '''
 __author__ = 'Marco Clemencic <marco.clemencic@cern.ch>'
 
-import os
-import platform
-import xml.etree.ElementTree as ET
-import collections
-import re
+try:
+    import os
+    import platform
+    import xml.etree.ElementTree as ET
+    import collections
+    import re
+    import six
+except ImportError:
+    import sys
+    sys.exit(1)
 
 
 def qmt_filename_to_name(path):
@@ -23,8 +28,8 @@ def qmt_filename_to_name(path):
     >>> qmt_filename_to_name('some_suite.qms/sub.qms/mytest.qmt')
     'some_suite.sub.mytest'
     '''
-    return '.'.join(re.sub(r'\.qm[st]$', '', p)
-                    for p in path.split(os.path.sep))
+    return '.'.join(
+        re.sub(r'\.qm[st]$', '', p) for p in path.split(os.path.sep))
 
 
 def fix_test_name(name, pkg):
@@ -50,6 +55,18 @@ def find_files(rootdir, ext):
                 yield os.path.join(dirpath, filename)
 
 
+def parse_xml(path):
+    '''
+    Return the parsed tree, handling exceptions if needed.
+    '''
+    try:
+        return ET.parse(path)
+    except ET.ParseError as e:
+        sys.stderr.write('ERROR: could not parse {}\n{}\n'.format(path, e))
+        sys.stderr.flush()
+        exit(1)
+
+
 def analyze_deps(pkg, rootdir):
     '''
     Collect dependencies from the QMTest tests in a directory and report them
@@ -64,12 +81,14 @@ def analyze_deps(pkg, rootdir):
         name = qmt_filename_to_name(os.path.relpath(path, rootdir))
         name = fix_test_name(name, pkg)
 
-        tree = ET.parse(path)
-        prereqs = [fix_test_name(el.text, pkg)
-                   for el in tree.findall(prereq_xpath)]
+        tree = parse_xml(path)
+
+        prereqs = [
+            fix_test_name(el.text, pkg) for el in tree.findall(prereq_xpath)
+        ]
         if prereqs:
-            print ('set_property(TEST {0} APPEND PROPERTY DEPENDS {1})'
-                   .format(name, ' '.join(prereqs)))
+            print('set_property(TEST {0} APPEND PROPERTY DEPENDS {1})'.format(
+                name, ' '.join(prereqs)))
 
 
 def analyze_suites(pkg, rootdir):
@@ -85,10 +104,10 @@ def analyze_suites(pkg, rootdir):
         name = qmt_filename_to_name(os.path.relpath(path, rootdir))
         name = fix_test_name(name, pkg)
 
-        tree = ET.parse(path)
+        tree = parse_xml(path)
 
-        labels[name].extend(fix_test_name(el.text, pkg)
-                            for el in tree.findall(tests_xpath))
+        labels[name].extend(
+            fix_test_name(el.text, pkg) for el in tree.findall(tests_xpath))
 
         if tree.findall(suites_xpath):
             sys.stderr.write(('WARNING: %s: suites of suites are '
@@ -97,36 +116,36 @@ def analyze_suites(pkg, rootdir):
 
     # transpose the dictionary of lists
     test_labels = collections.defaultdict(set)
-    for label, tests in labels.iteritems():
+    for label, tests in six.iteritems(labels):
         for test in tests:
             test_labels[test].add(label)
 
-    for test, labels in test_labels.iteritems():
-        print ('set_property(TEST {0} APPEND PROPERTY LABELS {1})'
-               .format(test, ' '.join(labels)))
+    for test, labels in six.iteritems(test_labels):
+        print('set_property(TEST {0} APPEND PROPERTY LABELS {1})'.format(
+            test, ' '.join(labels)))
 
 
 def analyze_disabling(pkg, rootdir):
     '''
     Set the label 'disabled' for tests that are not supported on a platform.
     '''
-    platform_id = (os.environ.get('BINARY_TAG') or
-                   os.environ.get('CMTCONFIG') or
-                   platform.platform())
+    platform_id = (os.environ.get('BINARY_TAG') or os.environ.get('CMTCONFIG')
+                   or platform.platform())
 
     unsupp_xpath = 'argument[@name="unsupported_platforms"]/set/text'
     for path in find_files(rootdir, '.qmt'):
         name = qmt_filename_to_name(os.path.relpath(path, rootdir))
         name = fix_test_name(name, pkg)
 
-        tree = ET.parse(path)
+        tree = parse_xml(path)
         # If at least one regex matches the test is disabled.
-        skip_test = [None
-                     for el in tree.findall(unsupp_xpath)
-                     if re.search(el.text, platform_id)]
+        skip_test = [
+            None for el in tree.findall(unsupp_xpath)
+            if re.search(el.text, platform_id)
+        ]
         if skip_test:
-            print ('set_property(TEST {0} APPEND PROPERTY LABELS disabled)'
-                   .format(name))
+            print('set_property(TEST {0} APPEND PROPERTY LABELS disabled)'.
+                  format(name))
 
 
 if __name__ == '__main__':

@@ -132,6 +132,22 @@ set(_opt_ext_DEBUG "-g")
 set(_opt_level_RELWITHDEBINFO "${_opt_level_RELEASE}")
 set(_opt_ext_RELWITHDEBINFO "${_opt_ext_RELEASE} -g")
 
+# Sanitizer options
+# http://clang.llvm.org/docs/AddressSanitizer.html
+# http://clang.llvm.org/docs/LeakSanitizer.html
+# http://clang.llvm.org/docs/ThreadSanitizer.html
+# http://clang.llvm.org/docs/UndefinedBehaviorSanitizer.html
+# https://gcc.gnu.org/onlinedocs/gcc/Instrumentation-Options.html
+set(GAUDI_asan_FLAGS "-fsanitize=address -fsanitize-recover=all -fno-omit-frame-pointer -lasan"
+    CACHE STRING "Build options for AddressSanitizer")
+set(GAUDI_lsan_FLAGS "-fsanitize=leak -fsanitize-recover=all -fno-omit-frame-pointer -llsan"
+    CACHE STRING "Build options for LeakSanitizer")
+set(GAUDI_tsan_FLAGS "-fsanitize=thread -fsanitize-recover=all -fno-omit-frame-pointer -ltsan"
+    CACHE STRING "Build options for ThreadSanitizer")
+set(GAUDI_ubsan_FLAGS "-fsanitize=undefined -fsanitize-recover=all -fno-omit-frame-pointer -lubsan"
+    CACHE STRING "Build options for UndefinedSanitizer")
+set(GAUDI_DEFAULT_SANITIZER)
+
 # - parse subtype flags
 string(TOUPPER "${CMAKE_BUILD_TYPE}" _up_bt)
 foreach(_subtype ${BINARY_TAG_SUBTYPE})
@@ -142,27 +158,40 @@ foreach(_subtype ${BINARY_TAG_SUBTYPE})
     set(_opt_ext_${_up_bt} "${_opt_ext_${_up_bt}} -g")
   elseif(_subtype STREQUAL "cov")
     set(_opt_ext_${_up_bt} "${_opt_ext_${_up_bt}} --coverage")
+  elseif(_subtype MATCHES "^(a|l|t|ub)san$")
+    set(GAUDI_DEFAULT_SANITIZER ${_subtype})
   endif()
 endforeach()
+
+set(GAUDI_USE_SANITIZER ${GAUDI_DEFAULT_SANITIZER} CACHE STRING "Enabled given sanitizer")
+if (GAUDI_USE_SANITIZER)
+  if(NOT GAUDI_USE_SANITIZER MATCHES "^(a|l|t|ub)san$")
+    message(FATAL_ERROR "Invalid sanitizer name: ${GAUDI_USE_SANITIZER}")
+  else()
+    set(SANITIZER_ENABLED "lib${GAUDI_USE_SANITIZER}.so")
+    set(_opt_ext_${_up_bt} "${_opt_ext_${_up_bt}} ${GAUDI_${GAUDI_USE_SANITIZER}_FLAGS}")
+  endif()
+endif()
 
 if(_opt_level_${_up_bt})
   message(STATUS "Optimization:     ${_opt_level_${_up_bt}} ${_opt_ext_${_up_bt}}")
 endif()
 
-# special architecture flags
+# extra flags to enable/disable specific instruction sets
 set(GAUDI_ARCH_DEFAULT)
 if(BINARY_TAG_MICROARCH)
   set(GAUDI_ARCH_DEFAULT ${BINARY_TAG_MICROARCH})
 elseif(BINARY_TAG_COMP_NAME STREQUAL "gcc" AND BINARY_TAG_COMP_VERSION VERSION_GREATER "5.0" AND
    BINARY_TAG_ARCH STREQUAL "x86_64")
+  # Special case: x86_64-*-gcc6 or higher is equivalent to x86_64+sse4.2-*
   set(GAUDI_ARCH_DEFAULT "sse4.2")
 else()
-  if (NOT HOST_BINARY_TAG_ARCH STREQUAL BINARY_TAG_ARCH)
-    if (HOST_BINARY_TAG_ARCH STREQUAL "x86_64" AND BINARY_TAG_ARCH STREQUAL "i686")
-      set(GAUDI_ARCH_DEFAULT "32")
-    else()
-      message(FATAL_ERROR "Cannot build for ${BINARY_TAG_ARCH} on ${HOST_BINARY_TAG_ARCH}.")
-    endif()
+  # if no extra flags and not special case, compare host and target architecture
+  # (BTU_KNOWN_x86_ARCHS is list ordered such that later entries can build earliler entries)
+  list(FIND BTU_KNOWN_x86_ARCHS ${BINARY_TAG_ARCH} _target_idx)
+  list(FIND BTU_KNOWN_x86_ARCHS ${HOST_BINARY_TAG_ARCH} _host_idx)
+  if (_host_idx LESS _target_idx)
+    message(FATAL_ERROR "Cannot build for '${BINARY_TAG_ARCH}' on '${HOST_BINARY_TAG_ARCH}'.")
   endif()
 endif()
 set(GAUDI_ARCH "${GAUDI_ARCH_DEFAULT}"
@@ -202,20 +231,21 @@ if(NOT GAUDI_FLAGS_SET EQUAL GAUDI_FLAGS_OPTIONS)
 
   else()
     # special architecture flags
-    set(arch_opts)
+    string(REPLACE "_" "-" _gcc_arch_name ${BINARY_TAG_ARCH})
+    set(arch_opts "-march=${_gcc_arch_name}")
     foreach(_arch_opt ${GAUDI_ARCH})
       if(_arch_opt STREQUAL "native")
-        set(_arch_opt "arch=native")
+        message(FATAL_ERROR "you must use 'native-${BINARY_TAG_OS}-${BINARY_TAG_COMP}-${BINARY_TAG_TYPE}'' instead of '${BINARY_TAG_ARCH}+native-${BINARY_TAG_OS}-${BINARY_TAG_COMP}-${BINARY_TAG_TYPE}'")
       endif()
       set(arch_opts "${arch_opts} -m${_arch_opt}")
     endforeach()
     # Common compilation flags
     set(CMAKE_CXX_FLAGS
-        "${arch_opts} -fmessage-length=0 -pipe -Wall -Wextra -Werror=return-type -pthread -pedantic -Wwrite-strings -Wpointer-arith -Woverloaded-virtual -Wno-long-long"
+        "${arch_opts} -fmessage-length=0 -pipe -Wall -Wextra -Werror=return-type -pthread -pedantic -Wwrite-strings -Wpointer-arith -Woverloaded-virtual -Wnon-virtual-dtor"
         CACHE STRING "Flags used by the compiler during all build types."
         FORCE)
     set(CMAKE_C_FLAGS
-        "${arch_opts} -fmessage-length=0 -pipe -Wall -Wextra -Werror=return-type -pthread -pedantic -Wwrite-strings -Wpointer-arith -Wno-long-long"
+        "${arch_opts} -fmessage-length=0 -pipe -Wall -Wextra -Werror=return-type -pthread -pedantic -Wwrite-strings -Wpointer-arith"
         CACHE STRING "Flags used by the compiler during all build types."
         FORCE)
     set(CMAKE_Fortran_FLAGS
@@ -392,10 +422,6 @@ if(GAUDI_HIDE_WARNINGS)
     if(BINARY_TAG_COMP_VERSION VERSION_GREATER "4.7")
       set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-unused-local-typedefs")
     endif()
-  endif()
-else()
-  if(BINARY_TAG_COMP_NAME STREQUAL "gcc" AND NOT BINARY_TAG_COMP_VERSION VERSION_LESS "5.0")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wsuggest-override")
   endif()
 endif()
 

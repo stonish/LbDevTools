@@ -8,7 +8,7 @@
 # granted to it by virtue of its status as an Intergovernmental Organization  #
 # or submit itself to any jurisdiction.                                       #
 ###############################################################################
-cmake_minimum_required(VERSION 3.0.2)
+cmake_minimum_required(VERSION 3.6)
 
 # this check is needed because the toolchain is called when checking the
 # compiler (without the proper cache)
@@ -23,8 +23,10 @@ if(NOT CMAKE_SOURCE_DIR MATCHES "CMakeTmp")
     message(FATAL_ERROR "Cannot find GaudiDefaultToolchain.cmake")
   endif()
 
-  # FIXME: make sure we do not pick up ninja from LCG (it requires LD_LIBRARY_PATH set)
-  if(CMAKE_PREFIX_PATH AND CMAKE_VERSION VERSION_GREATER "3.6.0")
-    list(FILTER CMAKE_PREFIX_PATH EXCLUDE REGEX "(LCG_|lcg/nightlies).*ninja")
+  # FIXME: make sure we do not pick up unwanted/problematic projects from LCG
+  if(CMAKE_PREFIX_PATH)
+    # - ninja (it requires LD_LIBRARY_PATH set to run)
+    # - Gaudi (we do not want to use it from LCG)
+    list(FILTER CMAKE_PREFIX_PATH EXCLUDE REGEX "(LCG_|lcg/nightlies).*(ninja|Gaudi)")
   endif()
 endif()

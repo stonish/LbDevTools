@@ -3,12 +3,11 @@
 #
 # Authors: Pere Mato, Marco Clemencic
 #
-# Commit Id: 9eca68f7ba7017c1b29919a4ce4e19e4ae5c3072
+# Commit Id: fda18ef342353f5e26df2a4996c96dda0414d1f9
 
-cmake_minimum_required(VERSION 2.8.12)
-
-if(NOT CMAKE_VERSION VERSION_LESS 3.0) # i.e CMAKE_VERSION >= 3.0
-  cmake_policy(SET CMP0026 NEW)
+cmake_minimum_required(VERSION 3.6)
+if(POLICY CMP0077)
+  cmake_policy(SET CMP0077 NEW)
 endif()
 
 # Preset the CMAKE_MODULE_PATH from the environment, if not already defined.
@@ -55,12 +54,42 @@ endif()
 find_program(ccache_cmd NAMES ccache ccache-swig)
 find_program(distcc_cmd distcc)
 find_program(icecc_cmd icecc)
-set(_clang_format_names)
-foreach(_clang_version 5.0 4.0 3.9 3.8 3.7)
-  list(APPEND _clang_format_names lcg-clang-format-${_clang_version} clang-format-${_clang_version})
-endforeach()
-list(APPEND _clang_format_names clang-format)
-find_program(clang_format_cmd NAMES ${_clang_format_names})
+
+set(CLANG_FORMAT_VERSION "8" CACHE STRING "Version of clang-format to use")
+find_program(clang_format_cmd
+  NAMES lcg-clang-format-${CLANG_FORMAT_VERSION}
+        lcg-clang-format-${CLANG_FORMAT_VERSION}.0
+        lcg-clang-format-${CLANG_FORMAT_VERSION}.0.0
+        clang-format-${CLANG_FORMAT_VERSION}
+        gaudi-clang-format-${CLANG_FORMAT_VERSION})
+if(clang_format_cmd)
+  message(STATUS "found clang-format ${CLANG_FORMAT_VERSION}: ${clang_format_cmd}")
+else()
+  message(WARNING "could not find clang-format ${CLANG_FORMAT_VERSION}:
+  automatic formatting of C++ files will not be possible")
+endif()
+
+set(YAPF_VERSION "0.24.0" CACHE STRING "Version of yapf to use")
+if(NOT yapf_cmd)
+  find_program(yapf_cmd NAMES yapf)
+  if(yapf_cmd)
+    execute_process(COMMAND "${yapf_cmd}" --version
+        OUTPUT_VARIABLE yapf_detected_version
+        OUTPUT_STRIP_TRAILING_WHITESPACE)
+    string(REGEX REPLACE "yapf *" "" yapf_detected_version "${yapf_detected_version}")
+    if(NOT yapf_detected_version STREQUAL YAPF_VERSION)
+      message(STATUS "ignoring yapf: found yapf ${yapf_detected_version}, but ${YAPF_VERSION} required")
+      set(yapf_cmd "yapf-NOTFOUND" CACHE FILEPATH "yapf command" FORCE)
+    endif()
+  endif()
+endif()
+if(yapf_cmd)
+  message(STATUS "found yapf ${YAPF_VERSION}: ${yapf_cmd}")
+else()
+  message(WARNING "could not find yapf ${YAPF_VERSION}:
+  automatic formatting of Python files will not be possible")
+endif()
+
 mark_as_advanced(ccache_cmd distcc_cmd icecc_cmd clang_format_cmd)
 
 if(ccache_cmd)
@@ -75,7 +104,7 @@ set(_distributed_compiler)
 if(distcc_cmd)
   option(CMAKE_USE_DISTCC "Use distcc to speed up compilation." OFF)
   if(CMAKE_USE_DISTCC)
-    set(_distributed_compiler distcc)
+    set(_distributed_compiler ${distcc_cmd})
   endif()
 endif()
 if(icecc_cmd)
@@ -84,7 +113,7 @@ if(icecc_cmd)
     if(_distributed_compiler)
         message(FATAL_ERROR "Cannot use multiple distributed compilers at the same time")
     endif()
-    set(_distributed_compiler icecc)
+    set(_distributed_compiler ${icecc_cmd})
   endif()
 endif()
 if(_distributed_compiler)
@@ -122,7 +151,7 @@ if(GAUDI_USE_CTEST_LAUNCHERS)
   set(__launch_custom_options
     "${__launch_common_options} --output <OUTPUT>")
 
-  if("${CMAKE_GENERATOR}" MATCHES "Ninja" AND NOT CMAKE_VERSION VERSION_LESS 3.0)
+  if("${CMAKE_GENERATOR}" MATCHES "Ninja")
     # this make sense only with CMamke >= 3.0
     set(__launch_compile_options "${__launch_compile_options} --filter-prefix <CMAKE_CL_SHOWINCLUDES_PREFIX>")
   endif()
@@ -202,8 +231,6 @@ include(CMakeParseArguments)
 include(CMakeFunctionalUtils)
 include(BinaryTagUtils)
 
-find_package(PythonInterp 2.7)
-
 #-------------------------------------------------------------------------------
 # gaudi_project(project version
 #               [USE proj1 vers1 [proj2 vers2 ...]]
@@ -244,7 +271,7 @@ macro(gaudi_project project version)
   set(CMAKE_PROJECT_NAME ${project})
 
   #--- Define the version of the project - can be used to generate sources,
-  set(CMAKE_PROJECT_VERSION ${version} CACHE STRING "Version of the project")
+  set(CMAKE_PROJECT_VERSION ${version})
 
   if(CMAKE_PROJECT_VERSION MATCHES "${GAUDI_VERSION_REGEX}")
     set(CMAKE_PROJECT_VERSION_MAJOR ${CMAKE_MATCH_1} CACHE INTERNAL "Major version of project")
@@ -262,7 +289,7 @@ macro(gaudi_project project version)
   #--- Project Options and Global settings----------------------------------------------------------
   option(BUILD_SHARED_LIBS "Set to OFF to build static libraries." ON)
   option(GAUDI_BUILD_TESTS "Set to OFF to disable the build of the tests (libraries and executables)." ON)
-  option(GAUDI_HIDE_WARNINGS "Turn on or off options that are used to hide warning messages." ON)
+  option(GAUDI_HIDE_WARNINGS "Turn on or off options that are used to hide warning messages." OFF)
   option(GAUDI_USE_EXE_SUFFIX "Add the .exe suffix to executables on Unix systems (like CMT does)." ON)
   #-------------------------------------------------------------------------------------------------
   set(GAUDI_DATA_SUFFIXES DBASE;PARAM;EXTRAPACKAGES CACHE STRING
@@ -274,12 +301,16 @@ macro(gaudi_project project version)
   endif()
 
   if(NOT CMAKE_RUNTIME_OUTPUT_DIRECTORY)
-    set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin CACHE STRING
-        "Single build output directory for all executables" FORCE)
+    foreach( _config "" "_DEBUG" "_RELEASE" "_MINSIZEREL" "_RELWITHDEBINFO" )
+      set(CMAKE_RUNTIME_OUTPUT_DIRECTORY${_config} ${CMAKE_BINARY_DIR}/bin CACHE STRING
+          "Single build output directory for all executables" FORCE)
+    endforeach()
   endif()
   if(NOT CMAKE_LIBRARY_OUTPUT_DIRECTORY)
-    set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib CACHE STRING
-        "Single build output directory for all libraries" FORCE)
+    foreach( _config "" "_DEBUG" "_RELEASE" "_MINSIZEREL" "_RELWITHDEBINFO" )
+      set(CMAKE_LIBRARY_OUTPUT_DIRECTORY${_config} ${CMAKE_BINARY_DIR}/lib CACHE STRING
+          "Single build output directory for all libraries" FORCE)
+    endforeach()
   endif()
 
   if(NOT CMAKE_CONFIG_OUTPUT_DIRECTORY)
@@ -300,6 +331,15 @@ macro(gaudi_project project version)
 
   if(GAUDI_BUILD_TESTS)
     enable_testing()
+  endif()
+
+  #-- Set up the boost_python_version variable for the project
+  find_package(PythonInterp 2.7)
+  find_package(Boost)
+  if((Boost_VERSION GREATER 106700) OR (Boost_VERSION EQUAL 106700))
+     set(boost_python_version "${PYTHON_VERSION_MAJOR}${PYTHON_VERSION_MINOR}")
+  else()
+     set(boost_python_version "")
   endif()
 
   #--- Allow installation on failed builds
@@ -404,7 +444,10 @@ macro(gaudi_project project version)
   find_program(env_cmd NAMES xenv)
   if(NOT env_cmd)
     if(NOT EXISTS ${CMAKE_BINARY_DIR}/contrib/xenv)
-      execute_process(COMMAND git clone https://gitlab.cern.ch/gaudi/xenv.git ${CMAKE_BINARY_DIR}/contrib/xenv)
+      # Avoid interference from user environment
+      unset(ENV{GIT_DIR})
+      unset(ENV{GIT_WORK_TREE})
+      execute_process(COMMAND git clone -b 0.0.1 https://gitlab.cern.ch/gaudi/xenv.git ${CMAKE_BINARY_DIR}/contrib/xenv)
     endif()
     # I'd like to generate the script with executable permission, but I only
     # found this workaround: https://stackoverflow.com/a/45515418
@@ -452,8 +495,6 @@ main()")
 
   find_program(gaudirun_cmd gaudirun.py HINTS ${binary_paths})
   set(gaudirun_cmd ${PYTHON_EXECUTABLE} ${gaudirun_cmd})
-
-  find_program(autopep8_cmd autopep8 HINTS ${binary_paths})
 
   # genconf is special because it must be known before we actually declare the
   # target in GaudiKernel/src/Util (because we need to be dynamic and agnostic).
@@ -828,9 +869,11 @@ if os.path.exists('${CMAKE_SOURCE_DIR}/${package}/python/${pypack}/__init__.py')
   file(WRITE ${CMAKE_BINARY_DIR}/apply-formatting "#!/bin/sh
 for f in \"$@\" ; do
   case \"$f\" in
-    (*.h|*.cpp|*.icpp)\n")
+    (*.h|*.cpp|*.icpp|*.icc)\n")
   if(clang_format_cmd)
-    file(GLOB_RECURSE _all_sources RELATIVE ${CMAKE_SOURCE_DIR} *.h *.cpp *.icpp)
+    file(GLOB_RECURSE _all_sources RELATIVE ${CMAKE_SOURCE_DIR} *.h *.cpp *.icpp *.icc)
+    # Filter out files in InstallArea and build areas.
+    list(FILTER _all_sources EXCLUDE REGEX "InstallArea/.*|build\\..*")
     add_custom_target(apply-formatting-c++
       COMMAND ${clang_format_cmd}
                   -style=${GAUDI_CLANG_STYLE}
@@ -841,20 +884,20 @@ for f in \"$@\" ; do
     add_dependencies(apply-formatting apply-formatting-c++)
     file(APPEND ${CMAKE_BINARY_DIR}/apply-formatting "      ${clang_format_cmd} -style=${GAUDI_CLANG_STYLE} -i \"$f\" ;;\n")
   else()
-    file(APPEND ${CMAKE_BINARY_DIR}/apply-formatting "      echo 'formatting of c++ code not supported (install clang-format first)' ; exit 1 ;;\n")
+    file(APPEND ${CMAKE_BINARY_DIR}/apply-formatting "      echo 'formatting of c++ code not supported (install clang-format-${CLANG_FORMAT_VERSION} first)' ; exit 1 ;;\n")
   endif()
 
   file(APPEND ${CMAKE_BINARY_DIR}/apply-formatting "    (*.py)\n")
-  if(autopep8_cmd)
+  if(yapf_cmd)
     add_custom_target(apply-formatting-python
-      COMMAND ${autopep8_cmd}
-                  --recursive --in-place --exclude ${CMAKE_BINARY_DIR} ${CMAKE_SOURCE_DIR}
+      COMMAND ${yapf_cmd}
+                  --recursive --in-place --exclude ${CMAKE_BINARY_DIR} --exclude InstallArea ${CMAKE_SOURCE_DIR}
       COMMENT "Applying coding conventions to Python sources"
     )
     add_dependencies(apply-formatting apply-formatting-python)
-    file(APPEND ${CMAKE_BINARY_DIR}/apply-formatting "      ${autopep8_cmd} --in-place \"$f\" ;;\n")
+    file(APPEND ${CMAKE_BINARY_DIR}/apply-formatting "      ${yapf_cmd} --in-place \"$f\" ;;\n")
   else()
-    file(APPEND ${CMAKE_BINARY_DIR}/apply-formatting "      echo 'formatting of Python code not supported (install autopep8 first)' ; exit 1 ;;\n")
+    file(APPEND ${CMAKE_BINARY_DIR}/apply-formatting "      echo 'formatting of Python code not supported (install yapf ${YAPF_VERSION} first)' ; exit 1 ;;\n")
   endif()
   file(APPEND ${CMAKE_BINARY_DIR}/apply-formatting "    (*) echo \"unknown file type $f\" ;;\n  esac\ndone\n")
   execute_process(COMMAND chmod a+x ${CMAKE_BINARY_DIR}/apply-formatting)
@@ -1780,12 +1823,19 @@ function(gaudi_generate_configurables library)
     set(genconf_products ${genconf_products} ${outdir}/__init__.py)
   endif()
 
+  # If a sanitizer is enabled force genconf to always return true status
+  # to allow builds to continue even if running genconf triggered a sanitizer error
+  set(genconf_force_status "")
+  if (SANITIZER_ENABLED)
+    set(genconf_force_status "||true")
+  endif()
+
   add_custom_command(
     OUTPUT ${genconf_products} ${outdir}/${library}.confdb
     COMMAND ${env_cmd} --xml ${env_xml}
               ${genconf_cmd} ${library_preload} -o ${outdir} -p ${package}
                 ${genconf_opts}
-                -i ${library}
+                -i ${library} ${genconf_force_status}
     DEPENDS ${conf_depends})
   add_custom_target(${library}Conf ALL DEPENDS ${outdir}/${library}.confdb)
   # Add the target to the target that groups all of them for the package.
@@ -1793,7 +1843,7 @@ function(gaudi_generate_configurables library)
     add_custom_target(${package}ConfAll ALL)
   endif()
   add_dependencies(${package}ConfAll ${library}Conf)
-  # ensure that the componentslist file is found at build time (GAUDI-1055)
+  # ensure that the .confdb file is found at build time (GAUDI-1055)
   gaudi_build_env(PREPEND LD_LIBRARY_PATH ${outdir})
   # Add dependencies on GaudiSvc and the genconf executable if they have to be built in the current project
   # Notify the project level target
@@ -1845,6 +1895,9 @@ function(gaudi_generate_confuserdb)
                   -o ${outdir}/${package}_user.confdb
                   ${package} ${modules})
     gaudi_merge_files_append(ConfDB ${package}ConfUserDB ${outdir}/${package}_user.confdb)
+
+    # ensure that the .confdb file is found at build time (GAUDI-1055)
+    gaudi_build_env(PREPEND LD_LIBRARY_PATH ${outdir})
 
     # FIXME: dependency on others ConfUserDB
     # Historically we have been relying on the ConfUserDB built in the dependency
@@ -2248,7 +2301,7 @@ function(gaudi_add_dictionary dictionary header selection)
     get_property(pcmname TARGET ${dictionary}Gen PROPERTY PCMFILE)
     add_custom_command(OUTPUT ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/${pcmname}
                        COMMAND ${CMAKE_COMMAND} -E copy ${pcmname} ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/${pcmname}
-                       DEPENDS ${dictionary}Gen)
+                       DEPENDS ${dictionary}Gen ${pcmname})
     add_custom_target(${dictionary}PCM ALL
                       DEPENDS ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/${pcmname})
   endif()
@@ -2455,11 +2508,8 @@ function(gaudi_add_test name)
       string(REPLACE ".qmt" "" qmt_name "${qmt_name}")
       string(REGEX REPLACE "^${subdir_name_lower}\\." "" qmt_name "${qmt_name}")
       #message(STATUS "adding test ${qmt_file} as ${qmt_name}")
-      set(test_cmd python -m GaudiTesting.Run)
-      if(NOT CMAKE_VERSION VERSION_LESS 3.0)
-        set(test_cmd ${test_cmd} --skip-return-code 77)
-      endif()
-      set(test_cmd ${test_cmd}
+      set(test_cmd python -m GaudiTesting.Run
+                       --skip-return-code 77
                        --report ctest
                        --common-tmpdir ${CMAKE_CURRENT_BINARY_DIR}/tests_tmp
                        --workdir ${qmtest_root_dir}
@@ -2467,20 +2517,26 @@ function(gaudi_add_test name)
       if(NOT EXISTS ${CMAKE_CURRENT_BINARY_DIR}/tests_tmp)
         file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/tests_tmp)
       endif()
+      set(_test_environment_ "${ARG_ENVIRONMENT}" )
+      if (SANITIZER_ENABLED)
+        if (_test_environment_)
+          set(_test_environment_ "LD_PRELOAD=${SANITIZER_ENABLED};${_test_environment_}" )
+        else()
+          set(_test_environment_ "LD_PRELOAD=${SANITIZER_ENABLED}" )
+        endif()
+      endif()
       gaudi_add_test(${qmt_name}
                      COMMAND ${test_cmd}
                      WORKING_DIRECTORY ${qmtest_root_dir}
                      LABELS QMTest ${ARG_LABELS}
-                     ENVIRONMENT ${ARG_ENVIRONMENT})
+                     ENVIRONMENT ${_test_environment_})
       # we need to reapply the logic to qmt_name
       if(CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR)
         set(test_name ${qmt_name})
       else()
         set(test_name ${package}.${qmt_name})
       endif()
-      if(NOT CMAKE_VERSION VERSION_LESS 3.0)
-        set_property(TEST ${test_name} PROPERTY SKIP_RETURN_CODE 77)
-      endif()
+      set_property(TEST ${test_name} PROPERTY SKIP_RETURN_CODE 77)
     endforeach()
     # extract dependencies
     execute_process(COMMAND ${qmtest_metadata_cmd}
@@ -2489,6 +2545,7 @@ function(gaudi_add_test name)
                     RESULT_VARIABLE qmt_deps_retcode)
     if(NOT qmt_deps_retcode EQUAL 0)
       message(WARNING "failure computing dependencies of QMTest tests")
+      return()
     endif()
     include(${CMAKE_CURRENT_BINARY_DIR}/qmt_deps.cmake)
     list(LENGTH qmt_files qmt_count)
@@ -2576,7 +2633,8 @@ endfunction()
 #
 # Declare a compilation test (typically to test for compilation failure):
 #  ERRORS - List of errors (regex allowed) that are all required in the output
-#           in order for the test to succeed(!)
+#           in order for the test to succeed(!). If not specified, test result is
+#           the same as compilation success/failure.
 #---------------------------------------------------------------------------------------------------
 function(gaudi_add_compile_test executable)
   CMAKE_PARSE_ARGUMENTS(ARG ""
@@ -2586,22 +2644,23 @@ function(gaudi_add_compile_test executable)
   # We do not want the install target coming with gaudi_add_executable
   gaudi_common_add_build(${ARG_UNPARSED_ARGUMENTS})
   add_executable(${executable} ${srcs})
-   
+
   # Avoid building this target by default
   set_target_properties(${executable} PROPERTIES EXCLUDE_FROM_ALL TRUE
                                                  EXCLUDE_FROM_DEFAULT_BUILD TRUE)
 
-  # Concatenate errors into multiline regex
   if(ARG_ERRORS)
+    # Concatenate errors into multiline regex
     string(REPLACE ";" ".*[\\n\\r]*.*" regex "${ARG_ERRORS}")
+    gaudi_add_test(${executable}
+       COMMAND ${CMAKE_COMMAND} --build . --target ${executable}
+       LABELS ${ARG_LABELS}
+       PASSREGEX ${regex})
   else()
-    set(regex ".*")
+    gaudi_add_test(${executable}
+       COMMAND ${CMAKE_COMMAND} --build . --target ${executable}
+       LABELS ${ARG_LABELS})
   endif()
-
-  gaudi_add_test(${executable}
-                 COMMAND ${CMAKE_COMMAND} --build . --target ${executable}
-                 LABELS ${ARG_LABELS}
-                 PASSREGEX ${regex})
 endfunction()
 
 #---------------------------------------------------------------------------------------------------

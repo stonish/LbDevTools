@@ -29,7 +29,7 @@ if(NOT EXISTS "${GaudiProject_DIR}/BinaryTagUtils.cmake")
     # set LCG_ARCH, LCG_COMP and LCG_TYPE
     parse_binary_tag(LCG "${CMAKE_MATCH_1}")
 
-    set(LCG_HOST_ARCH "${HOST_BINARY_TAG_ARCH}")
+    set(LCG_HOST_ARCH "${CMAKE_HOST_SYSTEM_PROCESSOR}")
     set(LCG_SYSTEM ${LCG_ARCH}-${LCG_OS}-${LCG_COMP})
     set(LCG_system ${LCG_SYSTEM}-opt)
     set(LCG_BUILD_TYPE ${LCG_TYPE})

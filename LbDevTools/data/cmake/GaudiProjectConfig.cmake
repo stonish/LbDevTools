@@ -394,7 +394,7 @@ macro(gaudi_project project version)
     set(LCG_platform ${LCG_SYSTEM}-${BINARY_TAG_TYPE})
   endif()
   set(LCG_system   ${LCG_SYSTEM}-opt)
-  set(LCG_HOST_ARCH "${HOST_BINARY_TAG_ARCH}")
+  set(LCG_HOST_ARCH "${CMAKE_HOST_SYSTEM_PROCESSOR}")
   string(REPLACE "." "" LCG_COMPVERS "${BINARY_TAG_COMP_VERSION}")
 
   # Locate and import used projects.

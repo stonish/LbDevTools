@@ -6,6 +6,35 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased][]
 
+## [0.5.3][] - 2019-07-03
+### Fixed
+- Port of lhcb-core/LbPlatformUtils!35 to get_host_binary_tag.py to fix builds on AVX512
+
+
+## [0.5.2][] - 2019-06-26
+### Fixed
+- Fix compatibility of gaudi/Gaudi!853 with old projects (!65)
+
+
+## [0.5.1][] - 2019-06-26
+### Added
+- Add `--license-fn` argument for changing the licence filename (!63)
+
+### Fixed
+- Prevent use of Gaudi from LCG (!64)
+- Use `lb-run --siteroot` in Ganga input sandbox script (!62)
+- Fix check of `yapf_cmd` (!61)
+- More resilient `lb-format` (!60)
+
+
+## [0.5.0][] - 2019-05-20
+### Changed
+- Use clang-format-8 to format C++ code (!59)
+- Do not automatically disable Ninja for FORTRAN (!58, #19)
+
+### Added
+- Add `--with-fortran` option to `lb-dev` (!57)
+
 
 ## [0.4.5][] - 2019-02-20
 ### Fixed

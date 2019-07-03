@@ -22,7 +22,7 @@ ARCH_DEFS = OrderedDict(
     [('cannonlake',
       set([
           'pclmulqdq', 'avx', 'pku', 'umip', 'avx512dq', 'bmi1', 'fsgsbase',
-          'avx512ifma', 'avx512bw', 'xsaves', 'clflushopt', 'sse4_2', 'sse4_1',
+          'avx512ifma', 'avx512bw', 'clflushopt', 'sse4_2', 'sse4_1',
           'lm', 'adx', '3dnowprefetch', 'sha_ni', 'fma', 'mmx', 'avx512cd',
           'avx512f', 'pni', 'rdseed', 'popcnt', 'sse', 'f16c', 'xsavec', 'aes',
           'avx2', 'sse2', 'avx512vbmi', 'bmi2', 'ssse3', 'movbe', 'rdrand',
@@ -31,14 +31,14 @@ ARCH_DEFS = OrderedDict(
      ('skylake_avx512',
       set([
           'pclmulqdq', 'avx', 'pku', 'avx512dq', 'fsgsbase', 'avx512bw',
-          'xsaves', 'clflushopt', 'sse4_2', 'sse4_1', 'lm', 'adx',
+          'clflushopt', 'sse4_2', 'sse4_1', 'lm', 'adx',
           '3dnowprefetch', 'fma', 'mmx', 'avx512cd', 'avx512f', 'clwb', 'pni',
           'rdseed', 'popcnt', 'sse', 'f16c', 'xsavec', 'aes', 'avx2', 'sse2',
           'bmi1', 'bmi2', 'ssse3', 'movbe', 'rdrand', 'avx512vl'
       ])),
      ('skylake',
       set([
-          'avx', 'fsgsbase', 'xsaves', 'clflushopt', 'sse4_2', 'sse4_1', 'lm',
+          'avx', 'fsgsbase', 'clflushopt', 'sse4_2', 'sse4_1', 'lm',
           'adx', '3dnowprefetch', 'fma', 'mmx', 'pclmulqdq', 'pni', 'rdseed',
           'popcnt', 'sse', 'f16c', 'xsavec', 'aes', 'avx2', 'sse2', 'bmi1',
           'bmi2', 'ssse3', 'movbe', 'rdrand'

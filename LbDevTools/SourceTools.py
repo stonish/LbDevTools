@@ -423,7 +423,7 @@ def check_copyright():
         help='list files w/ copyright, instead of w/o (Default)')
     parser.add_argument(
         '--ignore',
-        nargs='+',
+        action='append',
         default=[],
         help='Regex of filenames that should be ignored')
     parser.set_defaults(inverted=False, separator='\n')

@@ -422,9 +422,10 @@ def check_copyright():
         action='store_true',
         help='list files w/ copyright, instead of w/o (Default)')
     parser.add_argument(
-        '--ignore',
+        '-x', '--exclude',
         action='append',
         default=[],
+        type=re.compile,
         help='Regex of filenames that should be ignored')
     parser.set_defaults(inverted=False, separator='\n')
 
@@ -437,7 +438,7 @@ def check_copyright():
         # case we invert the answer of has_copyright, to report the file _with_
         # copyright notice
         if not is_empty(path) and not (args.inverted ^ has_copyright(path))
-        and not any(re.match('^'+pattern+'$', path) for pattern in args.ignore)
+        and not any(pattern.search(path) for pattern in args.exclude)
     ]
     if missing:
         missing.sort()

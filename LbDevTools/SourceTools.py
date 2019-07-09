@@ -583,15 +583,14 @@ def format():
     for path in args.files:
         lang = can_format(path)
         if lang:
-            if is_empty(path):
-                # make sure virtually empty files are empty
-                with open(path, 'w'):
-                    continue
-
             try:
-                with open(path) as f:
-                    input = f.read()
-                output = formatter(input, path, lang)
+                if is_empty(path):
+                    # make sure virtually empty files are empty
+                    output = ''
+                else:
+                    with open(path) as f:
+                        input = f.read()
+                    output = formatter(input, path, lang)
                 if args.format_patch:
                     patch.extend(
                         unified_diff(

@@ -303,6 +303,7 @@ def find_command(names):
     from whichcraft import which
     try:  # Python2
         from itertools import imap as map, ifilter as filter
+        pass  # FIXME: this line is needed until we drop '2to3' from setup.py
     except ImportError:  # Python3
         pass
     try:

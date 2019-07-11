@@ -39,7 +39,7 @@ or submit itself to any jurisdiction.
 
 # see https://www.python.org/dev/peps/pep-0263 for the regex
 ENCODING_DECLARATION = re.compile(
-    r'^[ \t\f]*#.*?coding[:=][ \t]*([-_.a-zA-Z0-9]+)')
+    r'^[ \t\f]*#.*?coding[:=][ \t]*([-_.a-zA-Z0-9]+)'.encode())
 
 CLANG_FORMAT_VERSION = '8'
 YAPF_VERSION = '0.24.0'
@@ -92,15 +92,15 @@ def get_files(reference=None):
     '''
     from subprocess import check_output
     if reference is None:
-        all = check_output(['git', 'ls-files',
-                            '-z']).rstrip('\x00').split('\x00')
+        all = (path.decode() for path in check_output(
+            ['git', 'ls-files', '-z']).rstrip(b'\x00').split(b'\x00'))
     else:
         prefix_len = len(
             check_output(['git', 'rev-parse', '--show-prefix']).strip())
-        all = (path[prefix_len:] for path in check_output([
+        all = (path[prefix_len:].decode() for path in check_output([
             'git', 'diff', '--name-only', '--no-renames', '--diff-filter=MA',
             '-z', reference + '...', '.'
-        ]).rstrip('\x00').split('\x00'))
+        ]).rstrip(b'\x00').split(b'\x00'))
     return (path for path in all if to_check(path))
 
 
@@ -209,10 +209,9 @@ def add_copyright_to_file(path, year=None, license_fn=None):
     used.
     '''
     lang = lang_family(path)
-    text = to_comment(COPYRIGHT_STATEMENT.format(
-        year or date.today().year,
-        license_fn or 'COPYING'
-    ).strip(), lang)
+    text = to_comment(
+        COPYRIGHT_STATEMENT.format(year or date.today().year, license_fn
+                                   or 'COPYING').strip(), lang)
     with open(path, 'rb') as f:
         data = f.readlines()
 
@@ -220,18 +219,18 @@ def add_copyright_to_file(path, year=None, license_fn=None):
     encoding_offset = find_encoding_declaration_line(data)
     if encoding_offset is not None:
         offset = encoding_offset + 1
-    elif data[0].startswith('#!'):
+    elif data[0].startswith(b'#!'):
         offset = 1
     elif lang == 'xml':
         offset = 1 if not path.endswith('.ent') else 0
         for l in data:
             if l.strip():
                 # lcgdict selection files are a bit special
-                if 'lcgdict' in l or '<!--' in l:
+                if b'lcgdict' in l or b'<!--' in l:
                     offset = 0
                 break
 
-    data.insert(offset, text)
+    data.insert(offset, text.encode())
     with open(path, 'wb') as f:
         f.writelines(data)
 
@@ -302,9 +301,13 @@ def ensure_clang_format_style(path):
 
 def find_command(names):
     from whichcraft import which
-    from itertools import imap, ifilter
+    try:  # Python2
+        from itertools import imap as map, ifilter as filter
+        pass  # FIXME: this line is needed until we drop '2to3' from setup.py
+    except ImportError:  # Python3
+        pass
     try:
-        return next(ifilter(None, imap(which, names)))
+        return next(filter(None, map(which, names)))
     except StopIteration:
         return None
 
@@ -330,7 +333,7 @@ def get_yapf_format_cmd(version=YAPF_VERSION):
     cmd = find_command(['yapf'])
     if not cmd:
         raise CommandNotFound('yapf not found')
-    found_version = check_output([cmd, '--version']).split()[-1]
+    found_version = check_output([cmd, '--version']).split()[-1].decode()
     if found_version != version:
         raise CommandNotFound(
             'wrong yapf version %s (%s required)' % (found_version, version))
@@ -422,7 +425,8 @@ def check_copyright():
         action='store_true',
         help='list files w/ copyright, instead of w/o (Default)')
     parser.add_argument(
-        '-x', '--exclude',
+        '-x',
+        '--exclude',
         action='append',
         default=[],
         type=re.compile,
@@ -586,22 +590,23 @@ def format():
             try:
                 if is_empty(path):
                     # make sure virtually empty files are empty
-                    output = ''
+                    output = b''
                 else:
-                    with open(path) as f:
+                    with open(path, 'rb') as f:
                         input = f.read()
                     output = formatter(input, path, lang)
                 if args.format_patch:
                     patch.extend(
-                        unified_diff(
-                            input.splitlines(True), output.splitlines(True),
-                            os.path.join('a', path), os.path.join('b', path)))
+                        unified_diff(input.decode().splitlines(True),
+                                     output.decode().splitlines(True),
+                                     os.path.join('a', path),
+                                     os.path.join('b', path)))
                 elif output != input:
                     if args.dry_run:
                         print(path, 'should be changed')
                     else:
                         info('%s changed', path)
-                        with open(path, 'w') as f:
+                        with open(path, 'wb') as f:
                             f.write(output)
             except CalledProcessError as err:
                 warning('could not format %r: %s\n%s', path, err,
@@ -625,13 +630,13 @@ def format():
             '', '', ''.join(patch)
         ]))
         if args.format_patch == '-':
-            print(msg.as_string())
+            print(msg)
         else:
             if (os.path.dirname(args.format_patch)
                     and not os.path.isdir(os.path.dirname(args.format_patch))):
                 os.makedirs(os.path.dirname(args.format_patch))
             with open(args.format_patch, 'wb') as patchfile:
-                patchfile.write(msg.as_string())
+                patchfile.write(bytes(msg))
             print(
                 '=======================================',
                 ' You can fix formatting with:',

@@ -129,7 +129,8 @@ setup(
     #
     # For an analysis of "install_requires" vs pip's requirements files see:
     # https://packaging.python.org/en/latest/requirements.html
-    install_requires=['LbEnv>=0.3.0', 'LbPlatformUtils', 'GitPython',
+    install_requires=['LbEnv>=0.3.0', 'LbPlatformUtils',
+                      'GitPython' + ('<2.1.12' if version_info < (3, 0) else ''),
                       'python-gitlab', 'jinja2', 'yapf', 'whichcraft'],
 
     # List additional groups of dependencies here (e.g. development

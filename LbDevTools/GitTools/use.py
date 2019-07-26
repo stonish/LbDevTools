@@ -51,7 +51,7 @@ def main():
 
     project = fixProjectCase(args.project)
     if args.project != project:
-        logging.warnins('misspelled project name, using %s instead', project)
+        logging.warning('misspelled project name, using %s instead', project)
         args.project = project
     del project
 

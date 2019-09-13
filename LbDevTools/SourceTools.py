@@ -538,7 +538,7 @@ def format():
     if args.pipe and args.files:
         parser.error('cannot process explicit files in --pipe mode')
 
-    from logging import debug, warning, info
+    from logging import debug, warning, info, error
     from subprocess import CalledProcessError
     from difflib import unified_diff
 
@@ -583,6 +583,7 @@ def format():
         debug('cmd %s', cmd)
         print(call_formatter(cmd, sys.stdin.read()), end='')
     patch = []
+    encoding_errors = []
     formatter = Formatter(clang_format_cmd, yapf_cmd)
     for path in args.files:
         lang = can_format(path)
@@ -597,10 +598,10 @@ def format():
                     output = formatter(input, path, lang)
                 if args.format_patch:
                     patch.extend(
-                        unified_diff(input.decode().splitlines(True),
-                                     output.decode().splitlines(True),
-                                     os.path.join('a', path),
-                                     os.path.join('b', path)))
+                        unified_diff(
+                            input.decode('utf-8').splitlines(True),
+                            output.decode('utf-8').splitlines(True),
+                            os.path.join('a', path), os.path.join('b', path)))
                 elif output != input:
                     if args.dry_run:
                         print(path, 'should be changed')
@@ -611,8 +612,20 @@ def format():
             except CalledProcessError as err:
                 warning('could not format %r: %s\n%s', path, err,
                         err.output.rstrip())
+            except UnicodeDecodeError as err:
+                error('invalid encoding in %r: %s', path, err)
+                encoding_errors.append(path)
         else:
             warning('cannot format %s (file type not supported)', path)
+
+    # report encoding errors
+    if encoding_errors:
+        print(
+            '=======================================',
+            ' Detected files with encoding (UTF-8) errors:',
+            sep='\n')
+        print('', *encoding_errors, sep='\n - ')
+        print('', '=======================================', sep='\n')
 
     # check if we need to create a patch file
     if patch:
@@ -649,6 +662,8 @@ def format():
             else:
                 print('   git am {}'.format(args.format_patch))
             print('', '=======================================', sep='\n')
+
+    if patch or encoding_errors:
         exit(1)
 
 

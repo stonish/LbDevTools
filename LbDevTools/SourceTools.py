@@ -581,7 +581,8 @@ def format():
 
     if not args.pipe:
         if not args.files:
-            args.files = filter(can_format, get_files(args.reference))
+            args.files = (f for f in get_files(args.reference)
+                          if can_format(f))
 
     if args.pipe:
         import sys

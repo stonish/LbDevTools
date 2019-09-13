@@ -486,7 +486,8 @@ def format():
     parser.add_argument(
         'files',
         nargs='*',
-        help='files to modify (empty list means all git tracked files)')
+        help='files to modify (empty list means all git tracked files, or a '
+        'subset of them if the option --reference is used)')
     parser.add_argument(
         '--clang-format-version',
         help='version of clang-format to use '
@@ -508,10 +509,14 @@ def format():
     parser.add_argument(
         '-n', '--dry-run', action='store_true', help='do not modify the files')
     parser.add_argument(
+        '--reference',
+        help='check/format only the files select the files that have changed '
+        'since the REFERENCE commit/branch')
+    parser.add_argument(
         '--format-patch',
         help='create a patch file with the changes, '
         'in this mode the first file argument is interpreted '
-        'as reference branch')
+        'as argument to the --reference option')
     parser.add_argument(
         '-P',
         '--pipe',
@@ -528,15 +533,23 @@ def format():
     args = parser.parse_args()
     logging.basicConfig(level=args.log_level)
 
-    if args.format_patch and args.pipe:
-        parser.error('incompatible options --format-patch and -P/--pipe')
+    if args.pipe:
+        if args.format_patch:
+            parser.error('incompatible options --format-patch and -P/--pipe')
+        elif args.reference:
+            parser.error('incompatible options --reference and -P/--pipe')
+        elif args.files:
+            parser.error('cannot process explicit files in --pipe mode')
 
-    if args.format_patch and len(args.files) > 1:
-        parser.error('wrong number of arguments: at most one argument must be '
-                     'provided when using --format-patch')
+    if args.reference and args.files:
+        parser.error('you cannot specify files with --reference')
 
-    if args.pipe and args.files:
-        parser.error('cannot process explicit files in --pipe mode')
+    if args.format_patch:
+        if len(args.files) > 1:
+            parser.error('wrong number of arguments: at most one argument '
+                         'must be provided when using --format-patch')
+        elif args.files:
+            args.reference = args.files.pop()
 
     from logging import debug, warning, info, error
     from subprocess import CalledProcessError
@@ -568,10 +581,8 @@ def format():
 
     if not args.pipe:
         if not args.files:
-            args.files = filter(can_format, get_files())
-        elif args.format_patch:
-            # if we have args for --format-patch, it's a reference commit
-            args.files = filter(can_format, get_files(args.files[0]))
+            args.files = (f for f in get_files(args.reference)
+                          if can_format(f))
 
     if args.pipe:
         import sys

@@ -598,7 +598,9 @@ def format():
                     output = formatter(input, path, lang)
                 if args.format_patch:
                     patch.extend(
-                        unified_diff(
+                        l if l.endswith('\n') else (
+                            l + '\n\\ No newline at end of file\n')
+                        for l in unified_diff(
                             input.decode('utf-8').splitlines(True),
                             output.decode('utf-8').splitlines(True),
                             os.path.join('a', path), os.path.join('b', path)))

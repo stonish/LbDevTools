@@ -301,13 +301,8 @@ def ensure_clang_format_style(path):
 
 def find_command(names):
     from whichcraft import which
-    try:  # Python2
-        from itertools import imap as map, ifilter as filter
-        pass  # FIXME: this line is needed until we drop '2to3' from setup.py
-    except ImportError:  # Python3
-        pass
     try:
-        return next(filter(None, map(which, names)))
+        return next(path for path in (which(name) for name in names) if path)
     except StopIteration:
         return None
 

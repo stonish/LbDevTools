@@ -597,10 +597,10 @@ def format():
                     output = formatter(input, path, lang)
                 if args.format_patch:
                     patch.extend(
-                        unified_diff(input.decode().splitlines(True),
-                                     output.decode().splitlines(True),
-                                     os.path.join('a', path),
-                                     os.path.join('b', path)))
+                        unified_diff(
+                            input.decode('utf-8').splitlines(True),
+                            output.decode('utf-8').splitlines(True),
+                            os.path.join('a', path), os.path.join('b', path)))
                 elif output != input:
                     if args.dry_run:
                         print(path, 'should be changed')

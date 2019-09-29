@@ -25,11 +25,17 @@ def build():
     for v in ('BINARY_TAG', 'CMTCONFIG'):
         if v in os.environ:
             del os.environ[v]
+    import sys
+    sys.path.append(os.path.dirname(os.path.dirname(__file__)))
+    from get_host_binary_tag import os_id, compiler_id
+    os.environ['BINARY_TAG'] = '-'.join(
+        ['x86_64', os_id(), compiler_id(), 'opt'])
     build_proc = Popen(['make', 'VERBOSE=1'],
                        cwd=base_dir,
                        stdout=PIPE,
                        stderr=PIPE)
     build_log, build_err = build_proc.communicate()
+    build_log, build_err = build_log.decode('utf-8'), build_err.decode('utf-8')
     build_returncode = build_proc.returncode
 
 
@@ -65,6 +71,7 @@ def test_env():
         stdout=PIPE,
         stderr=PIPE)
     out, _err = getenv.communicate()
+    out = out.decode('utf-8')
     assert getenv.returncode == 0, getenv.returncode
 
     root_inc_path = [

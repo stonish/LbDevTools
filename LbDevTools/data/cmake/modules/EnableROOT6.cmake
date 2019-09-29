@@ -15,9 +15,11 @@ if (CMAKE_GENERATOR MATCHES "Ninja")
       set(scan_dicts_deps ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_LIST_DIR}/scan_dict_deps.py)
     endif()
   else()
-    find_package(Python2 COMPONENTS Interpreter)
-    if (TARGET Python2::Interpreter)
-      set(scan_dicts_deps Python2::Interpreter ${CMAKE_CURRENT_LIST_DIR}/scan_dict_deps.py)
+    # Python_config_version is defined by the LCG toolchain and this should guarantee
+    # a consistent use of Python when using LCG (see https://gitlab.cern.ch/gaudi/Gaudi/issues/88).
+    find_package(Python ${Python_config_version} COMPONENTS Interpreter)
+    if (TARGET Python::Interpreter)
+      set(scan_dicts_deps Python::Interpreter ${CMAKE_CURRENT_LIST_DIR}/scan_dict_deps.py)
     endif()
   endif()
 endif()
@@ -237,6 +239,10 @@ macro(reflex_generate_dictionary dictionary _headerfile _selectionfile)
     set(_root_dicts_deps_warning 1 CACHE INTERNAL "")
   endif()
 
+  if (GENREFLEX_JOB_POOL)
+    set(job_pool JOB_POOL ${GENREFLEX_JOB_POOL})
+  endif()
+
   add_custom_command(
     OUTPUT ${gensrcdict} ${rootmapname} ${gensrcclassdef} ${pcmname}
     COMMAND ${ROOT_genreflex_CMD}
@@ -244,7 +250,8 @@ macro(reflex_generate_dictionary dictionary _headerfile _selectionfile)
          ${ARG_OPTIONS} ${include_dirs} ${definitions}
     ${deps_scan_cmd}
     DEPENDS ${headerfiles} ${selectionfile}
-    ${impl_deps})
+    ${impl_deps}
+    ${job_pool})
 
   # Creating this target at ALL level enables the possibility to generate dictionaries (genreflex step)
   # well before the dependent libraries of the dictionary are build

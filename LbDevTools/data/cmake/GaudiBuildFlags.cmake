@@ -10,7 +10,6 @@ endif()
 
 check_compiler()
 
-
 # Convert BINARY_TAG_TYPE to CMAKE_BUILD_TYPE
 if(BINARY_TAG_TYPE STREQUAL "opt")
   set(_BT_CMAKE_BUILD_TYPE Release)
@@ -64,6 +63,10 @@ set(GAUDI_CPP11_DEFAULT ON)
 if(NOT ROOT_CXX_STANDARD)
   find_package(ROOT QUIET)
   if(ROOT_FOUND)
+    # the ROOTConfig.cmake delivered by ROOT does not define ROOT_INCLUDE_DIR
+    if(NOT DEFINED ROOT_INCLUDE_DIR)
+      list(GET ROOT_INCLUDE_DIRS 0 ROOT_INCLUDE_DIR)
+    endif()
     file(STRINGS ${ROOT_INCLUDE_DIR}/RConfigure.h _RConfigure REGEX "define R__")
     foreach(rconfig_line IN LISTS _RConfigure)
       if(rconfig_line MATCHES "R__USE_CXX([^ ]+)")
@@ -121,8 +124,8 @@ option(GAUDI_DIAGNOSTICS_COLOR "enable colors in compiler diagnostics" OFF)
 # - default optimization levels
 set(_opt_level_RELEASE "-O3")
 set(_opt_ext_RELEASE "-DNDEBUG")
-if(NOT GAUDI_SLOW_DEBUG AND BINARY_TAG_COMP_NAME STREQUAL "gcc")
-  # Use -Og with Debug builds in gcc (if not disabled)
+if(NOT GAUDI_SLOW_DEBUG AND (BINARY_TAG_COMP_NAME STREQUAL "gcc" OR BINARY_TAG_COMP_NAME STREQUAL "clang"))
+  # Use -Og with Debug builds in gcc/clang (if not disabled)
   set(_opt_level_DEBUG "-Og")
 else()
   set(_opt_level_DEBUG "-O0")
@@ -138,13 +141,13 @@ set(_opt_ext_RELWITHDEBINFO "${_opt_ext_RELEASE} -g")
 # http://clang.llvm.org/docs/ThreadSanitizer.html
 # http://clang.llvm.org/docs/UndefinedBehaviorSanitizer.html
 # https://gcc.gnu.org/onlinedocs/gcc/Instrumentation-Options.html
-set(GAUDI_asan_FLAGS "-fsanitize=address -fsanitize-recover=all -fno-omit-frame-pointer -lasan"
+set(GAUDI_asan_FLAGS "-fsanitize=address -fsanitize-recover=all -fno-omit-frame-pointer"
     CACHE STRING "Build options for AddressSanitizer")
-set(GAUDI_lsan_FLAGS "-fsanitize=leak -fsanitize-recover=all -fno-omit-frame-pointer -llsan"
+set(GAUDI_lsan_FLAGS "-fsanitize=leak -fsanitize-recover=all -fno-omit-frame-pointer"
     CACHE STRING "Build options for LeakSanitizer")
-set(GAUDI_tsan_FLAGS "-fsanitize=thread -fsanitize-recover=all -fno-omit-frame-pointer -ltsan"
+set(GAUDI_tsan_FLAGS "-fsanitize=thread -fsanitize-recover=all -fno-omit-frame-pointer"
     CACHE STRING "Build options for ThreadSanitizer")
-set(GAUDI_ubsan_FLAGS "-fsanitize=undefined -fsanitize-recover=all -fno-omit-frame-pointer -lubsan"
+set(GAUDI_ubsan_FLAGS "-fsanitize=undefined -fsanitize-recover=all -fno-omit-frame-pointer"
     CACHE STRING "Build options for UndefinedSanitizer")
 set(GAUDI_DEFAULT_SANITIZER)
 
@@ -170,6 +173,10 @@ if (GAUDI_USE_SANITIZER)
   else()
     set(SANITIZER_ENABLED "lib${GAUDI_USE_SANITIZER}.so")
     set(_opt_ext_${_up_bt} "${_opt_ext_${_up_bt}} ${GAUDI_${GAUDI_USE_SANITIZER}_FLAGS}")
+    # gcc requires additional -l<sanitizer>
+    if(BINARY_TAG_COMP_NAME STREQUAL "gcc")
+      set(_opt_ext_${_up_bt} "${_opt_ext_${_up_bt}} -l${GAUDI_USE_SANITIZER}")
+    endif()
   endif()
 endif()
 
@@ -237,8 +244,13 @@ if(NOT GAUDI_FLAGS_SET EQUAL GAUDI_FLAGS_OPTIONS)
       if(_arch_opt STREQUAL "native")
         message(FATAL_ERROR "you must use 'native-${BINARY_TAG_OS}-${BINARY_TAG_COMP}-${BINARY_TAG_TYPE}'' instead of '${BINARY_TAG_ARCH}+native-${BINARY_TAG_OS}-${BINARY_TAG_COMP}-${BINARY_TAG_TYPE}'")
       endif()
-      set(arch_opts "${arch_opts} -m${_arch_opt}")
+      if(_arch_opt STREQUAL "vecwid256")
+        set(arch_opts "${arch_opts} -mprefer-vector-width=256")
+      else()
+        set(arch_opts "${arch_opts} -m${_arch_opt}")
+      endif()
     endforeach()
+    message(STATUS "Arch Flags:       ${arch_opts}")
     # Common compilation flags
     set(CMAKE_CXX_FLAGS
         "${arch_opts} -fmessage-length=0 -pipe -Wall -Wextra -Werror=return-type -pthread -pedantic -Wwrite-strings -Wpointer-arith -Woverloaded-virtual -Wnon-virtual-dtor"

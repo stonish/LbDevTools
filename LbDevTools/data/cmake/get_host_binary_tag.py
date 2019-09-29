@@ -8,6 +8,7 @@ Inspired by
 * https://github.com/HEP-SF/documents/tree/master/HSF-TN/draft-2015-NAM
 * https://github.com/HEP-SF/tools
 '''
+from __future__ import print_function
 
 import os
 import re
@@ -18,64 +19,64 @@ from collections import OrderedDict
 
 # available flags per architecture
 # source: https://gitlab.cern.ch/lhcb-core/LbPlatformUtils/blob/master/LbPlatformUtils/architectures.py
-ARCH_DEFS = OrderedDict(
-    [('cannonlake',
-      set([
-          'pclmulqdq', 'avx', 'pku', 'umip', 'avx512dq', 'bmi1', 'fsgsbase',
-          'avx512ifma', 'avx512bw', 'clflushopt', 'sse4_2', 'sse4_1',
-          'lm', 'adx', '3dnowprefetch', 'sha_ni', 'fma', 'mmx', 'avx512cd',
-          'avx512f', 'pni', 'rdseed', 'popcnt', 'sse', 'f16c', 'xsavec', 'aes',
-          'avx2', 'sse2', 'avx512vbmi', 'bmi2', 'ssse3', 'movbe', 'rdrand',
-          'avx512vl'
-      ])),
-     ('skylake_avx512',
-      set([
-          'pclmulqdq', 'avx', 'pku', 'avx512dq', 'fsgsbase', 'avx512bw',
-          'clflushopt', 'sse4_2', 'sse4_1', 'lm', 'adx',
-          '3dnowprefetch', 'fma', 'mmx', 'avx512cd', 'avx512f', 'clwb', 'pni',
-          'rdseed', 'popcnt', 'sse', 'f16c', 'xsavec', 'aes', 'avx2', 'sse2',
-          'bmi1', 'bmi2', 'ssse3', 'movbe', 'rdrand', 'avx512vl'
-      ])),
-     ('skylake',
-      set([
-          'avx', 'fsgsbase', 'clflushopt', 'sse4_2', 'sse4_1', 'lm',
-          'adx', '3dnowprefetch', 'fma', 'mmx', 'pclmulqdq', 'pni', 'rdseed',
-          'popcnt', 'sse', 'f16c', 'xsavec', 'aes', 'avx2', 'sse2', 'bmi1',
-          'bmi2', 'ssse3', 'movbe', 'rdrand'
-      ])),
-     ('broadwell',
-      set([
-          'avx', 'fsgsbase', 'sse4_2', 'sse4_1', 'lm', 'adx', '3dnowprefetch',
-          'fma', 'mmx', 'pclmulqdq', 'pni', 'rdseed', 'popcnt', 'sse', 'f16c',
-          'aes', 'avx2', 'sse2', 'bmi1', 'bmi2', 'ssse3', 'movbe', 'rdrand'
-      ])),
-     ('haswell',
-      set([
-          'avx', 'fsgsbase', 'sse4_2', 'sse4_1', 'lm', 'fma', 'mmx', 'aes',
-          'pni', 'popcnt', 'sse', 'f16c', 'pclmulqdq', 'avx2', 'sse2', 'bmi1',
-          'bmi2', 'ssse3', 'movbe', 'rdrand'
-      ])),
-     ('ivybridge',
-      set([
-          'pni', 'aes', 'sse4_2', 'mmx', 'sse2', 'sse4_1', 'lm', 'pclmulqdq',
-          'ssse3', 'fsgsbase', 'popcnt', 'rdrand', 'sse', 'avx', 'f16c'
-      ])),
-     ('sandybridge',
-      set([
-          'pni', 'aes', 'sse4_2', 'mmx', 'sse2', 'sse4_1', 'lm', 'pclmulqdq',
-          'ssse3', 'popcnt', 'sse', 'avx'
-      ])),
-     ('westmere',
-      set([
-          'pni', 'aes', 'sse4_2', 'mmx', 'sse2', 'sse4_1', 'lm', 'pclmulqdq',
-          'ssse3', 'popcnt', 'sse'
-      ])),
-     ('nehalem',
-      set([
-          'pni', 'sse4_2', 'mmx', 'sse2', 'sse4_1', 'lm', 'ssse3', 'popcnt',
-          'sse'
-      ])), ('core2', set(['pni', 'mmx', 'sse2', 'lm', 'ssse3', 'sse'])),
-     ('x86_64', set([]))])
+ARCH_DEFS = OrderedDict([
+    ('cannonlake',
+     set([
+         'pclmulqdq', 'avx', 'pku', 'umip', 'avx512dq', 'bmi1', 'fsgsbase',
+         'avx512ifma', 'avx512bw', 'clflushopt', 'sse4_2', 'sse4_1', 'lm',
+         'adx', '3dnowprefetch', 'sha_ni', 'fma', 'mmx', 'avx512cd', 'avx512f',
+         'pni', 'rdseed', 'popcnt', 'sse', 'f16c', 'xsavec', 'aes', 'avx2',
+         'sse2', 'avx512vbmi', 'bmi2', 'ssse3', 'movbe', 'rdrand', 'avx512vl'
+     ])),
+    ('skylake_avx512',
+     set([
+         'pclmulqdq', 'avx', 'pku', 'avx512dq', 'fsgsbase', 'avx512bw',
+         'clflushopt', 'sse4_2', 'sse4_1', 'lm', 'adx', '3dnowprefetch', 'fma',
+         'mmx', 'avx512cd', 'avx512f', 'clwb', 'pni', 'rdseed', 'popcnt',
+         'sse', 'f16c', 'xsavec', 'aes', 'avx2', 'sse2', 'bmi1', 'bmi2',
+         'ssse3', 'movbe', 'rdrand', 'avx512vl'
+     ])),
+    ('skylake',
+     set([
+         'avx', 'fsgsbase', 'clflushopt', 'sse4_2', 'sse4_1', 'lm', 'adx',
+         '3dnowprefetch', 'fma', 'mmx', 'pclmulqdq', 'pni', 'rdseed', 'popcnt',
+         'sse', 'f16c', 'xsavec', 'aes', 'avx2', 'sse2', 'bmi1', 'bmi2',
+         'ssse3', 'movbe', 'rdrand'
+     ])),
+    ('broadwell',
+     set([
+         'avx', 'fsgsbase', 'sse4_2', 'sse4_1', 'lm', 'adx', '3dnowprefetch',
+         'fma', 'mmx', 'pclmulqdq', 'pni', 'rdseed', 'popcnt', 'sse', 'f16c',
+         'aes', 'avx2', 'sse2', 'bmi1', 'bmi2', 'ssse3', 'movbe', 'rdrand'
+     ])),
+    ('haswell',
+     set([
+         'avx', 'fsgsbase', 'sse4_2', 'sse4_1', 'lm', 'fma', 'mmx', 'aes',
+         'pni', 'popcnt', 'sse', 'f16c', 'pclmulqdq', 'avx2', 'sse2', 'bmi1',
+         'bmi2', 'ssse3', 'movbe', 'rdrand'
+     ])),
+    ('ivybridge',
+     set([
+         'pni', 'aes', 'sse4_2', 'mmx', 'sse2', 'sse4_1', 'lm', 'pclmulqdq',
+         'ssse3', 'fsgsbase', 'popcnt', 'rdrand', 'sse', 'avx', 'f16c'
+     ])),
+    ('sandybridge',
+     set([
+         'pni', 'aes', 'sse4_2', 'mmx', 'sse2', 'sse4_1', 'lm', 'pclmulqdq',
+         'ssse3', 'popcnt', 'sse', 'avx'
+     ])),
+    ('westmere',
+     set([
+         'pni', 'aes', 'sse4_2', 'mmx', 'sse2', 'sse4_1', 'lm', 'pclmulqdq',
+         'ssse3', 'popcnt', 'sse'
+     ])),
+    ('nehalem',
+     set([
+         'pni', 'sse4_2', 'mmx', 'sse2', 'sse4_1', 'lm', 'ssse3', 'popcnt',
+         'sse'
+     ])), ('core2', set(['pni', 'mmx', 'sse2', 'lm', 'ssse3', 'sse'])),
+    ('x86_64', set([]))
+])
 
 
 def _Linux_os():
@@ -125,8 +126,8 @@ def _compiler_version(cmd=os.environ.get('CC', 'cc')):
     # prevent interference from localization
     env = dict(os.environ)
     env['LC_ALL'] = 'C'
-    m = re.search(r'(gcc|clang|icc|LLVM) version (\d+)\.(\d+)',
-                  check_output([cmd, '-v'], stderr=STDOUT, env=env))
+    output = check_output([cmd, '-v'], stderr=STDOUT, env=env).decode('utf-8')
+    m = re.search(r'(gcc|clang|icc|LLVM) version (\d+)\.(\d+)', output)
     if not m:  # prevent crashes if the compiler is not supported
         return 'unknown'
     comp = 'clang' if m.group(1) == 'LLVM' else m.group(1)

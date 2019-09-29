@@ -3,7 +3,7 @@
 #
 # Authors: Pere Mato, Marco Clemencic
 #
-# Commit Id: fda18ef342353f5e26df2a4996c96dda0414d1f9
+# Commit Id: 46d42edcd585b518dc3e9ca4475549e33708ec0c
 
 cmake_minimum_required(VERSION 3.6)
 if(POLICY CMP0077)
@@ -63,7 +63,17 @@ find_program(clang_format_cmd
         clang-format-${CLANG_FORMAT_VERSION}
         gaudi-clang-format-${CLANG_FORMAT_VERSION})
 if(clang_format_cmd)
-  message(STATUS "found clang-format ${CLANG_FORMAT_VERSION}: ${clang_format_cmd}")
+  execute_process(COMMAND ${clang_format_cmd} -version
+                  RESULT_VARIABLE _clang_format_working
+                  OUTPUT_VARIABLE _clang_format_reported_version
+                  ERROR_QUIET
+                  OUTPUT_STRIP_TRAILING_WHITESPACE)
+  if (_clang_format_working EQUAL 0)
+    message(STATUS "found ${_clang_format_reported_version}: ${clang_format_cmd}")
+  else()
+    message(WARNING "could not run ${clang_format_cmd}:
+    automatic formatting of C++ files will not be possible")
+  endif()
 else()
   message(WARNING "could not find clang-format ${CLANG_FORMAT_VERSION}:
   automatic formatting of C++ files will not be possible")
@@ -333,8 +343,25 @@ macro(gaudi_project project version)
     enable_testing()
   endif()
 
+  # Make sure we select the version of Python provided by LCG (if we are building in that context)
+  if(Python_config_version)
+    set(Python_config_version ${Python_config_version} CACHE STRING "LCG version of Python")
+    find_package(PythonInterp ${Python_config_version} QUIET)
+    find_package(PythonLibs ${Python_config_version} QUIET)
+    if(CMAKE_VERSION VERSION_GREATER 3.12)
+      # This should ensure that FindPython.cmake finds the version we actually want
+      get_filename_component(Python_ROOT_DIR "${PYTHON_EXECUTABLE}" DIRECTORY)
+      get_filename_component(Python_ROOT_DIR "${Python_ROOT_DIR}" DIRECTORY)
+      set(Python_ROOT_DIR "${Python_ROOT_DIR}" CACHE PATH "where to use Python from")
+      set(Python2_ROOT_DIR "${Python_ROOT_DIR}" CACHE PATH "where to use Python from")
+      set(Python3_ROOT_DIR "${Python_ROOT_DIR}" CACHE PATH "where to use Python from")
+      mark_as_advanced(Python_ROOT_DIR Python2_ROOT_DIR Python3_ROOT_DIR)
+    endif()
+    mark_as_advanced(Python_config_version)
+  endif()
+
   #-- Set up the boost_python_version variable for the project
-  find_package(PythonInterp 2.7)
+  find_package(PythonInterp)
   find_package(Boost)
   if((Boost_VERSION GREATER 106700) OR (Boost_VERSION EQUAL 106700))
      set(boost_python_version "${PYTHON_VERSION_MAJOR}${PYTHON_VERSION_MINOR}")
@@ -777,8 +804,11 @@ __path__ = [d for d in [os.path.join(d, '${pypack}') for d in sys.path if d]
             if (d.startswith('${CMAKE_BINARY_DIR}') or
                 d.startswith('${CMAKE_SOURCE_DIR}')) and
                (os.path.exists(d) or 'python.zip' in d)]
-if os.path.exists('${CMAKE_SOURCE_DIR}/${package}/python/${pypack}/__init__.py'):
-    execfile('${CMAKE_SOURCE_DIR}/${package}/python/${pypack}/__init__.py')
+fname = '${CMAKE_SOURCE_DIR}/${package}/python/${pypack}/__init__.py'
+if os.path.exists(fname):
+    with open(fname) as f:
+        code = compile(f.read(), fname, 'exec')
+        exec(code)
 ")
       endforeach()
     endif()
@@ -2755,6 +2785,7 @@ function(gaudi_install_python_modules)
   file(GLOB sub-dir RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} python/*)
   foreach(dir ${sub-dir})
     if(NOT dir STREQUAL python/.svn
+       AND NOT dir MATCHES "__pycache__"
        AND IS_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/${dir}
        AND NOT EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/${dir}/__init__.py)
       set(pyfile ${CMAKE_CURRENT_SOURCE_DIR}/${dir}/__init__.py)
@@ -2786,6 +2817,7 @@ function(gaudi_install_scripts)
           PATTERN "CVS" EXCLUDE
           PATTERN ".svn" EXCLUDE
           PATTERN "*~" EXCLUDE
+          PATTERN "__pycache__" EXCLUDE
           PATTERN "*.pyc" EXCLUDE)
 endfunction()
 
@@ -3230,12 +3262,15 @@ macro(gaudi_external_project_environment)
     list(FIND used_gaudi_projects ${pack} gaudi_project_idx)
     if((NOT pack STREQUAL GaudiProject) AND (gaudi_project_idx EQUAL -1))
       message(STATUS "    ${pack}")
-      # this is needed to get the non-cache variables for the packages
-      find_package(${pack} QUIET)
-
-      if(pack STREQUAL PythonInterp OR pack STREQUAL PythonLibs)
+      if(NOT pack MATCHES "^Python(Interp|Libs)?$")
+        # this is needed to get the non-cache variables for the packages
+        find_package(${pack} QUIET)
+      else()
+        # but Python is a bit special (see https://gitlab.cern.ch/gaudi/Gaudi/issues/88)
+        find_package(${pack} ${Python_config_version} QUIET)
         set(pack Python)
       endif()
+
       string(TOUPPER ${pack} _pack_upper)
 
       set(executable ${${_pack_upper}_EXECUTABLE})

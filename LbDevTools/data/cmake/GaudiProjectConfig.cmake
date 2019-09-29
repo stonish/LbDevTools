@@ -1609,7 +1609,7 @@ function(gaudi_resolve_link_libraries variable)
     # check if it is an actual library or a target first
     if(TARGET ${package})
       get_property(target_type TARGET ${package} PROPERTY TYPE)
-      if(NOT target_type MATCHES "(SHARED|STATIC)_LIBRARY")
+      if(NOT target_type MATCHES "(SHARED|STATIC|UNKNOWN)_LIBRARY")
         message(FATAL_ERROR "${package} is a ${target_type}: you cannot link against it")
       endif()
       #message(STATUS "${package} is a TARGET")

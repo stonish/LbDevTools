@@ -595,12 +595,12 @@ def format():
         lang = can_format(path)
         if lang:
             try:
+                with open(path, 'rb') as f:
+                    input = f.read()
                 if is_empty(path):
                     # make sure virtually empty files are empty
                     output = b''
                 else:
-                    with open(path, 'rb') as f:
-                        input = f.read()
                     output = formatter(input, path, lang)
                 if args.format_patch:
                     patch.extend(

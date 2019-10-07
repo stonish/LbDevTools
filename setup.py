@@ -131,7 +131,7 @@ setup(
     # https://packaging.python.org/en/latest/requirements.html
     install_requires=['LbEnv>=0.3.0', 'LbPlatformUtils',
                       'GitPython' + ('<2.1.12' if version_info < (3, 0) else ''),
-                      'python-gitlab', 'jinja2', 'yapf', 'whichcraft'],
+                      'python-gitlab', 'jinja2', 'yapf==0.24.0', 'whichcraft'],
 
     # List additional groups of dependencies here (e.g. development
     # dependencies). Users will be able to install these using the "extras"

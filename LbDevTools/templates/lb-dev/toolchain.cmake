@@ -27,8 +27,9 @@ if(NOT CMAKE_SOURCE_DIR MATCHES "CMakeTmp")
   # Use the toolchain used by the project we derive from
   list(GET projects 1 first_used_project)
 
-  if(first_used_project STREQUAL "GAUDI")
-    # special case for Gaudi
+  if(first_used_project STREQUAL "GAUDI" 
+     OR NOT EXISTS $${$${first_used_project}_ROOT_DIR}/toolchain.cmake)
+    # special case for Gaudi and projects without a specific toolchain
     include(${datadir}/toolchain.cmake)
   else()
     # special case for Gauss (needs a fix in Gauss toolchain.cmake)

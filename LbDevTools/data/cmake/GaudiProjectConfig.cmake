@@ -346,6 +346,8 @@ macro(gaudi_project project version)
   # Make sure we select the version of Python provided by LCG (if we are building in that context)
   if(Python_config_version)
     set(Python_config_version ${Python_config_version} CACHE STRING "LCG version of Python")
+    # Prevent special LCG versions (like 2.7.9.p1) to confuse CMake
+    string(REGEX REPLACE "([0-9]+\\.[0-9]+\\.[0-9]+).*" "\\1" Python_config_version "${Python_config_version}")
     find_package(PythonInterp ${Python_config_version} QUIET)
     find_package(PythonLibs ${Python_config_version} QUIET)
     if(CMAKE_VERSION VERSION_GREATER 3.12)

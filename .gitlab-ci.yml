@@ -98,8 +98,8 @@ pack-py3:
   dependencies: []
   image: gitlab-registry.cern.ch/lhcb-docker/python-deployment:python-3.7
   script:
-    - python setup.py sdist --dist-dir public/${CI_PROJECT_NAME,,}
-    - python setup.py bdist_wheel --dist-dir public/${CI_PROJECT_NAME,,}
+    - python setup.py sdist --dist-dir public/
+    - python setup.py bdist_wheel --dist-dir public/
   artifacts:
     paths:
       - public
@@ -112,7 +112,7 @@ pack-py2:
   dependencies: []
   image: gitlab-registry.cern.ch/lhcb-docker/python-deployment:python-2.7
   script:
-    - python setup.py bdist_wheel --dist-dir public/${CI_PROJECT_NAME,,}
+    - python setup.py bdist_wheel --dist-dir public/
   artifacts:
     paths:
       - public
@@ -145,8 +145,6 @@ compiler-wrappers-rpm:
     expire_in: 1 week
 
 
-# see https://gitlab.cern.ch/gitlabci-examples/deploy_eos for the details
-# of the configuration
 deploy-packages:
   stage: deploy
   only:
@@ -154,13 +152,10 @@ deploy-packages:
   dependencies:
     - pack-py3
     - pack-py2
-  image: gitlab-registry.cern.ch/ci-tools/ci-web-deployer:latest
+  image: gitlab-registry.cern.ch/lhcb-docker/python-deployment:python-3.7
   script:
-    - test -z "$EOS_ACCOUNT_USERNAME" -o -z "$EOS_ACCOUNT_PASSWORD" -o -z "$EOS_PATH" && exit 0 || true
-    # Script that performs the deploy to EOS. Makes use of the variables defined in the project
-    # It will copy the generated content to the folder in EOS
-    - deploy-eos
-  # do not run any globally defined before_script or after_script for this step
+    - if [ -z "$TWINE_PASSWORD" ] ; then echo "Set TWINE_PASSWORD in CI variables" ; exit 1 ; fi
+    - twine upload -u __token__ public/*
   before_script: []
   after_script: []
 

@@ -14,15 +14,9 @@ cmake_minimum_required(VERSION 3.6)
 # compiler (without the proper cache)
 if(NOT CMAKE_SOURCE_DIR MATCHES "CMakeTmp")
 
-  if(NOT default_toolchain)
-    if(EXISTS ${CMAKE_SOURCE_DIR}/cmake/GaudiDefaultToolchain.cmake)
-      set(default_toolchain ${CMAKE_SOURCE_DIR}/cmake/GaudiDefaultToolchain.cmake)
-    elseif(EXISTS ${CMAKE_CURRENT_LIST_DIR}/cmake/GaudiDefaultToolchain.cmake)
-      set(default_toolchain ${CMAKE_CURRENT_LIST_DIR}/cmake/GaudiDefaultToolchain.cmake)
-    else()
-      find_file(default_toolchain NAMES GaudiDefaultToolchain.cmake)
-    endif()
-  endif()
+  find_file(default_toolchain NAMES GaudiDefaultToolchain.cmake
+            HINTS ${CMAKE_SOURCE_DIR}/cmake
+                  ${CMAKE_CURRENT_LIST_DIR}/cmake)
   if(default_toolchain)
     include(${default_toolchain})
   else()

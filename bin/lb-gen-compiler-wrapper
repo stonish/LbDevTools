@@ -65,6 +65,10 @@ setup_gcc() {
         fi
         # default (if not set)
         : ${_binutils_version:=2.28}
+        # force more recent binutils for gcc 9 (see https://sft.its.cern.ch/jira/browse/SPI-1472)
+        if [[ "${_version}" == 9.* ]] ; then
+          _binutils_version=2.33.1
+        fi
         # FIXME: we have to hardcode the path to the latest binutils, just in case
         new_LIB_PATH=${MYSITEROOT}/lcg/releases/binutils/${_binutils_version}/${_platform}/lib${new_LIB_PATH:+:${new_LIB_PATH}}
         new_BIN_PATH=${MYSITEROOT}/lcg/releases/binutils/${_binutils_version}/${_platform}/bin${new_BIN_PATH:+:${new_BIN_PATH}}

@@ -130,13 +130,13 @@ compiler-wrappers-rpm:
   script:
     - mkdir -p ~/rpmbuild/SOURCES public
     - cp bin/lb-gen-compiler-wrapper /userhome/rpmbuild/SOURCES
-    - rpm_name=$(awk '/^Name/{n = $2}/Version/{v = $2}/Release/{r = $2}END{printf("%s-%s-%s.noarch.rpm\n", n, v, r)}'
-                 rpm/CompilerWrappers.spec)
+    - rpmbuild -bb rpm/CompilerWrappers.spec
+    - rpm_name=$(ls /userhome/rpmbuild/RPMS/noarch/ | grep 'rpm$' | head -1)
+    - mv /userhome/rpmbuild/RPMS/noarch/${rpm_name} public
     - if curl --silent --head ${RPM_REPO_URL}${rpm_name} | grep -q "200 OK" ; then
-    -   echo "${rpm_name} already in ${RPM_REPO_URL}, nothing to do"
+    -   echo "${rpm_name} already in ${RPM_REPO_URL}, will not deploy"
     - else
-    -   rpmbuild -bb rpm/CompilerWrappers.spec
-    -   mv /userhome/rpmbuild/RPMS/noarch/${rpm_name} public
+    -   touch public/to_deploy
     - fi
   artifacts:
     paths:
@@ -169,13 +169,13 @@ deploy-rpm:
     # Script that performs the deploy to EOS. Makes use of the variables defined in the project
     # It will copy the generated content to the folder in EOS
     - export EOS_PATH=${RPM_REPO_EOS}
-    - count=$(find public -type f | wc -l)
-    - if [ "$count" = "0" ] ; then
-    -   echo "nothing to publish"
-    - else
-    -   echo "publishing $count files:"
+    - if [ -e public/to_deploy ] ; then
+    -   rm -f public/to_deploy
+    -   echo "publishing $(find public -type f -ls | wc -l) files:"
     -   find public -type f -ls
     -   deploy-eos
+    - else
+    -   echo "nothing to publish"
     - fi
   # do not run any globally defined before_script or after_script for this step
   before_script: []

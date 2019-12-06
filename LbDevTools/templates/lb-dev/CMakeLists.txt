@@ -18,9 +18,5 @@ gaudi_project(${local_project} ${local_version}${with_fortran}
               USE ${project} ${version})
 
 # Enable Ganga integration
-include(GangaTools OPTIONAL RESULT_VARIABLE GangaTools_FOUND)
-if(GangaTools_FOUND)
-  enable_ganga_integration()
-else()
-  message(WARNING "Ganga integration not available (cannot find GangaTools.cmake)")
-endif()
+include(${datadir}/cmake/GangaTools.cmake)
+enable_ganga_integration()

@@ -213,6 +213,9 @@ set(GAUDI_CXX_STANDARD "${GAUDI_CXX_STANDARD_DEFAULT}"
 if(ROOT_CXX_STANDARD AND NOT ROOT_CXX_STANDARD STREQUAL GAUDI_CXX_STANDARD)
   message(WARNING "Requested ${GAUDI_CXX_STANDARD} but ROOT was compiled with ${ROOT_CXX_STANDARD}")
 endif()
+if(NOT GAUDI_CXX_STANDARD MATCHES "^c\\+\\+")
+  string(PREPEND GAUDI_CXX_STANDARD "c++")
+endif()
 
 # If modern c++ and gcc >= 5.1 and requested, use old ABI compatibility
 if((NOT GAUDI_CXX_STANDARD STREQUAL "c++98") AND

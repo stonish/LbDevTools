@@ -4,6 +4,8 @@ include(GaudiToolchainMacros)
 
 init()
 find_projects(projects tools ${CMAKE_SOURCE_DIR}/CMakeLists.txt)
+# We look for GaudiProject here to use the information in HEPToolsMacros
+find_package(GaudiProject QUIET)
 
 if(heptools_version)
   include(UseHEPTools)
@@ -16,7 +18,6 @@ endif()
 set_paths_from_projects(${tools} ${projects})
 
 # set legacy variables for backward compatibility
-find_package(GaudiProject QUIET)
 if(NOT EXISTS "${GaudiProject_DIR}/BinaryTagUtils.cmake")
   # with newer versions of Gaudi these variables are set after the toolchain,
   # but we have to set them here for old versions

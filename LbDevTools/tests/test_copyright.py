@@ -12,7 +12,7 @@ from __future__ import print_function
 
 from os.path import join, dirname, splitext
 
-import LbDevTools.CopyrightCheck as C
+import LbDevTools.SourceTools as C
 
 
 DATA_DIR = join(dirname(__file__), 'data')

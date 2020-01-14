@@ -5,10 +5,7 @@
 #
 # Commit Id: 46d42edcd585b518dc3e9ca4475549e33708ec0c
 
-cmake_minimum_required(VERSION 3.6)
-if(POLICY CMP0077)
-  cmake_policy(SET CMP0077 NEW)
-endif()
+cmake_minimum_required(VERSION 3.13)
 
 # Preset the CMAKE_MODULE_PATH from the environment, if not already defined.
 if(NOT CMAKE_MODULE_PATH)
@@ -54,53 +51,7 @@ endif()
 find_program(ccache_cmd NAMES ccache ccache-swig)
 find_program(distcc_cmd distcc)
 find_program(icecc_cmd icecc)
-
-set(CLANG_FORMAT_VERSION "8" CACHE STRING "Version of clang-format to use")
-find_program(clang_format_cmd
-  NAMES lcg-clang-format-${CLANG_FORMAT_VERSION}
-        lcg-clang-format-${CLANG_FORMAT_VERSION}.0
-        lcg-clang-format-${CLANG_FORMAT_VERSION}.0.0
-        clang-format-${CLANG_FORMAT_VERSION}
-        gaudi-clang-format-${CLANG_FORMAT_VERSION})
-if(clang_format_cmd)
-  execute_process(COMMAND ${clang_format_cmd} -version
-                  RESULT_VARIABLE _clang_format_working
-                  OUTPUT_VARIABLE _clang_format_reported_version
-                  ERROR_QUIET
-                  OUTPUT_STRIP_TRAILING_WHITESPACE)
-  if (_clang_format_working EQUAL 0)
-    message(STATUS "found ${_clang_format_reported_version}: ${clang_format_cmd}")
-  else()
-    message(WARNING "could not run ${clang_format_cmd}:
-    automatic formatting of C++ files will not be possible")
-  endif()
-else()
-  message(WARNING "could not find clang-format ${CLANG_FORMAT_VERSION}:
-  automatic formatting of C++ files will not be possible")
-endif()
-
-set(YAPF_VERSION "0.24.0" CACHE STRING "Version of yapf to use")
-if(NOT yapf_cmd)
-  find_program(yapf_cmd NAMES yapf)
-  if(yapf_cmd)
-    execute_process(COMMAND "${yapf_cmd}" --version
-        OUTPUT_VARIABLE yapf_detected_version
-        OUTPUT_STRIP_TRAILING_WHITESPACE)
-    string(REGEX REPLACE "yapf *" "" yapf_detected_version "${yapf_detected_version}")
-    if(NOT yapf_detected_version STREQUAL YAPF_VERSION)
-      message(STATUS "ignoring yapf: found yapf ${yapf_detected_version}, but ${YAPF_VERSION} required")
-      set(yapf_cmd "yapf-NOTFOUND" CACHE FILEPATH "yapf command" FORCE)
-    endif()
-  endif()
-endif()
-if(yapf_cmd)
-  message(STATUS "found yapf ${YAPF_VERSION}: ${yapf_cmd}")
-else()
-  message(WARNING "could not find yapf ${YAPF_VERSION}:
-  automatic formatting of Python files will not be possible")
-endif()
-
-mark_as_advanced(ccache_cmd distcc_cmd icecc_cmd clang_format_cmd)
+mark_as_advanced(ccache_cmd distcc_cmd icecc_cmd)
 
 if(ccache_cmd)
   option(CMAKE_USE_CCACHE "Use ccache to speed up compilation." OFF)
@@ -133,14 +84,6 @@ if(_distributed_compiler)
   else()
     set(GAUDI_RULE_LAUNCH_COMPILE "${GAUDI_RULE_LAUNCH_COMPILE} ${_distributed_compiler}")
     message(STATUS "Using ${_distributed_compiler} for building")
-  endif()
-endif()
-
-if(clang_format_cmd AND NOT GAUDI_CLANG_STYLE)
-  if(EXISTS ${CMAKE_SOURCE_DIR}/.clang-format)
-    set(GAUDI_CLANG_STYLE file CACHE STRING "style to use for clang-format (apply-formatting command and target)")
-  else()
-    set(GAUDI_CLANG_STYLE google CACHE STRING "style to use for clang-format (apply-formatting command and target)")
   endif()
 endif()
 
@@ -296,6 +239,9 @@ macro(gaudi_project project version)
     set(CMAKE_PROJECT_VERSION_TWEAK 0)
   endif()
 
+  # Prevent use of new style Gaudi helper functions
+  set(GAUDI_NO_TOOLBOX TRUE)
+
   #--- Project Options and Global settings----------------------------------------------------------
   option(BUILD_SHARED_LIBS "Set to OFF to build static libraries." ON)
   option(GAUDI_BUILD_TESTS "Set to OFF to disable the build of the tests (libraries and executables)." ON)
@@ -363,12 +309,12 @@ macro(gaudi_project project version)
   endif()
 
   #-- Set up the boost_python_version variable for the project
-  find_package(PythonInterp)
+  find_package(Python ${Python_config_version} COMPONENTS Interpreter)
   find_package(Boost)
-  if((Boost_VERSION GREATER 106700) OR (Boost_VERSION EQUAL 106700))
-     set(boost_python_version "${PYTHON_VERSION_MAJOR}${PYTHON_VERSION_MINOR}")
+  if((Boost_VERSION LESS 106700) OR (Boost_VERSION GREATER 1069000))
+    set(boost_python_version "")
   else()
-     set(boost_python_version "")
+    set(boost_python_version "${Python_VERSION_MAJOR}${Python_VERSION_MINOR}")
   endif()
 
   #--- Allow installation on failed builds
@@ -425,6 +371,43 @@ macro(gaudi_project project version)
   set(LCG_system   ${LCG_SYSTEM}-opt)
   set(LCG_HOST_ARCH "${CMAKE_HOST_SYSTEM_PROCESSOR}")
   string(REPLACE "." "" LCG_COMPVERS "${BINARY_TAG_COMP_VERSION}")
+
+  # Search standard libraries.
+  set(std_library_path)
+  if(CMAKE_HOST_UNIX)
+    # Guess the LD_LIBRARY_PATH required by the compiler we use (only Unix).
+    _gaudi_find_standard_lib(libstdc++.so std_library_path)
+    if (CMAKE_CXX_COMPILER MATCHES "icpc")
+      _gaudi_find_standard_lib(libimf.so icc_libdir)
+      set(std_library_path ${std_library_path} ${icc_libdir})
+    endif()
+    # this ensures that the std libraries are in RPATH
+    link_directories(${std_library_path})
+    # and in the LD_LIBRARY_PATH usd at configure time (required by some modules)
+    foreach(_ldir IN LISTS std_library_path)
+      if("$ENV{LD_LIBRARY_PATH}" STREQUAL "")
+        set(ENV{LD_LIBRARY_PATH} "${_ldir}")
+      else()
+        set(ENV{LD_LIBRARY_PATH} "${_ldir}:$ENV{LD_LIBRARY_PATH}")
+      endif()
+    endforeach()
+    # find the real path to the compiler
+    set(compiler_bin_path)
+    get_filename_component(cxx_basename "${CMAKE_CXX_COMPILER}" NAME)
+    if(cxx_basename MATCHES "lcg-([^-]*)-.*")
+      # the correct path to the compiler may not contain the lcg-abc-X.Y.Z link
+      set(cxx_basename "${CMAKE_MATCH_1}")
+    endif()
+    foreach(_ldir ${std_library_path})
+      while(NOT _ldir STREQUAL "/")
+        get_filename_component(_ldir "${_ldir}" PATH)
+        if(EXISTS "${_ldir}/bin/${cxx_basename}")
+          set(compiler_bin_path ${compiler_bin_path} "${_ldir}/bin")
+          break()
+        endif()
+      endwhile()
+    endforeach()
+  endif()
 
   # Locate and import used projects.
   if(PROJECT_USE)
@@ -525,10 +508,20 @@ main()")
   find_program(gaudirun_cmd gaudirun.py HINTS ${binary_paths})
   set(gaudirun_cmd ${PYTHON_EXECUTABLE} ${gaudirun_cmd})
 
+  find_program(CTestXML2HTML_cmd CTestXML2HTML HINTS ${binary_paths})
+  if(CTestXML2HTML_cmd)
+    set(CTestXML2HTML_cmd ${PYTHON_EXECUTABLE} ${CTestXML2HTML_cmd})
+  endif()
+
   # genconf is special because it must be known before we actually declare the
   # target in GaudiKernel/src/Util (because we need to be dynamic and agnostic).
   if(TARGET genconf)
     get_target_property(genconf_cmd genconf IMPORTED_LOCATION)
+  elseif(TARGET Gaudi::genconf)
+    set(genconf_cmd "$<TARGET_FILE:Gaudi::genconf>")
+    # only recent enough versions of Gaudi expose this target
+    set(GENCONF_WITH_NO_INIT YES
+        CACHE BOOL "Whether the genconf command supports the options --no-init")
   else()
     if (NOT GAUDI_USE_EXE_SUFFIX)
       set(genconf_cmd ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/genconf)
@@ -539,12 +532,17 @@ main()")
   # similar case for listcomponents
   if(TARGET listcomponents)
     get_target_property(listcomponents_cmd listcomponents IMPORTED_LOCATION)
+    set(listcomponents_tgt listcomponents)
+  elseif(TARGET Gaudi::listcomponents)
+    set(listcomponents_cmd "$<TARGET_FILE:Gaudi::listcomponents>")
+    set(listcomponents_tgt Gaudi::listcomponents)
   else()
     if (NOT GAUDI_USE_EXE_SUFFIX)
       set(listcomponents_cmd ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/listcomponents)
     else()
       set(listcomponents_cmd ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/listcomponents.exe)
     endif()
+    set(listcomponents_tgt ${listcomponents_cmd})
   endif()
   # same as genconf (but it might never be built because it's needed only on WIN32)
   if(TARGET genwindef)
@@ -555,6 +553,7 @@ main()")
 
   mark_as_advanced(env_cmd default_merge_cmd versheader_cmd
                    qmtest_metadata_cmd
+                   CTestXML2HTML_cmd
                    genconfuser_cmd zippythondir_cmd gaudirun_cmd)
 
   #--- Project Installations------------------------------------------------------------------------
@@ -603,34 +602,8 @@ main()")
   #message(STATUS "${packages}")
   set(packages ${sorted_packages})
   #message(STATUS "${packages}")
-
-  # Search standard libraries.
-  set(std_library_path)
-  if(CMAKE_HOST_UNIX)
-    # Guess the LD_LIBRARY_PATH required by the compiler we use (only Unix).
-    _gaudi_find_standard_lib(libstdc++.so std_library_path)
-    if (CMAKE_CXX_COMPILER MATCHES "icpc")
-      _gaudi_find_standard_lib(libimf.so icc_libdir)
-      set(std_library_path ${std_library_path} ${icc_libdir})
-    endif()
-    # this ensures that the std libraries are in RPATH
-    link_directories(${std_library_path})
-    # find the real path to the compiler
-    set(compiler_bin_path)
-    get_filename_component(cxx_basename "${CMAKE_CXX_COMPILER}" NAME)
-    if(cxx_basename MATCHES "lcg-([^-]*)-.*")
-      # the correct path to the compiler may not contain the lcg-abc-X.Y.Z link
-      set(cxx_basename "${CMAKE_MATCH_1}")
-    endif()
-    foreach(_ldir ${std_library_path})
-      while(NOT _ldir STREQUAL "/")
-        get_filename_component(_ldir "${_ldir}" PATH)
-        if(EXISTS "${_ldir}/bin/${cxx_basename}")
-          set(compiler_bin_path ${compiler_bin_path} "${_ldir}/bin")
-          break()
-        endif()
-      endwhile()
-    endforeach()
+  if(GAUDIPROJECT_LIMIT_PKGS)
+    list(SUBLIST packages 0 ${GAUDIPROJECT_LIMIT_PKGS} packages)
   endif()
 
   file(WRITE ${CMAKE_BINARY_DIR}/subdirs_deps.dot "digraph subdirs_deps {\n")
@@ -873,9 +846,11 @@ if os.path.exists(fname):
   if(GAUDI_BUILD_TESTS)
     #--- Special target to generate HTML reports from CTest XML reports.
     add_custom_target(HTMLSummary)
-    add_custom_command(TARGET HTMLSummary
-                       COMMAND ${env_cmd} --xml ${env_xml}
-                               CTestXML2HTML)
+    if(CTestXML2HTML_cmd)
+      add_custom_command(TARGET HTMLSummary
+                         COMMAND ${env_cmd} --xml ${env_xml}
+                                 ${CTestXML2HTML_cmd})
+    endif()
   endif()
 
 
@@ -895,44 +870,6 @@ if os.path.exists(fname):
   gaudi_generate_project_manifest(${CMAKE_CONFIG_OUTPUT_DIRECTORY}/manifest.xml
                                   ${project} ${version} ${_manifest_args})
   install(FILES ${CMAKE_CONFIG_OUTPUT_DIRECTORY}/manifest.xml DESTINATION .)
-
-  #--- Settings to allow re-formatting of files (C++ and Python)
-  add_custom_target(apply-formatting)
-  file(WRITE ${CMAKE_BINARY_DIR}/apply-formatting "#!/bin/sh
-for f in \"$@\" ; do
-  case \"$f\" in
-    (*.h|*.cpp|*.icpp|*.icc)\n")
-  if(clang_format_cmd)
-    file(GLOB_RECURSE _all_sources RELATIVE ${CMAKE_SOURCE_DIR} *.h *.cpp *.icpp *.icc)
-    # Filter out files in InstallArea and build areas.
-    list(FILTER _all_sources EXCLUDE REGEX "InstallArea/.*|build\\..*")
-    add_custom_target(apply-formatting-c++
-      COMMAND ${clang_format_cmd}
-                  -style=${GAUDI_CLANG_STYLE}
-                  -i ${_all_sources}
-      WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-      COMMENT "Applying coding conventions to C++ sources"
-    )
-    add_dependencies(apply-formatting apply-formatting-c++)
-    file(APPEND ${CMAKE_BINARY_DIR}/apply-formatting "      ${clang_format_cmd} -style=${GAUDI_CLANG_STYLE} -i \"$f\" ;;\n")
-  else()
-    file(APPEND ${CMAKE_BINARY_DIR}/apply-formatting "      echo 'formatting of c++ code not supported (install clang-format-${CLANG_FORMAT_VERSION} first)' ; exit 1 ;;\n")
-  endif()
-
-  file(APPEND ${CMAKE_BINARY_DIR}/apply-formatting "    (*.py)\n")
-  if(yapf_cmd)
-    add_custom_target(apply-formatting-python
-      COMMAND ${yapf_cmd}
-                  --recursive --in-place --exclude ${CMAKE_BINARY_DIR} --exclude InstallArea ${CMAKE_SOURCE_DIR}
-      COMMENT "Applying coding conventions to Python sources"
-    )
-    add_dependencies(apply-formatting apply-formatting-python)
-    file(APPEND ${CMAKE_BINARY_DIR}/apply-formatting "      ${yapf_cmd} --in-place \"$f\" ;;\n")
-  else()
-    file(APPEND ${CMAKE_BINARY_DIR}/apply-formatting "      echo 'formatting of Python code not supported (install yapf ${YAPF_VERSION} first)' ; exit 1 ;;\n")
-  endif()
-  file(APPEND ${CMAKE_BINARY_DIR}/apply-formatting "    (*) echo \"unknown file type $f\" ;;\n  esac\ndone\n")
-  execute_process(COMMAND chmod a+x ${CMAKE_BINARY_DIR}/apply-formatting)
 endmacro()
 
 #-------------------------------------------------------------------------------
@@ -990,9 +927,11 @@ macro(_gaudi_use_other_projects)
                   ${other_project})
         foreach(_s2 "" "/InstallArea")
           foreach(_s3 "" "/${BINARY_TAG}" "/${LCG_platform}" "/${LCG_system}")
-            set(suffixes ${suffixes} ${_s1}${_s2}${_s3})
+            foreach(_s4 "" "/lib/cmake/${other_project}")
+              set(suffixes ${suffixes} ${_s1}${_s2}${_s3}${_s4})
           endforeach()
         endforeach()
+      endforeach()
       endforeach()
       list(REMOVE_DUPLICATES suffixes)
       #message(STATUS "project: ${other_project} version: ${${other_project}_version} dir: ${${other_project}_DIR} cmake: ${other_project_cmake_version}")
@@ -1003,6 +942,9 @@ macro(_gaudi_use_other_projects)
                    PATH_SUFFIXES ${suffixes})
       if(${other_project}_FOUND)
         message(STATUS "  found ${other_project} ${${other_project}_VERSION} ${${other_project}_DIR}")
+        if(EXISTS ${${other_project}_DIR}/.metadata.cmake)
+          include(${${other_project}_DIR}/.metadata.cmake)
+        endif()
         if(heptools_version)
           if(NOT heptools_version STREQUAL ${other_project}_heptools_version)
             if(${other_project}_heptools_version)
@@ -1609,6 +1551,21 @@ function(gaudi_resolve_link_libraries variable)
   set(collected)
   foreach(package ${ARGN})
     # check if it is an actual library or a target first
+    if(NOT TARGET ${package})
+      if(package MATCHES "^Boost::(.*)$")
+        # special handling of Boost imported targets
+        find_package(Boost COMPONENTS ${CMAKE_MATCH_1} QUIET)
+      else()
+        # the target might be in a project namespace
+        foreach(_p IN LISTS used_gaudi_projects)
+          if(TARGET ${_p}::${package})
+            #message(STATUS "using ${_p}::${package} for ${package}")
+            set(package ${_p}::${package})
+            break()
+          endif()
+        endforeach()
+      endif()
+    endif()
     if(TARGET ${package})
       get_property(target_type TARGET ${package} PROPERTY TYPE)
       if(NOT target_type MATCHES "(SHARED|STATIC|UNKNOWN)_LIBRARY")
@@ -1659,6 +1616,19 @@ function(gaudi_resolve_link_libraries variable)
   endforeach()
   #message(STATUS "gaudi_resolve_link_libraries collected: ${collected}")
   _gaudi_strip_build_type_libs(collected)
+  # resolve missing Boost::* targets, if needed
+  set(boost_components ${collected})
+  list(FILTER boost_components INCLUDE REGEX "^Boost::")
+  list(TRANSFORM boost_components REPLACE "^Boost::" "")
+  set(missing_components)
+  foreach(comp IN LISTS boost_components)
+    if(NOT TARGET Boost::${comp})
+      list(APPEND missing_components ${comp})
+    endif()
+  endforeach()
+  if(missing_components)
+    find_package(Boost COMPONENTS ${missing_components} QUIET)
+  endif()
   #message(STATUS "gaudi_resolve_link_libraries output: ${collected}")
   set(${variable} ${collected} PARENT_SCOPE)
 endfunction()
@@ -1793,9 +1763,14 @@ function(gaudi_generate_configurables library)
   endif()
 
   if(NOT GaudiCoreSvcIsImported) # it's a local target
-    set(conf_depends ${conf_depends} GaudiCoreSvc genconf)
+    set(conf_depends ${conf_depends} GaudiCoreSvc)
   else()
-    set(conf_depends ${conf_depends} genconf)
+    set(conf_depends ${conf_depends})
+  endif()
+  if(TARGET genconf)
+    list(APPEND conf_depends genconf)
+  elseif(TARGET Gaudi::genconf)
+    list(APPEND conf_depends Gaudi::genconf)
   endif()
 
   if(ARG_USER_MODULE)
@@ -2248,7 +2223,13 @@ function(gaudi_add_module library)
                          LINK_LIBRARIES ${ARG_LINK_LIBRARIES} INCLUDE_DIRS ${ARG_INCLUDE_DIRS})
 
   add_library(${library} MODULE ${srcs})
-  target_link_libraries(${library} GaudiPluginService ${ARG_LINK_LIBRARIES})
+  target_link_libraries(${library} ${ARG_LINK_LIBRARIES})
+  if(TARGET Gaudi::GaudiPluginService)
+    target_link_libraries(${library} Gaudi::GaudiPluginService)
+  else()
+    target_link_libraries(${library} GaudiPluginService)
+  endif()
+
   _gaudi_detach_debinfo(${library})
 
   gaudi_generate_componentslist(${library})
@@ -2442,14 +2423,28 @@ function(gaudi_add_unit_test executable)
     endif()
 
     if (${${executable}_UNIT_TEST_TYPE} STREQUAL "Boost")
+      if(NOT TARGET Boost::unit_test_framework)
       find_package(Boost COMPONENTS unit_test_framework REQUIRED)
+      endif()
+      # check Boost configuration style
+      if(TARGET Boost::unit_test_framework)
+        # Boost CMake configuration
+        set(_link Boost::unit_test_framework)
+        set(_include)
+      else()
+        # FindBoost.cmake
+        set(_link Boost)
+        set(_include Boost)
+      endif()
     else()
       find_package(${${executable}_UNIT_TEST_TYPE} QUIET REQUIRED)
+      set(_link ${${executable}_UNIT_TEST_TYPE})
+      set(_include ${${executable}_UNIT_TEST_TYPE})
     endif()
 
     gaudi_add_executable(${executable} ${srcs}
-                         LINK_LIBRARIES ${ARG_LINK_LIBRARIES} ${${executable}_UNIT_TEST_TYPE}
-                         INCLUDE_DIRS ${ARG_INCLUDE_DIRS} ${${executable}_UNIT_TEST_TYPE})
+                         LINK_LIBRARIES ${ARG_LINK_LIBRARIES} ${_link}
+                         INCLUDE_DIRS ${ARG_INCLUDE_DIRS} ${_include})
 
     gaudi_get_package_name(package)
 
@@ -2902,7 +2897,7 @@ function(gaudi_generate_componentslist library)
                      COMMAND ${env_cmd}
                        --xml ${env_xml}
                      ${listcomponents_cmd} --output ${componentsfile} ${libname}
-                     DEPENDS ${library} listcomponents)
+                     DEPENDS ${library} ${listcomponents_tgt})
   add_custom_target(${library}ComponentsList ALL DEPENDS ${componentsfile})
   # ensure that the componentslist file is found at build time (GAUDI-1055)
   gaudi_build_env(PREPEND LD_LIBRARY_PATH ${CMAKE_CURRENT_BINARY_DIR})
@@ -3185,7 +3180,8 @@ function(gaudi_generate_env_conf filename)
   # include inherited environments
   # (note: it's important that the full search path is ready before we start including)
   foreach(other_project ${used_gaudi_projects} ${used_data_packages} ${inherited_data_packages})
-    set(val "${${other_project}_DIR}")
+    # use "${${other_project}_DIR}" optionally removing a trailing "/lib/cmake/<Project>" (new installation style)
+    string(REGEX REPLACE "/lib/cmake/${other_project}\$" "" val "${${other_project}_DIR}")
     _make_relocatable(val VARS ${root_vars})
     set(data "${data}  <env:search_path>${val}</env:search_path>\n")
   endforeach()
@@ -3264,6 +3260,14 @@ macro(gaudi_external_project_environment)
     list(FIND used_gaudi_projects ${pack} gaudi_project_idx)
     if((NOT pack STREQUAL GaudiProject) AND (gaudi_project_idx EQUAL -1))
       message(STATUS "    ${pack}")
+      if(pack STREQUAL Boost)
+        if(NOT TARGET Boost::headers)
+          # this is needed to get the non-cache variables for the packages
+          # but we do not need to call it if we do not use FindBoost.cmake (Boost >= 1.70)
+          find_package(${pack} QUIET)
+        endif()
+      endif()
+
       if(NOT pack MATCHES "^Python(Interp|Libs)?$")
         # this is needed to get the non-cache variables for the packages
         find_package(${pack} QUIET)
@@ -3310,6 +3314,17 @@ macro(gaudi_external_project_environment)
           # FIXME: this should not be needed, but it seems that LCG Qt5 requires it
           if(NOT environment MATCHES QT_XKB_CONFIG_ROOT)
             list(APPEND environment SET QT_XKB_CONFIG_ROOT "/usr/share/X11/xkb")
+          endif()
+        endif()
+      elseif(pack MATCHES "^boost_(.*)$")
+        # We are using BoostConfig.cmake (>=1.70) and not FindBoost.cmake
+        if(TARGET "Boost::${CMAKE_MATCH_1}")
+          set(tgt_name "Boost::${CMAKE_MATCH_1}")
+          get_property(target_type TARGET ${tgt_name} PROPERTY TYPE)
+          if(target_type MATCHES "(SHARED|UNKNOWN)_LIBRARY")
+            # FIXME: I'm not sure it's good to rely on the "_RELEASE" suffix
+            get_property(lib_path TARGET ${tgt_name} PROPERTY IMPORTED_LOCATION_RELEASE)
+            get_filename_component(${pack}_LIBRARY_DIR "${lib_path}" PATH)
           endif()
         endif()
       endif()
@@ -3586,6 +3601,16 @@ function(gaudi_generate_project_manifest filename project version)
   message(STATUS "Generating ${fn}")
   file(WRITE ${filename} "${data}")
 endfunction()
+
+# This helper might be provided by Gaudi
+if(NOT COMMAND __silence_header_warnings)
+  function(__silence_header_warnings)
+    foreach(target IN LISTS ARGN)
+      set_target_properties(${target} PROPERTIES
+          INTERFACE_SYSTEM_INCLUDE_DIRECTORIES $<TARGET_PROPERTY:${target},INTERFACE_INCLUDE_DIRECTORIES>)
+    endforeach()
+  endfunction()
+endif()
 
 # uncomment for instrumentation of cmake
 #include("Instrument")

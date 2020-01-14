@@ -180,6 +180,10 @@ macro(lcg_prepare_paths)
   if(Python_config_version)
     string(REGEX MATCH "[0-9]+\\.[0-9]+" Python_config_version_twodigit ${Python_config_version})
     set(Python_ADDITIONAL_VERSIONS ${Python_config_version_twodigit})
+    # prevent find_package(Python) too look into the path
+    set(Python_ROOT_DIR "${Python_home}")
+    set(Python2_ROOT_DIR "${Python_home}")
+    set(Python3_ROOT_DIR "${Python_home}")
   endif()
 
   # Note: this is needed because FindBoost.cmake requires both if the patch version is 0.
@@ -211,8 +215,21 @@ macro(lcg_prepare_paths)
       endif()
       #message(STATUS "Boost compiler suffix: ${Boost_COMPILER}")
     endif()
-    set(Boost_NO_BOOST_CMAKE ON)
-    set(Boost_NO_SYSTEM_PATHS ON)
+    # Use BoostConfig for Boost >= 1.70 and when we pick GaudiProjectConfig.cmake from LbDevTools,
+    # meaning disable BoostConfig for Boost < 1.70 or when GaudiProjectConfig.cmake comes from Gaudi InstallArea
+    if (Boost_config_version VERSION_LESS 1.70 OR NOT GaudiProject_DIR STREQUAL CMAKE_CURRENT_LIST_DIR)
+      # Do not use BoostConfig
+      # message(WARNING "Use FindBoost.cmake")
+      set(Boost_NO_BOOST_CMAKE ON)
+      set(Boost_NO_SYSTEM_PATHS ON)
+    else()
+      # message(WARNING "Use BoostConfig.cmake")
+      if(LCG_TOOLCHAIN_INFO MATCHES "-dbg\\.txt$")
+        set(Boost_USE_DEBUG_RUNTIME TRUE)
+      else()
+        set(Boost_USE_DEBUG_RUNTIME FALSE)
+      endif()
+    endif()
   endif()
 
   # Required if both Qt3 and Qt4 are available.

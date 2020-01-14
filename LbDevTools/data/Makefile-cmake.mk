@@ -42,6 +42,7 @@
 
 # settings
 CMAKE := cmake
+CMAKE_WITH_INSTALL := $(shell $(CMAKE) --help | grep -q -- --install && echo YES)
 CTEST := ctest
 NINJA := $(shell which ninja 2> /dev/null)
 
@@ -134,7 +135,11 @@ ifeq ($(VERBOSE),)
 # less verbose install (see GAUDI-1018)
 # (emulate the default CMake install target)
 install: all
+ifeq ($(CMAKE_WITH_INSTALL),YES)
+	$(CMAKE) --install $(BUILDDIR) | grep -v "^-- Up-to-date:"
+else
 	cd $(BUILDDIR) && $(CMAKE) -P cmake_install.cmake | grep -v "^-- Up-to-date:"
+endif
 endif
 
 # ensure that the target are always passed to the CMake Makefile
@@ -148,5 +153,4 @@ $(MAKEFILE_LIST):
 
 # trigger CMake configuration
 $(BUILDDIR)/$(BUILD_CONF_FILE):
-	mkdir -p $(BUILDDIR)
-	cd $(BUILDDIR) && $(CMAKE) $(CMAKEFLAGS) $(CURDIR)
+	$(CMAKE) -S $(CURDIR) -B $(BUILDDIR) $(CMAKEFLAGS)

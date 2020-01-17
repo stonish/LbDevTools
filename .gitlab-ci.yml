@@ -163,11 +163,13 @@ deploy-rpm:
     - compiler-wrappers-rpm
   script:
     - test -z "$REPO_USERNAME" -o -z "$REPO_PASSWORD" && exit 0 || true
-    - cd public
-    - for rpm in $(find . -name "*.rpm") ; do
-    -   echo $rpm
-    -   curl --user "$REPO_USERNAME:$REPO_PASSWORD" -T $rpm $RPM_REPO_URL
-    - done
+    - if [ -e public/to_deploy ] ; then
+    -   cd public
+    -   for rpm in $(find -name "*.rpm") ; do
+    -     echo $rpm
+    -     curl --user "$REPO_USERNAME:$REPO_PASSWORD" -T $rpm $RPM_REPO_URL
+    -   done
+    - fi
   # do not run any globally defined before_script or after_script for this step
   before_script: []
   after_script: []

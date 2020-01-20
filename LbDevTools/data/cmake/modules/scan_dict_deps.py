@@ -40,8 +40,9 @@ def find_deps(filename, searchpath, deps=None):
     # included files, ignoring those already included in the recursion
     INCLUDE_RE = re.compile(r'^\s*#\s*include\s*["<]([^">]*)[">]')
     deps.update(
-        find_file(m.group(1), searchpath)
-        for m in [INCLUDE_RE.match(l) for l in open(filename)] if m)
+        f for f in (find_file(m.group(1), searchpath)
+                    for m in (INCLUDE_RE.match(l) for l in open(filename))
+                    if m) if f)
     for included in (deps - old_deps):
         find_deps(included, searchpath, deps)
 

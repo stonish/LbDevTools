@@ -1,4 +1,14 @@
 #!/usr/bin/env python
+###############################################################################
+# (c) Copyright 2019 CERN                                                     #
+#                                                                             #
+# This software is distributed under the terms of the GNU General Public      #
+# Licence version 3 (GPL Version 3), copied verbatim in the file "COPYING".   #
+#                                                                             #
+# In applying this licence, CERN does not waive the privileges and immunities #
+# granted to it by virtue of its status as an Intergovernmental Organization  #
+# or submit itself to any jurisdiction.                                       #
+###############################################################################
 from __future__ import print_function
 import re
 
@@ -40,8 +50,9 @@ def find_deps(filename, searchpath, deps=None):
     # included files, ignoring those already included in the recursion
     INCLUDE_RE = re.compile(r'^\s*#\s*include\s*["<]([^">]*)[">]')
     deps.update(
-        find_file(m.group(1), searchpath)
-        for m in [INCLUDE_RE.match(l) for l in open(filename)] if m)
+        f for f in (find_file(m.group(1), searchpath)
+                    for m in (INCLUDE_RE.match(l) for l in open(filename))
+                    if m) if f)
     for included in (deps - old_deps):
         find_deps(included, searchpath, deps)
 
@@ -93,5 +104,5 @@ def main():
             )
 
 
-if __name__ == '__main__':
+if __name__ == '__main__':  # pragma no cover
     main()

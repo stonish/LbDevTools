@@ -573,20 +573,25 @@ main()")
   #             a version of the script that is compatible with the
   #             GaudiBuildFlags module we are going to use
   set(CMAKE_PREFIX_PATH ${CMAKE_MODULE_PATH} ${CMAKE_PREFIX_PATH})
-  unset(HOST_BINARY_TAG_COMMAND CACHE)
-  unset(HOST_BINARY_TAG)
-  unset(HOST_BINARY_TAG CACHE)
-  find_program(HOST_BINARY_TAG_COMMAND
-               NAMES host-binary-tag get_host_binary_tag.py
-               HINTS ${CMAKE_MODULE_PATH})
-  if(HOST_BINARY_TAG_COMMAND)
-    # the host detection command might not be executable...
-    execute_process(COMMAND test -x ${HOST_BINARY_TAG_COMMAND} RESULT_VARIABLE HOST_BINARY_TAG_COMMAND_IS_EXEC)
-    if(NOT HOST_BINARY_TAG_COMMAND_IS_EXEC EQUAL 0)
-      # not executable: let's make a copy
-      file(COPY ${HOST_BINARY_TAG_COMMAND} DESTINATION ${CMAKE_CURRENT_BINARY_DIR} FILE_PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE)
-      get_filename_component(HOST_BINARY_TAG_COMMAND ${HOST_BINARY_TAG_COMMAND} NAME)
-      set(HOST_BINARY_TAG_COMMAND ${CMAKE_CURRENT_BINARY_DIR}/${HOST_BINARY_TAG_COMMAND})
+  option(FORCE_BINARY_TAG FALSE "override target/host compatibility check")
+  if(FORCE_BINARY_TAG)
+    set(HOST_BINARY_TAG ${BINARY_TAG} CACHE STRING "host detection overriden" FORCE)
+  else()
+    unset(HOST_BINARY_TAG_COMMAND CACHE)
+    unset(HOST_BINARY_TAG)
+    unset(HOST_BINARY_TAG CACHE)
+    find_program(HOST_BINARY_TAG_COMMAND
+                 NAMES host-binary-tag get_host_binary_tag.py
+                 HINTS ${CMAKE_MODULE_PATH})
+    if(HOST_BINARY_TAG_COMMAND)
+      # the host detection command might not be executable...
+      execute_process(COMMAND test -x ${HOST_BINARY_TAG_COMMAND} RESULT_VARIABLE HOST_BINARY_TAG_COMMAND_IS_EXEC)
+      if(NOT HOST_BINARY_TAG_COMMAND_IS_EXEC EQUAL 0)
+        # not executable: let's make a copy
+        file(COPY ${HOST_BINARY_TAG_COMMAND} DESTINATION ${CMAKE_CURRENT_BINARY_DIR} FILE_PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE)
+        get_filename_component(HOST_BINARY_TAG_COMMAND ${HOST_BINARY_TAG_COMMAND} NAME)
+        set(HOST_BINARY_TAG_COMMAND ${CMAKE_CURRENT_BINARY_DIR}/${HOST_BINARY_TAG_COMMAND})
+      endif()
     endif()
   endif()
   unset(BINARY_TAG_COMP)

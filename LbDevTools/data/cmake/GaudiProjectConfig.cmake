@@ -2765,9 +2765,9 @@ function(gaudi_install_headers)
           endif()
         endif()
       else()
-        message(WARNING "Calling gaudi_install_headers more than once for ${package}")
-        message(WARNING "Are you calling gaudi_install_headers AND gaudi_add_library?")
-        message(WARNING "gaudi_add_library already installs headers.")
+        message(WARNING "Calling gaudi_install_headers more than once for ${package}
+Are you calling gaudi_install_headers AND gaudi_add_library? gaudi_add_library(...PUBLIC_HEADERS...) already installs headers.
+")
       endif()
       gaudi_add_genheader_dependencies(test_public_headers_build_${library})
       add_dependencies(test_public_headers_build test_public_headers_build_${library})

@@ -1831,8 +1831,14 @@ function(gaudi_generate_configurables library)
       get_filename_component(genconf_dir ${genconf_cmd} PATH)
       get_filename_component(genconf_dir ${genconf_dir} PATH)
       file(GLOB genconf_env "${genconf_dir}/*.xenv")
-      #message(STATUS "... running genconf --help ...")
-      execute_process(COMMAND ${env_cmd} --xml ${genconf_env}
+      set(genconf_env --xml ${genconf_env})
+      if(LCG_releases_base)
+        set(genconf_env -s LCG_releases_base=${LCG_releases_base} ${genconf_env})
+      endif()
+      # message(STATUS "... running genconf --help ...")
+      # message(STATUS "genconf_cmd -> ${genconf_cmd}")
+      # message(STATUS "genconf_env -> ${genconf_env}")
+      execute_process(COMMAND ${env_cmd} ${genconf_env}
                               ${genconf_cmd} --help
                       OUTPUT_VARIABLE _genconf_details)
     endif()

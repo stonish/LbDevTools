@@ -370,6 +370,8 @@ macro(gaudi_project project version)
   endif()
   set(LCG_system   ${LCG_SYSTEM}-opt)
   set(LCG_HOST_ARCH "${CMAKE_HOST_SYSTEM_PROCESSOR}")
+  # match old-style LCG_COMP value
+  set(LCG_COMP ${LCG_COMP_NAME})
   string(REPLACE "." "" LCG_COMPVERS "${BINARY_TAG_COMP_VERSION}")
 
   # Search standard libraries.
@@ -1831,8 +1833,14 @@ function(gaudi_generate_configurables library)
       get_filename_component(genconf_dir ${genconf_cmd} PATH)
       get_filename_component(genconf_dir ${genconf_dir} PATH)
       file(GLOB genconf_env "${genconf_dir}/*.xenv")
-      #message(STATUS "... running genconf --help ...")
-      execute_process(COMMAND ${env_cmd} --xml ${genconf_env}
+      set(genconf_env --xml ${genconf_env})
+      if(LCG_releases_base)
+        set(genconf_env -s LCG_releases_base=${LCG_releases_base} ${genconf_env})
+      endif()
+      # message(STATUS "... running genconf --help ...")
+      # message(STATUS "genconf_cmd -> ${genconf_cmd}")
+      # message(STATUS "genconf_env -> ${genconf_env}")
+      execute_process(COMMAND ${env_cmd} ${genconf_env}
                               ${genconf_cmd} --help
                       OUTPUT_VARIABLE _genconf_details)
     endif()
@@ -2765,9 +2773,9 @@ function(gaudi_install_headers)
           endif()
         endif()
       else()
-        message(WARNING "Calling gaudi_install_headers more than once for ${package}")
-        message(WARNING "Are you calling gaudi_install_headers AND gaudi_add_library?")
-        message(WARNING "gaudi_add_library already installs headers.")
+        message(WARNING "Calling gaudi_install_headers more than once for ${package}
+Are you calling gaudi_install_headers AND gaudi_add_library? gaudi_add_library(...PUBLIC_HEADERS...) already installs headers.
+")
       endif()
       gaudi_add_genheader_dependencies(test_public_headers_build_${library})
       add_dependencies(test_public_headers_build test_public_headers_build_${library})

@@ -370,6 +370,8 @@ macro(gaudi_project project version)
   endif()
   set(LCG_system   ${LCG_SYSTEM}-opt)
   set(LCG_HOST_ARCH "${CMAKE_HOST_SYSTEM_PROCESSOR}")
+  # match old-style LCG_COMP value
+  set(LCG_COMP ${LCG_COMP_NAME})
   string(REPLACE "." "" LCG_COMPVERS "${BINARY_TAG_COMP_VERSION}")
 
   # Search standard libraries.

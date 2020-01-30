@@ -4,8 +4,25 @@ include(GaudiToolchainMacros)
 
 init()
 find_projects(projects tools ${CMAKE_SOURCE_DIR}/CMakeLists.txt)
-# We look for GaudiProject here to use the information in HEPToolsMacros
-find_package(GaudiProject QUIET)
+# look for GaudiProjectConfig.cmake in upstream projects, CMAKE_PREFIX_PATH and here
+set(_GaudiProjectSearchPath)
+foreach(_p IN LISTS projects)
+  if(${_p}_ROOT_DIR)
+    if(NOT ${_p}_ROOT_DIR STREQUAL CMAKE_SOURCE_DIR)
+      list(APPEND _GaudiProjectSearchPath ${${_p}_ROOT_DIR}/InstallArea/${BINARY_TAG}/cmake)
+    endif()
+    list(APPEND _GaudiProjectSearchPath ${${_p}_ROOT_DIR}/cmake)
+  endif()
+endforeach()
+list(APPEND _GaudiProjectSearchPath ${CMAKE_PREFIX_PATH})
+find_path(GaudiProject_DIR NAMES GaudiProjectConfig.cmake
+          NO_PACKAGE_ROOT_PATH NO_CMAKE_PATH NO_CMAKE_ENVIRONMENT_PATH NO_SYSTEM_ENVIRONMENT_PATH
+          HINTS ${_GaudiProjectSearchPath} ${CMAKE_CURRENT_LIST_DIR})
+if(GaudiProject_DIR)
+  message(STATUS "Found GaudiProjectConfig.cmake in ${GaudiProject_DIR}")
+else()
+  message(STATUS "GaudiProjectConfig.cmake not found")
+endif()
 
 if(heptools_version)
   include(UseHEPTools)

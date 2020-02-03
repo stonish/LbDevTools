@@ -453,7 +453,12 @@ macro(gaudi_project project version)
 
   #--- commands required to build cached variable
   # (python scripts are located as such but run through python)
-  set(binary_paths ${CMAKE_SOURCE_DIR}/cmake ${CMAKE_SOURCE_DIR}/GaudiPolicy/scripts ${CMAKE_SOURCE_DIR}/GaudiKernel/scripts ${CMAKE_SOURCE_DIR}/Gaudi/scripts ${binary_paths})
+  set(binary_paths ${CMAKE_SOURCE_DIR}/cmake
+                   ${CMAKE_SOURCE_DIR}/GaudiPolicy/scripts
+                   ${CMAKE_SOURCE_DIR}/GaudiKernel/scripts
+                   ${CMAKE_SOURCE_DIR}/Gaudi/scripts
+                   ${Gaudi_DIR}/../../../bin
+                   ${binary_paths})
 
   find_program(env_cmd NAMES xenv)
   if(NOT env_cmd)
@@ -1915,7 +1920,10 @@ define_property(DIRECTORY
 function(gaudi_generate_confuserdb)
   gaudi_get_package_name(package)
   get_directory_property(modules CONFIGURABLE_USER_MODULES)
-  if( genconfuser_cmd AND NOT (modules STREQUAL "None") ) # ConfUser enabled
+  if(NOT modules STREQUAL "None") # ConfUser enabled
+    if(NOT genconfuser_cmd)
+      message(FATAL_ERROR "ConfigurableUser DB requested, but genconfuser_cmd is not set")
+    endif()
     set(outdir ${CMAKE_CURRENT_BINARY_DIR}/genConf/${package})
 
     # get the optional dependencies from argument and properties

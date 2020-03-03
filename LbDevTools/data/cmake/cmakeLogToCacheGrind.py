@@ -6,6 +6,7 @@ understandable by kcachegrind for easy visualization of where we spend time in
 cmake.
 '''
 from __future__ import print_function
+from __future__ import absolute_import
 import sys
 
 

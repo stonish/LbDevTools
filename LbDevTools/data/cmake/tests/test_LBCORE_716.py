@@ -1,6 +1,7 @@
 '''
 Test to check the correct override order of projects.
 '''
+from __future__ import absolute_import
 import os
 import re
 from subprocess import Popen, PIPE

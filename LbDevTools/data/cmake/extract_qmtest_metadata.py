@@ -5,6 +5,7 @@ files) and suites (.qms files), and report them as declaration of CTest test
 properties.
 '''
 from __future__ import print_function
+from __future__ import absolute_import
 __author__ = 'Marco Clemencic <marco.clemencic@cern.ch>'
 
 try:

@@ -8,6 +8,8 @@
 # granted to it by virtue of its status as an Intergovernmental Organization  #
 # or submit itself to any jurisdiction.                                       #
 ###############################################################################
+from __future__ import absolute_import
+from __future__ import print_function
 __author__ = 'Marco Clemencic <marco.clemencic@cern.ch>'
 
 import os
@@ -165,13 +167,13 @@ def main():
     if args.list:
         from LbEnv.ProjectEnv.lookup import listVersions
         for entry in listVersions(project, args.platform):
-            print '%s in %s' % entry
+            print('%s in %s' % entry)
         sys.exit(0)
     if args.list_platforms:
         from LbEnv.ProjectEnv.lookup import listPlatforms
         platforms = listPlatforms(project, version)
         if platforms:
-            print '\n'.join(platforms)
+            print('\n'.join(platforms))
         sys.exit(0)
 
     if not args.name:
@@ -196,7 +198,7 @@ def main():
         try:
             projectDir = findProject(project, version, args.platform)
             logging.info('using %s %s from %s', project, version, projectDir)
-        except MissingProjectError, x:
+        except MissingProjectError as x:
             parser.error(str(x))
 
         # Check if it is a CMake-enabled project
@@ -372,4 +374,4 @@ You can customize the configuration by editing the files 'build.conf' and
 'CMakeLists.txt' (see http://cern.ch/gaudi/CMake for details).
 '''
 
-    print msg.format(args.name, args.dest_dir, devProjectDir, project)
+    print(msg.format(args.name, args.dest_dir, devProjectDir, project))

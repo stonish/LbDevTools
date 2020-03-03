@@ -1,6 +1,7 @@
 '''
 Test relocatability of data packages.
 '''
+from __future__ import absolute_import
 import os
 from subprocess import Popen, PIPE
 

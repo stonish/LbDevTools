@@ -16,6 +16,7 @@ See `lb-gen-release-notes --help` for details.
 """
 from __future__ import print_function
 
+from __future__ import absolute_import
 import re
 import os
 import sys
@@ -29,6 +30,7 @@ from jinja2 import Environment, FileSystemLoader
 import subprocess
 
 from LbDevTools import __version__
+import six
 
 
 def getOutput(*args, **kwargs):
@@ -86,7 +88,7 @@ def find_merge_request_id(repo, merge_commit, second_parent):
     names = ref_names(repo, second_parent)
     m = [re.match(r'^refs/remotes/origin/merge-requests/(\d+)$', name)
          for name in names]
-    m = filter(None, m)
+    m = [_f for _f in m if _f]
     if m:
         if len(m) > 1:
             logging.warning(
@@ -190,7 +192,7 @@ def get_template(template, template_paths):
         for mr in mrs:
             if used is not None and mr.id in used:
                 continue
-            if any(set([ls] if isinstance(ls, basestring) else ls)
+            if any(set([ls] if isinstance(ls, six.string_types) else ls)
                    .issubset(mr.labels) for ls in labels):
                 if used is not None:
                     used.append(mr.id)

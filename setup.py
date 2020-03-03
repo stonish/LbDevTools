@@ -6,6 +6,7 @@ https://github.com/pypa/sampleproject
 """
 
 # Always prefer setuptools over distutils
+from __future__ import absolute_import
 from setuptools import setup, find_packages
 # To use a consistent encoding
 from codecs import open
@@ -197,7 +198,4 @@ setup(
 
     # The package can be safely distributed as a ZIP file
     zip_safe=False,
-
-    # Process files with 2to3 to run with Python 3
-    use_2to3=version_info >= (3, 0),
 )

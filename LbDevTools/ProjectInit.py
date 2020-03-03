@@ -12,6 +12,7 @@
 '''
 Script to initialize a project for the build.
 '''
+from __future__ import absolute_import
 __author__ = 'Marco Clemencic <marco.clemencic@cern.ch>'
 
 

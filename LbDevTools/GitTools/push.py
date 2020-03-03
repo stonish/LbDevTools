@@ -9,6 +9,7 @@ from __future__ import print_function
 # granted to it by virtue of its status as an Intergovernmental Organization  #
 # or submit itself to any jurisdiction.                                       #
 ###############################################################################
+from __future__ import absolute_import
 __author__ = 'Marco Clemencic <marco.clemencic@cern.ch>'
 
 import os
@@ -125,7 +126,7 @@ def commits_cmp(a, b):
     if a == b:
         return 0
     try:
-        a.repo.iter_commits('{.hexsha}..{.hexsha}'.format(a, b)).next()
+        next(a.repo.iter_commits('{.hexsha}..{.hexsha}'.format(a, b)))
         return -1
     except StopIteration:
         return 1
@@ -219,7 +220,7 @@ def main():
         logging.error('no directory selected, check your options')
         exit(1)
 
-    logging.info('considering directories %s', pkgs.keys())
+    logging.info('considering directories %s', list(pkgs.keys()))
 
     # dictionary of dictionaries of sets
     commits_to_consider = defaultdict(lambda: defaultdict(set))

@@ -10,6 +10,7 @@
 # or submit itself to any jurisdiction.                                       #
 ###############################################################################
 from __future__ import print_function
+from __future__ import absolute_import
 import re
 
 from os.path import join, exists, isabs

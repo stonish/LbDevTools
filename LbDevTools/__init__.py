@@ -11,9 +11,11 @@
 ###############################################################################
 from __future__ import print_function
 
+from __future__ import absolute_import
 import os
 
 from pkg_resources import get_distribution, DistributionNotFound
+import six
 try:
     __version__ = get_distribution(__name__).version
 except DistributionNotFound:  # pragma: no cover
@@ -129,7 +131,7 @@ def initProject(path, overwrite=False):
         overwrite = set()
     elif overwrite is True:
         overwrite = set(f[0] for f in factories)
-    elif isinstance(overwrite, basestring):
+    elif isinstance(overwrite, six.string_types):
         overwrite = set([overwrite])
     else:
         overwrite = set(overwrite)

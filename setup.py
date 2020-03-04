@@ -6,6 +6,7 @@ https://github.com/pypa/sampleproject
 """
 
 # Always prefer setuptools over distutils
+from __future__ import absolute_import
 from setuptools import setup, find_packages
 # To use a consistent encoding
 from codecs import open
@@ -132,7 +133,8 @@ setup(
     install_requires=['LbEnv>=0.3.0', 'LbPlatformUtils',
                       'GitPython' + ('<2.1.12' if version_info < (3, 0) else ''),
                       'python-gitlab' + ('<2' if version_info < (3, 6) else ''),
-                      'jinja2', 'yapf==0.24.0', 'whichcraft'],
+                      'jinja2', 'yapf==0.24.0', 'whichcraft',
+                      'gitdb2' + ('<3' if version_info < (3, 0) else ''),],
 
     # List additional groups of dependencies here (e.g. development
     # dependencies). Users will be able to install these using the "extras"
@@ -197,7 +199,4 @@ setup(
 
     # The package can be safely distributed as a ZIP file
     zip_safe=False,
-
-    # Process files with 2to3 to run with Python 3
-    use_2to3=version_info >= (3, 0),
 )

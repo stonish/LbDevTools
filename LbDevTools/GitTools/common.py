@@ -8,6 +8,7 @@
 # granted to it by virtue of its status as an Intergovernmental Organization  #
 # or submit itself to any jurisdiction.                                       #
 ###############################################################################
+from __future__ import absolute_import
 __author__ = 'Marco Clemencic <marco.clemencic@cern.ch>'
 
 PROTOCOLS_URLS = {

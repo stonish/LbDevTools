@@ -9,6 +9,7 @@ from __future__ import print_function
 # granted to it by virtue of its status as an Intergovernmental Organization  #
 # or submit itself to any jurisdiction.                                       #
 ###############################################################################
+from __future__ import absolute_import
 __author__ = 'Marco Clemencic <marco.clemencic@cern.ch>'
 
 import os
@@ -118,7 +119,7 @@ def main():
              if '/' in l),
         )
         try:
-            remote = remotes.next()
+            remote = next(remotes)
         except StopIteration:
             logging.error('cannot find the remote repository containing %s',
                           args.commit)

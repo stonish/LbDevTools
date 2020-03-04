@@ -1,12 +1,14 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 from __future__ import print_function
+from __future__ import absolute_import
 import os
 import re
 import atexit
 from six.moves import cPickle
 from subprocess import Popen, PIPE
 from collections import defaultdict
+from six.moves import map
 
 COVERAGE_FILE = '.cmake_coverage'
 
@@ -60,7 +62,7 @@ def get_ranges(numbers):
     from operator import itemgetter
     for _key, group in groupby(
             enumerate(numbers), lambda index, number: number - index):
-        group = map(itemgetter(1), group)
+        group = list(map(itemgetter(1), group))
         yield group[0], group[-1]
 
 

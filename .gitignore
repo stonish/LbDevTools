@@ -17,3 +17,12 @@ dist/
 # test artifacts
 .coverage
 cover/
+
+# virtual environments
+venv/
+venv2/
+venv3/
+
+# IDE / Editor files
+.vscode/
+ 

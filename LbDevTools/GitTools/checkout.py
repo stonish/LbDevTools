@@ -33,6 +33,43 @@ def _checkout(repo, commit, remote, path, configfile):
         conf.set(section, 'imported', repo.commit(commit).hexsha)
 
 
+def get_packages_of(repo, commit):
+    '''
+    Get packages of repo at certain commit. Packages contain either a CmakeLists.txt or a requirements file
+
+    Args:
+        repo (Repo): The repository in which we are searching for packages
+        commit (String): The commit in which we are searching for packages
+
+    Returns:
+        a set of strings representing packages
+    '''
+    cmakelist_packages = get_packages_that_contain('/CMakeLists.txt', repo, commit)
+    requirements_packages = get_packages_that_contain('/requirements', repo, commit)
+    # Packages that contain CMakeLists.txt files, have them at the top directory of the package
+    # while requirements files are inside a cmt folder, therefore we need to go one level higher
+    # so, we remove the '/cmt' from the end of the path
+    requirements_packages = set(path.rsplit('/', 1)[0] for path in requirements_packages)
+
+    return cmakelist_packages.union(requirements_packages)
+
+def get_packages_that_contain(file_name, repo, commit):
+    '''
+    Get packages of repo at certain commit that contain a certain file
+
+    Args:
+        file_name (String): The name of the file we are searching for
+        repo (Repo): The repository in which we are searching for packages
+        commit (String): The commit in which we are searching for packages
+
+    Returns:
+        a set of strings representing packages
+    '''
+    return set(
+            os.path.dirname(b.path)
+            for b in repo.commit(commit).tree.traverse()
+            if b.path.endswith(file_name))
+
 def main():
     '''
     Implementation of `git lb-checkout` command.
@@ -126,11 +163,8 @@ def main():
             exit(1)
 
     try:
-        pkgs = set(
-            os.path.dirname(b.path)
-            for b in repo.commit(args.commit).tree.traverse()
-            if b.path.endswith('/CMakeLists.txt'))
-
+        pkgs = get_packages_of(repo, args.commit)
+        
         if args.list:
             print('\n'.join(sorted(pkgs)))
             return

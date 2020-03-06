@@ -82,33 +82,6 @@ python3.7:
 
 
 # Packaging step
-pack-py3:
-  stage: package
-  only: [tags]
-  dependencies: []
-  image: gitlab-registry.cern.ch/lhcb-docker/python-deployment:python-3.7
-  script:
-    - python setup.py sdist --dist-dir public/
-    - python setup.py bdist_wheel --dist-dir public/
-  artifacts:
-    paths:
-      - public
-    when: always
-    expire_in: 1 week
-
-pack-py2:
-  stage: package
-  only: [tags]
-  dependencies: []
-  image: gitlab-registry.cern.ch/lhcb-docker/python-deployment:python-2.7
-  script:
-    - python setup.py bdist_wheel --dist-dir public/
-  artifacts:
-    paths:
-      - public
-    when: always
-    expire_in: 1 week
-
 compiler-wrappers-rpm:
   stage: package
   dependencies: []
@@ -139,11 +112,11 @@ deploy-packages:
   stage: deploy
   only:
     - tags
-  dependencies:
-    - pack-py3
-    - pack-py2
+  dependencies: []
   image: gitlab-registry.cern.ch/lhcb-docker/python-deployment:python-3.7
   script:
+    - python setup.py sdist --dist-dir public/
+    - python setup.py bdist_wheel --dist-dir public/
     - if [ -z "$TWINE_PASSWORD" ] ; then echo "Set TWINE_PASSWORD in CI variables" ; exit 1 ; fi
     - twine upload -u __token__ public/*
   before_script: []

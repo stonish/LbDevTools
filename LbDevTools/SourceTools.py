@@ -37,6 +37,7 @@ In applying this licence, CERN does not waive the privileges and immunities
 granted to it by virtue of its status as an Intergovernmental Organization
 or submit itself to any jurisdiction.
 '''
+LICENSE_FILESNAMES = ['LICENSE', 'LICENCE', 'LICENSE.md', 'LICENSE.md', 'COPYING', 'COPYING.md']
 
 # see https://www.python.org/dev/peps/pep-0263 for the regex
 ENCODING_DECLARATION = re.compile(
@@ -235,6 +236,114 @@ def add_copyright_to_file(path, year=None, license_fn=None):
     with open(path, 'wb') as f:
         f.writelines(data)
 
+def get_parser_for_copyright_file_check():
+    from argparse import ArgumentParser
+
+    parser = ArgumentParser(description='Check for license file in repository')
+    parser.add_argument(
+        'path',
+        action='store',
+        nargs='?',
+        help='Path to the top-level directory of the repository',
+        default='.'
+    ),
+    group = parser.add_mutually_exclusive_group()
+
+    group.add_argument(
+        '-v',
+        dest='info',
+        action='store_true',
+        help='Level of logging: INFO',
+        required=False
+    )
+    group.add_argument(
+        '-vv',
+        dest='debug',
+        action='store_true',
+        help='Level of logging: DEBUG',
+        required=False
+    )
+    group.add_argument(
+        '-vvv',
+        dest='warn',
+        action='store_true',
+        help='Level of logging: WARN',
+        required=False
+    )
+    group.add_argument(
+        '-vvvv',
+        dest='error',
+        action='store_true',
+        help='Level of logging: ERROR',
+        required=False
+    )
+
+    args = parser.parse_args()
+    return args
+
+def get_filenames(path):
+    file_names = []
+
+    for (_, _, filenames) in os.walk(path):
+        file_names.extend(filenames)
+        break
+
+    return file_names
+
+def find_strings_in_list(strings, string_list):
+    return [string for string in strings if any(list_item == string for list_item in string_list)]
+
+def get_non_empty_filenames(path):
+    file_names = get_filenames(path)
+
+    non_empty_filenames = []
+    for file_name in file_names:
+        if not is_empty('{}/{}'.format(path, file_name)):
+            non_empty_filenames.append(file_name)
+
+    return non_empty_filenames
+
+def has_copyright_file(path, log_level='DEBUG'):
+    import logging
+
+    logging.basicConfig(level=log_level)
+
+    logging.debug('Path given by the user is {}'.format(path))
+
+    file_names = get_non_empty_filenames(path)
+
+    logging.debug('These files exist in the given path and are not empty: {}'.format(file_names))
+
+    license_files = find_strings_in_list(file_names, LICENSE_FILESNAMES)
+    logging.debug('found license files {}'.format(license_files))
+
+    if not license_files:
+        logging.info('found no license files in repository')
+        return False
+    else:
+        logging.info('found {} license files in repository'.format(len(license_files)))
+        return True
+
+def check_repo_for_copyright_file():
+    args = get_parser_for_copyright_file_check()
+
+    log_level = 'NOTSET'
+    if args.info:
+        log_level = 'INFO'
+    elif args.debug:
+        log_level = 'DEBUG'
+    elif args.warn:
+        log_level = 'WARN'
+    elif args.error:
+        log_level = 'ERROR' 
+
+
+    has_copyright = has_copyright_file(args.path, log_level)
+
+    if has_copyright:
+        print('This repository does have a copyright file')
+    else:
+        print('There is no copyright file in this repository')
 
 def call_formatter(cmd, input):
     '''

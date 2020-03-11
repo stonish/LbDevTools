@@ -235,6 +235,195 @@ def add_copyright_to_file(path, year=None, license_fn=None):
     with open(path, 'wb') as f:
         f.writelines(data)
 
+def get_parser_for_for_copyright_file_check():
+    from argparse import ArgumentParser
+
+    parser = ArgumentParser(description='Check for license file in repository')
+    parser.add_argument(
+        'path',
+        action='store',
+        nargs='?',
+        help='Path to the top-level directory of the repository',
+        default='.'
+    ),
+    parser.add_argument(
+        '--log',
+        action='store',
+        choices={'INFO', 'DEBUG', 'WARN', 'ERROR', 'FATAL', 'OFF', 'TRACE'},
+        help='Level of logging',
+        default='INFO'
+    )
+
+    return parser
+
+def get_parser_for_for_check_copyright():
+    from argparse import ArgumentParser
+    parser = ArgumentParser(description='''
+    Check that each git tracked source file in the current directory contains a
+    copyright statement.
+    ''')
+    parser.add_argument(
+        'reference',
+        nargs='?',
+        help='commit-ish to use as reference to only check changed file')
+    parser.add_argument(
+        '--porcelain',
+        action='store_true',
+        help='only print the list of files w/o copyright')
+    parser.add_argument(
+        '-z',
+        action='store_const',
+        dest='separator',
+        const='\x00',
+        help='when using --porcelain, paths are separated with NUL character')
+    parser.add_argument(
+        '--inverted',
+        action='store_true',
+        help='list files w/ copyright, instead of w/o (Default)')
+    parser.add_argument(
+        '-x',
+        '--exclude',
+        action='append',
+        default=[],
+        type=re.compile,
+        help='Regex of filenames that should be ignored')
+    parser.set_defaults(inverted=False, separator='\n')
+
+    return parser
+
+def get_parser_for_for_add_copyright():
+    from argparse import ArgumentParser
+    parser = ArgumentParser(
+        description='Add standard LHCb copyright statement to files.')
+    parser.add_argument('files', nargs='+', help='files to modify')
+    parser.add_argument(
+        '--year', help='copyright year specification (default: current year)')
+    parser.add_argument(
+        '--license-fn', help='Name of the license file (default: COPYING)')
+    parser.add_argument(
+        '--force',
+        action='store_true',
+        help='add copyright also to non supported file types')
+
+    return parser
+
+def get_parser_for_for_format():
+    from argparse import ArgumentParser
+    import logging
+
+    parser = ArgumentParser(description='Reformat C++ and Python files.')
+    parser.add_argument(
+        'files',
+        nargs='*',
+        help='files to modify (empty list means all git tracked files, or a '
+        'subset of them if the option --reference is used)')
+    parser.add_argument(
+        '--clang-format-version',
+        help='version of clang-format to use '
+        '(default: %(default)s)')
+    parser.add_argument(
+        '--yapf-version', help='version of yapf to use (default: %(default)s)')
+    parser.add_argument(
+        '--verbose',
+        action='store_const',
+        const=logging.INFO,
+        dest='log_level',
+        help='print info messages')
+    parser.add_argument(
+        '--debug',
+        action='store_const',
+        const=logging.DEBUG,
+        dest='log_level',
+        help='print debug messages')
+    parser.add_argument(
+        '-n', '--dry-run', action='store_true', help='do not modify the files')
+    parser.add_argument(
+        '--reference',
+        help='check/format only the files select the files that have changed '
+        'since the REFERENCE commit/branch')
+    parser.add_argument(
+        '--format-patch',
+        help='create a patch file with the changes, '
+        'in this mode the first file argument is interpreted '
+        'as argument to the --reference option')
+    parser.add_argument(
+        '-P',
+        '--pipe',
+        metavar='LANGUAGE',
+        choices=FORMATTABLE_LANGUAGES,
+        help='format from stdin to stdout (allowed values: %s)' %
+        FORMATTABLE_LANGUAGES)
+    parser.set_defaults(
+        files=[],
+        clang_format_version=CLANG_FORMAT_VERSION,
+        yapf_version=YAPF_VERSION,
+        log_level=logging.WARNING)
+
+    return parser
+
+def get_parser_for(command):
+    if command == 'check_repo_for_copyright_file':
+        return get_parser_for_for_copyright_file_check()
+    elif command == 'check_copyright':
+        return get_parser_for_for_check_copyright()
+    elif command == 'add_copyright':
+        return get_parser_for_for_add_copyright()
+    elif command == 'format':
+        return get_parser_for_for_format()
+
+def get_filenames(path):
+    file_names = []
+
+    for (_, _, filenames) in os.walk(path):
+        file_names.extend(filenames)
+        break
+
+    return file_names
+
+def find_strings_in_list(strings, string_list):
+    return [string for string in strings if any(list_item == string for list_item in string_list)]
+
+def get_non_empty_filenames(path):
+    file_names = get_filenames(path)
+
+    non_empty_filenames = []
+    for file_name in file_names:
+        if not is_empty('{}/{}'.format(path, file_name)):
+            non_empty_filenames.append(file_name)
+
+    return non_empty_filenames
+
+def has_copyright_file(path, log_level='DEBUG'):
+    import logging
+
+    logging.basicConfig(level=log_level)
+
+    logging.debug('Path given by the user is {}'.format(path))
+
+    file_names = get_non_empty_filenames(path)
+
+    logging.debug('These files exist in the given path and are not empty: {}'.format(file_names))
+
+    license_files = find_strings_in_list(file_names, LICENSE_FILESNAMES)
+    logging.debug('found license files {}'.format(license_files))
+
+    if not license_files:
+        logging.info('found no license files in repository')
+        return False
+    else:
+        logging.info('found {} license files in repository'.format(len(license_files)))
+        return True
+
+def check_repo_for_copyright_file():
+    parser = get_parser_for('check_repo_for_copyright_file')
+    args = parser.parse_args()
+
+    has_copyright = has_copyright_file(args.path)
+
+    if has_copyright:
+        print('This repository does have a copyright file')
+    else:
+        print('There is no copyright file in this repository')
 
 def call_formatter(cmd, input):
     '''
@@ -397,38 +586,7 @@ class Formatter:
 
 
 def check_copyright():
-    from argparse import ArgumentParser
-    parser = ArgumentParser(description='''
-    Check that each git tracked source file in the current directory contains a
-    copyright statement.
-    ''')
-    parser.add_argument(
-        'reference',
-        nargs='?',
-        help='commit-ish to use as reference to only check changed file')
-    parser.add_argument(
-        '--porcelain',
-        action='store_true',
-        help='only print the list of files w/o copyright')
-    parser.add_argument(
-        '-z',
-        action='store_const',
-        dest='separator',
-        const='\x00',
-        help='when using --porcelain, paths are separated with NUL character')
-    parser.add_argument(
-        '--inverted',
-        action='store_true',
-        help='list files w/ copyright, instead of w/o (Default)')
-    parser.add_argument(
-        '-x',
-        '--exclude',
-        action='append',
-        default=[],
-        type=re.compile,
-        help='Regex of filenames that should be ignored')
-    parser.set_defaults(inverted=False, separator='\n')
-
+    parser = get_parser_for('check_copyright')
     args = parser.parse_args()
 
     missing = [
@@ -450,19 +608,8 @@ def check_copyright():
 
 
 def add_copyright():
-    from argparse import ArgumentParser
-    parser = ArgumentParser(
-        description='Add standard LHCb copyright statement to files.')
-    parser.add_argument('files', nargs='+', help='files to modify')
-    parser.add_argument(
-        '--year', help='copyright year specification (default: current year)')
-    parser.add_argument(
-        '--license-fn', help='Name of the license file (default: COPYING)')
-    parser.add_argument(
-        '--force',
-        action='store_true',
-        help='add copyright also to non supported file types')
-
+    
+    parser = get_parser_for('add_copyright')
     args = parser.parse_args()
 
     for path in args.files:
@@ -476,56 +623,9 @@ def add_copyright():
 
 
 def format():
-    from argparse import ArgumentParser
     import logging
-    parser = ArgumentParser(description='Reformat C++ and Python files.')
-    parser.add_argument(
-        'files',
-        nargs='*',
-        help='files to modify (empty list means all git tracked files, or a '
-        'subset of them if the option --reference is used)')
-    parser.add_argument(
-        '--clang-format-version',
-        help='version of clang-format to use '
-        '(default: %(default)s)')
-    parser.add_argument(
-        '--yapf-version', help='version of yapf to use (default: %(default)s)')
-    parser.add_argument(
-        '--verbose',
-        action='store_const',
-        const=logging.INFO,
-        dest='log_level',
-        help='print info messages')
-    parser.add_argument(
-        '--debug',
-        action='store_const',
-        const=logging.DEBUG,
-        dest='log_level',
-        help='print debug messages')
-    parser.add_argument(
-        '-n', '--dry-run', action='store_true', help='do not modify the files')
-    parser.add_argument(
-        '--reference',
-        help='check/format only the files select the files that have changed '
-        'since the REFERENCE commit/branch')
-    parser.add_argument(
-        '--format-patch',
-        help='create a patch file with the changes, '
-        'in this mode the first file argument is interpreted '
-        'as argument to the --reference option')
-    parser.add_argument(
-        '-P',
-        '--pipe',
-        metavar='LANGUAGE',
-        choices=FORMATTABLE_LANGUAGES,
-        help='format from stdin to stdout (allowed values: %s)' %
-        FORMATTABLE_LANGUAGES)
-    parser.set_defaults(
-        files=[],
-        clang_format_version=CLANG_FORMAT_VERSION,
-        yapf_version=YAPF_VERSION,
-        log_level=logging.WARNING)
 
+    parser = get_parser_for('format')
     args = parser.parse_args()
     logging.basicConfig(level=args.log_level)
 

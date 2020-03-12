@@ -121,8 +121,7 @@ setup(
     #
     #   py_modules=["my_module"],
     #
-    packages=find_packages(exclude=['*.tests']
-                           if version_info < (3, 0) else []),
+    packages=find_packages(exclude=['*.tests']),
 
     # This field lists other packages that your project depends on to run.
     # Any package you put here will be installed by pip when your project is
@@ -131,10 +130,11 @@ setup(
     # For an analysis of "install_requires" vs pip's requirements files see:
     # https://packaging.python.org/en/latest/requirements.html
     install_requires=['LbEnv>=0.3.0', 'LbPlatformUtils',
-                      'GitPython' + ('<2.1.12' if version_info < (3, 0) else ''),
-                      'python-gitlab' + ('<2' if version_info < (3, 6) else ''),
-                      'jinja2', 'yapf==0.24.0', 'whichcraft',
-                      'gitdb2' + ('<3' if version_info < (3, 0) else ''), 'six',],
+                      'jinja2', 'yapf==0.24.0', 'whichcraft', 'six',
+                         # version restrictions to support Python 2
+                         'GitPython<2.1.12',
+                         'python-gitlab<2',  # this is also needed to support Python 3.5
+                         'gitdb2<3',],
 
     # List additional groups of dependencies here (e.g. development
     # dependencies). Users will be able to install these using the "extras"

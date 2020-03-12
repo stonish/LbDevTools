@@ -21,6 +21,9 @@ import os
 import re
 from itertools import islice
 from datetime import date
+from six.moves.urllib.request import Request, urlopen
+from json import loads
+from datetime import datetime
 
 COPYRIGHT_SIGNATURE = re.compile(r'\bcopyright\b', re.I)
 CHECKED_FILES = re.compile(
@@ -37,7 +40,8 @@ In applying this licence, CERN does not waive the privileges and immunities
 granted to it by virtue of its status as an Intergovernmental Organization
 or submit itself to any jurisdiction.
 '''
-LICENSE_FILESNAMES = ['LICENSE', 'LICENCE', 'LICENSE.md', 'LICENSE.md', 'COPYING', 'COPYING.md']
+LICENSE_FILESNAMES = ['LICENSE', 'LICENCE',
+                      'LICENSE.md', 'LICENSE.md', 'COPYING', 'COPYING.md']
 
 # see https://www.python.org/dev/peps/pep-0263 for the regex
 ENCODING_DECLARATION = re.compile(
@@ -236,7 +240,70 @@ def add_copyright_to_file(path, year=None, license_fn=None):
     with open(path, 'wb') as f:
         f.writelines(data)
 
-def get_parser_for_copyright_file_check():
+
+def get_args_for_creating_copyright_file():
+    from argparse import ArgumentParser
+
+    parser = ArgumentParser(description='Create license file in repository')
+    parser.add_argument(
+        'path',
+        action='store',
+        nargs='?',
+        help='Path to the top-level directory of the repository',
+        default='.'
+    )
+    parser.add_argument(
+        '--name',
+        '-n',
+        dest='license_file',
+        action='store',
+        required=False,
+        default='LICENSE.md'
+    )
+    parser.add_argument(
+        '--license',
+        '-l',
+        dest='license',
+        choices={'apache-2.0', 'gpl-3.0', 'mit'},
+        default='gpl-3.0',
+        required=False
+    )
+    group = parser.add_mutually_exclusive_group()
+
+    group.add_argument(
+        '-v',
+        dest='info',
+        action='store_true',
+        help='Level of logging: INFO',
+        required=False
+    )
+    group.add_argument(
+        '-vv',
+        dest='debug',
+        action='store_true',
+        help='Level of logging: DEBUG',
+        required=False
+    )
+    group.add_argument(
+        '-vvv',
+        dest='warn',
+        action='store_true',
+        help='Level of logging: WARN',
+        required=False
+    )
+    group.add_argument(
+        '-vvvv',
+        dest='error',
+        action='store_true',
+        help='Level of logging: ERROR',
+        required=False
+    )
+
+    args = parser.parse_args()
+    return args
+
+
+def get_args_for_copyright_file_check():
     from argparse import ArgumentParser
 
     parser = ArgumentParser(description='Check for license file in repository')
@@ -312,7 +379,8 @@ def has_copyright_file(path, log_level='DEBUG'):
 
     file_names = get_non_empty_filenames(path)
 
-    logging.debug('These files exist in the given path and are not empty: {}'.format(file_names))
+    logging.debug(
+        'These files exist in the given path and are not empty: {}'.format(file_names))
 
     license_files = find_strings_in_list(file_names, LICENSE_FILESNAMES)
     logging.debug('found license files {}'.format(license_files))
@@ -321,11 +389,13 @@ def has_copyright_file(path, log_level='DEBUG'):
         logging.info('found no license files in repository')
         return False
     else:
-        logging.info('found {} license files in repository'.format(len(license_files)))
+        logging.info('found {} license files in repository'.format(
+            len(license_files)))
         return True
 
+
 def check_repo_for_copyright_file():
-    args = get_parser_for_copyright_file_check()
+    args = get_args_for_copyright_file_check()
 
     log_level = 'NOTSET'
     if args.info:
@@ -335,8 +405,7 @@ def check_repo_for_copyright_file():
     elif args.warn:
         log_level = 'WARN'
     elif args.error:
-        log_level = 'ERROR' 
-
+        log_level = 'ERROR'
 
     has_copyright = has_copyright_file(args.path, log_level)
 
@@ -344,6 +413,69 @@ def check_repo_for_copyright_file():
         print('This repository does have a copyright file')
     else:
         print('There is no copyright file in this repository')
+
+
+def get_license_text(license):
+    request = Request('https://api.github.com/licenses/{}'.format(license))
+    license_json = loads(urlopen(request).read().decode('utf8'))
+
+    return license_json['body']
+
+def write_license_to_file(license, copyright_filename, license_text):
+    should_delete_license = False
+    with open(copyright_filename, 'w') as copyright_file:
+        if license == 'mit':
+            copyright_file.write(license_text.replace('[year]', str(datetime.now().year)).replace('[fullname]', 'CERN'))
+        elif license == 'apache-2.0':
+            copyright_file.write(license_text.replace('[yyyy]', str(datetime.now().year)).replace('[name of copyright owner]', 'CERN'))
+        elif license == 'gpl-3.0':
+            copyright_file.write(license_text.split('END OF TERMS AND CONDITIONS', 1)[0])
+        else:
+            print('The license you are trying to use is not currently supported')
+            should_delete_license = True
+
+    if should_delete_license:
+        os.remove(copyright_filename)
+
+def create_copyright_file(copyright_filename, license, log_level='DEBUG'):
+    import logging
+    logging.basicConfig(level=log_level)
+
+    logging.info('creating copyright file')
+
+    logging.debug('fetching license from https://api.github.com/licenses/{}'.format(license))
+    license_text = get_license_text(license)
+
+    logging.debug('writing {} license in file {}'.format(license, copyright_filename))
+    write_license_to_file(license, copyright_filename, license_text)
+
+def create_copyright_file_in_repo():
+    import logging
+
+    args = get_args_for_creating_copyright_file()
+
+    log_level = 'NOTSET'
+    if args.info:
+        log_level = 'INFO'
+    elif args.debug:
+        log_level = 'DEBUG'
+    elif args.warn:
+        log_level = 'WARN'
+    elif args.error:
+        log_level = 'ERROR'
+
+    logging.basicConfig(level=log_level)
+
+    logging.info('checking for existion copyright file')
+    has_copyright = has_copyright_file(args.path)
+
+    if has_copyright:
+        print('This repository already has a copyright file')
+    else:
+        license_file = '/'.join([args.path, args.license_file])
+        create_copyright_file(license_file, args.license, log_level)
+        print('{} create, containing {} license'.format(license_file, args.license))
+
 
 def call_formatter(cmd, input):
     '''

@@ -14,6 +14,7 @@ from __future__ import absolute_import
 from os.path import join, dirname, splitext, basename
 from os import remove, mkdir, rmdir
 from shutil import rmtree
+from datetime import datetime
 
 import LbDevTools.SourceTools as C
 import tempfile
@@ -99,3 +100,58 @@ def test_get_non_empty_filenames():
     rmtree("./temp")
 
     assert file_names == non_empty_files_in_path
+
+def test_create_mit_license_file():
+    temp_folder = tempfile.mkdtemp(prefix="")
+    try:
+        file_name = '/'.join([temp_folder, 'LICENSE'])
+        mock_license_text = 'mock license text [year] [fullname]'
+        
+        C.write_license_to_file('mit', file_name, mock_license_text)
+
+        with open(file_name, 'r') as f:
+            data = f.read()
+        assert data == 'mock license text {} {}'.format(str(datetime.now().year), 'CERN')
+    finally:
+        rmtree(temp_folder)
+
+def test_create_apache2_license_file():
+    temp_folder = tempfile.mkdtemp(prefix="")
+    try:
+        file_name = '/'.join([temp_folder, 'LICENSE'])
+        mock_license_text = 'mock license text [yyyy] [name of copyright owner]'
+        
+        C.write_license_to_file('apache-2.0', file_name, mock_license_text)
+
+        with open(file_name, 'r') as f:
+            data = f.read()
+        assert data == 'mock license text {} {}'.format(str(datetime.now().year), 'CERN')
+    finally:
+        rmtree(temp_folder)
+
+def test_create_gpl3_license_file():
+    temp_folder = tempfile.mkdtemp(prefix="")
+    try:
+        file_name = '/'.join([temp_folder, 'LICENSE'])
+        mock_license_text = 'mock license text END OF TERMS AND CONDITIONS'
+        
+        C.write_license_to_file('gpl-3.0', file_name, mock_license_text)
+
+        with open(file_name, 'r') as f:
+            data = f.read()
+        assert data == 'mock license text '
+    finally:
+        rmtree(temp_folder)
+
+def test_create_random_license_file():
+    temp_folder = tempfile.mkdtemp(prefix="")
+    try:
+        file_name = '/'.join([temp_folder, 'LICENSE'])
+        mock_license_text = 'mock license text END OF TERMS AND CONDITIONS'
+        
+        C.write_license_to_file('random license', file_name, mock_license_text)
+
+        files_in_directory = C.get_non_empty_filenames(temp_folder)
+        assert files_in_directory == []
+    finally:
+        rmtree(temp_folder)

@@ -66,11 +66,11 @@ __nightly-slots() {
   [[ -n $opt_args[--nightly-base] ]] && nightly_bases+=($opt_args[--nightly-base])
 
   # bodge based on https://unix.stackexchange.com/a/572410
-  for path in $nightly_bases; do
+  for nightlypath in $nightly_bases; do
     if compset -P 1 '*/'; then
-      _files -W $path/$IPREFIX -/ -S " " -F "*/*"
+      _files -W $nightlypath/$IPREFIX -/ -S " " -F "*/*"
     else
-      _files -W $path -/ -S "/"
+      _files -W $nightlypath -/ -S "/"
     fi
 
   done

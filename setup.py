@@ -199,4 +199,12 @@ setup(
 
     # The package can be safely distributed as a ZIP file
     zip_safe=False,
+
+    # We are basically saying that this package can run on python2 and 3
+    # and thus we want to create a universal wheel whenever we build it
+    options = {
+        'bdist_wheel': {
+            'universal': True
+        }
+    }
 )

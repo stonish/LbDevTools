@@ -102,8 +102,6 @@ def main():
 
     logging.basicConfig(level=args.log_level)
 
-    args.platform = checkPlatform(parser, args.platform)
-
     if args.version:
         logging.warning(
             'deprecated version specification: '
@@ -117,11 +115,27 @@ def main():
 
     try:
         project, version = args.project
-        version = expandVersionAlias(project, version, args.platform)
     except ValueError:
         parser.error('wrong number of arguments')
-
     project = fixProjectCase(project)
+
+    args.platform = checkPlatform(parser, args.platform) or "best"
+
+    version = expandVersionAlias(
+        project, version, args.platform if args.platform != "best" else "any")
+
+    if args.platform == "best":
+        from LbEnv.ProjectEnv.lookup import listPlatforms
+        from LbEnv.ProjectEnv.script import HOST_INFO
+        from LbPlatformUtils import host_supports_tag
+        try:
+            args.platform = next(
+                p for p in listPlatforms(project, version)
+                if host_supports_tag(HOST_INFO, p))
+        except StopIteration:
+            sys.stderr.write("none of the available platforms is supported:"
+                             " {!r}\n".format(listPlatforms(project, version)))
+            sys.exit(64)
 
     try:
         from LbEnv.ProjectEnv.lookup import InvalidNightlySlotError

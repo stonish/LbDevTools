@@ -145,7 +145,7 @@ def main():
                 localNightlyHelp(
                     parser.prog or os.path.basename(sys.argv[0]), args.nightly,
                     project, args.platform
-                    if args.platform not in ('best', None) else '$CMTCONFIG',
+                    if args.platform not in ('best', None) else '$BINARY_TAG',
                     sys.argv[1:]))
             sys.exit(64)
         if args.help_nightly_local:
@@ -158,8 +158,8 @@ def main():
                     InvalidNightlySlotError(args.nightly[0], args.nightly[1],
                                             []),
                     project,
-                    args.platform
-                    if args.platform not in ('best', None) else '$CMTCONFIG', [
+                    args.platform if args.platform not in ('best', None) else
+                    '$BINARY_TAG', [
                         a for a in sys.argv[1:]
                         if not '--help-nightly-local'.startswith(a)
                     ],
@@ -229,7 +229,7 @@ def main():
 
         if not use_cmake and not use_cmt:
             logging.error('neither CMake nor CMT configuration found '
-                          '(are you using the right CMTCONFIG?)')
+                          '(are you using the right BINARY_TAG?)')
             exit(1)
     except SystemExit as err:
         if args.nightly:
@@ -242,7 +242,7 @@ def main():
                         InvalidNightlySlotError(args.nightly[0],
                                                 args.nightly[1], []), project,
                         args.platform if args.platform not in ('best', None)
-                        else '$CMTCONFIG', sys.argv[1:]))
+                        else '$BINARY_TAG', sys.argv[1:]))
             except ImportError:
                 # old version of LbEnv
                 # (before https://gitlab.cern.ch/lhcb-core/LbEnv/merge_requests/19)

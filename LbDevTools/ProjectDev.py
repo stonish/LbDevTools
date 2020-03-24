@@ -273,7 +273,9 @@ def main():
         local_version=local_version,
         with_fortran=' FORTRAN' if args.with_fortran else '',
         cmt_project=args.name,
-        datadir=DATA_DIR)
+        datadir=DATA_DIR,
+        platform=args.platform,
+    )
 
     # FIXME: improve generation of searchPath files, so that they match the command line
     templateDir = os.path.join(

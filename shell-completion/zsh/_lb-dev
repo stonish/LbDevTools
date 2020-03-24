@@ -1,0 +1,103 @@
+#compdef lb-dev
+
+###############################################################################
+# (c) Copyright 2020 CERN                                                     #
+#                                                                             #
+# This software is distributed under the terms of the GNU General Public      #
+# Licence version 3 (GPL Version 3), copied verbatim in the file "COPYING".   #
+#                                                                             #
+# In applying this licence, CERN does not waive the privileges and immunities #
+# granted to it by virtue of its status as an Intergovernmental Organization  #
+# or submit itself to any jurisdiction.                                       #
+###############################################################################
+
+# usage: lb-dev [-h] [--dev] [--dev-dir DEVDIR] [--nightly-base NIGHTLY_BASES]
+#               [--nightly SLOT[/(DAY|id)]] [--help-nightly-local]
+#               [--user-area USER_AREA] [--no-user-area] [-r SITEROOT]
+#               [--verbose] [--debug] [--quiet] [-c PLATFORM] [--force-platform]
+#               [-l] [--list-versions] [-L] [--name NAME] [--dest-dir DEST_DIR]
+#               [--git] [--no-git] [--with-fortran] [--without-fortran]
+#               [--version]
+#               Project[/version]
+
+__projects () {
+  if compset -P 1 '*/'; then
+    # TODO: it appears lb-dev --nightly <SLOT> --list <PROJECT> does not list HEAD
+    local -a versionlist
+    project=${(S)IPREFIX#/}
+    # (f) calling a subshell and splitting on line break https://unix.stackexchange.com/a/460798
+    # [@] for every array element
+    # %%\ *  remove everything with trailing ' *' (largest match)
+    versionlist=(${${(f)"$(lb-dev $words[2,-2] --list --quiet $project)"}[@]%%\ *})
+    compadd "$@" ${versionlist}
+  else
+    # TODO: avoid duplication with _git-lb-use
+    local -a projects
+    projects=($(lb-completion-helper list_projects 2> /dev/null))
+    if [[ $? -ne 0 ]]; then
+      _message "could not determine list of projects, falling back to hard coded list"
+      projects=(Gaudi LHCb Lbcom Rec Boole Brunel Gauss Phys Analysis Hlt Alignment Moore Online Euler Geant4 DaVinci Bender Orwell Panoramix LbScripts Dirac LHCbGrid Panoptes Curie Vetra VetraTB Compat VanDerMeer Ganga LHCbDirac Integration Erasmus Feicim Stripping LHCbExternals Urania VMDirac LHCbVMDirac Noether Tesla MooreOnline BeautyDirac Kepler AlignmentOnline Lovell L0MuonTools Calibration)
+    fi
+    compadd "$@" -S '/' ${projects}
+  fi
+}
+
+# TODO: avoid duplication with _lb-set-platform (the version here adds best)
+__lb-platforms() {
+  local -a compatible_platforms
+  compatible_platforms=($(lb-completion-helper list_compatible_platforms 2>/dev/null))
+  compatible_platforms+=(best)
+  compadd "$@" ${compatible_platforms[@]}
+}
+
+# TODO: do not blindly complete directories. ATM
+# lhcb-head/today/Brunel/Brunel_HEAD/Rec.... gets completed. Instead, there
+# shouldn't be a trailing slash after lhcb-head/today.
+__nightly-slots() {
+  local -a nightly_bases
+  nightly_bases=()
+  if (( ${+LHCBNIGHTLIES} )); then
+    nightly_bases+=${(s,:,)LHCBNIGHTLIES}
+  fi
+  if (( ${+LCG_nightlies_area} )); then
+    nightly_bases+=${(s,:,)LCG_nightlies_area}
+  fi
+  [[ -d /cvmfs/lhcbdev.cern.ch/nightlies ]] && nightly_bases+=(/cvmfs/lhcbdev.cern.ch/nightlies)
+  [[ -n $opt_args[--nightly-base] ]] && nightly_bases+=($opt_args[--nightly-base])
+
+  # bodge based on https://unix.stackexchange.com/a/572410
+  for nightlypath in $nightly_bases; do
+    if compset -P 1 '*/'; then
+      _files -W $nightlypath/$IPREFIX -/ -S " " -F "*/*"
+    else
+      _files -W $nightlypath -/ -S "/"
+    fi
+
+  done
+}
+
+_arguments \
+  '(- 1)'{-h,--help}'[Show help message]' \
+  '(-c --platform)'{-c,--platform}'[runtime platform]:PLATFORM: __lb-platforms' \
+  '--dev[prepend $LHCBDEV to the search path]' \
+  '--dev-dir[prepend a directory to the search path]:DEVDIR: _files -/' \
+  '--nightly-base[add the specified directory to the nightly builds search path]:NIGHTLY_BASES: _files -/' \
+  '--nightly[Add the required slot of the LHCb nightly builds to the list of DEV dirs ]:SLOT[/(DAY|id)]: __nightly-slots' \
+  '(- 1)--help-nightly-local[Print instructions on how to install locally and use a nightly slot build]' \
+  '(--no-user-area --user-area)--user-area[Use the specified path as User_release_area]:USER_AREA: _files -/' \
+  '(--no-user-area --user-area)--no-user-area[Ignore the user release area when looking for projects]' \
+  '(-r --siteroot)'{-r,--siteroot}'[path to the installation root]:SITEROOT: _files -/' \
+  '(-l --list)'{-l,--list}'[list the available versions of the requested project]' \
+  '(-L --list-platforms)'{-L,--list-platforms}'[list the available platforms for the requested project/version]' \
+  '--name[Name of the local project]:NAME' \
+  '--dest-dir[Where to create the local project]:DEST_DIR: _files -/' \
+  (--git --no-git)'--git[Initialize git repository in the generated directory]' \
+  (--git --no-git)'--no-git[Do not initialize the git local repository]' \
+  '--force-platform[ignore platform compatibility check]' \
+  '(-v --verbose -q --quiet -d --debug)'{-d,--debug}'[be very verbose]' \
+  '(-v --verbose -q --quiet -d --debug)'{-v,--verbose}'[be more verbose]' \
+  '(-q --quiet -v --verbose -d --debug)'{-q,--quiet}'[be more quiet]' \
+  '(: -)--version[display version information]' \
+  '(--with-fortran --without-fortran)--with-fortran[enable FORTRAN support for the generated project]' \
+  '(--with-fortran --without-fortran)--without-fortran[do not enable FORTRAN support for the generated project (default)]' \
+  '(: -)1:Project[/Version]: __projects'

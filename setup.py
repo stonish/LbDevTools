@@ -169,6 +169,7 @@ setup(
          ]),
         ('share/zsh/completions',
          [
+             'shell-completion/zsh/_lb-dev',
              'shell-completion/zsh/_git-lb-checkout',
              'shell-completion/zsh/_git-lb-push',
              'shell-completion/zsh/_git-lb-use'

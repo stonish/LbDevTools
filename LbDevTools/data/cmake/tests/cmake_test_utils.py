@@ -7,20 +7,20 @@ from os.path import join, curdir
 
 
 class CMakeTestScripts(object):
-    '''
+    """
     Helper class to run CMake test scripts.
 
     @param base_dir: where the tests should be run from
     @param scripts_dir: directory containing the tests scripts (test_<name>.cmake)
     @param tests: list of names of test scripts to run
-    '''
+    """
 
     base_dir = curdir
     scripts_dir = curdir
     tests = []
 
     def run(self, name):
-        script_name = join(self.scripts_dir, 'test_%s.cmake' % name)
+        script_name = join(self.scripts_dir, "test_%s.cmake" % name)
         out, err, returncode = cmake_script(script_name, cwd=self.base_dir)
         print("---------- stdout ----------")
         print(out)

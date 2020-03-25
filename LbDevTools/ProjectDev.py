@@ -369,7 +369,7 @@ def main():
 
     # Success report
     msg = '''
-Successfully created the local project {0} in {1}
+Successfully created the local project {0} for {4} in {1}
 
 To start working:
 
@@ -386,8 +386,14 @@ and optionally (CMake only)
 
   > make install
 
-You can customize the configuration by editing the files 'build.conf' and
-'CMakeLists.txt' (see http://cern.ch/gaudi/CMake for details).
+To build for another platform call
+
+  > make platform=<platform id>
+
+You can customize the configuration by editing the files 'build.conf' and 'CMakeLists.txt'
+(see https://twiki.cern.ch/twiki/bin/view/LHCb/GaudiCMakeConfiguration for details).
 '''
 
-    print(msg.format(args.name, args.dest_dir, devProjectDir, project))
+    print(
+        msg.format(args.name, args.dest_dir, devProjectDir, project,
+                   args.platform))

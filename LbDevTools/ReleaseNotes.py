@@ -87,7 +87,7 @@ def git_o(*args, **kwargs):
     Helper function to get the output of a call to git.
     '''
     args[0].insert(0, 'git')
-    return getOutput(*args, **kwargs)
+    return getOutput(*args, **kwargs).decode()
 
 
 def ref_names(repo, commit):
@@ -477,5 +477,5 @@ Example:
         'get_dep_mrs': get_dep_mrs,
     }
     with open(args.output, 'w') as f:
-        f.write(template.render(context).encode('utf8'))
+        f.write(template.render(context))
     print('Release notes draft written to {}.'.format(args.output))

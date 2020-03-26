@@ -1,10 +1,10 @@
 #!/usr/bin/env python
-'''
+"""
 This script allows to parse a log file coming from the instrumentation of the
 Gaudi cmake process (See Instrument.cmake) and create an other file
 understandable by kcachegrind for easy visualization of where we spend time in
 cmake.
-'''
+"""
 from __future__ import print_function
 from __future__ import absolute_import
 import sys
@@ -13,7 +13,8 @@ import sys
 def usage():
     print(
         "Invalid arguments\nProper syntax is :\n  %s <log file> <callgrind file>"
-        % sys.argv[0])
+        % sys.argv[0]
+    )
 
 
 if len(sys.argv) != 3:
@@ -24,7 +25,7 @@ if len(sys.argv) != 3:
 # actuall a dictionnary of dictionnaries, with top level key
 # storing caller name, second level key storing callee name
 # and values storing a tuple (nb calls, total time spent in calls)
-calls = {'main': {}}
+calls = {"main": {}}
 
 # dictionnary of total time spent in functions
 timeSpentInfunc = {}
@@ -40,15 +41,15 @@ totalcost = 0
 # and get time info. We then update the calls and timeSpentInfunc
 # dictionnaries
 for line in open(sys.argv[1]).readlines():
-    if not line.startswith('TIMING'):
+    if not line.startswith("TIMING"):
         continue
     key, func, time = line.split()[2:]
-    if key == 'STARTIME':
+    if key == "STARTIME":
         callStack.append((func, int(time)))
-    elif key == 'ENDTIME':
+    elif key == "ENDTIME":
         sfunc, stime = callStack.pop()
         if sfunc != func:
-            print('Mismatch START/END for %s/%s' % (sfunc, func))
+            print("Mismatch START/END for %s/%s" % (sfunc, func))
             sys.exit()
         deltatime = int(time) - stime
         # add time spent to this function
@@ -59,7 +60,7 @@ for line in open(sys.argv[1]).readlines():
         if callStack:
             caller = callStack[-1][0]
         else:
-            caller = 'main'
+            caller = "main"
             # totalcost
             totalcost += deltatime
         if caller not in calls:
@@ -71,37 +72,37 @@ for line in open(sys.argv[1]).readlines():
 
 
 def writeCalls(func, callees):
-    '''writes the callgrind entry for a given function given its
-    name and a dictionnary of callees -> (nb calls, time spent)'''
-    output.write('fn=%s\n' % func)
+    """writes the callgrind entry for a given function given its
+    name and a dictionnary of callees -> (nb calls, time spent)"""
+    output.write("fn=%s\n" % func)
     # compute time spent in this function
     # excluding time spend in callees
     if func in timeSpentInfunc:
         tottime = timeSpentInfunc[func]
         for cfunc in callees:
             tottime -= callees[cfunc][1]
-        output.write('0 %d \n' % tottime)
+        output.write("0 %d \n" % tottime)
     else:
-        output.write('0 0 \n')
+        output.write("0 0 \n")
     # print callees and nb calls/time spent
     # for each of them
     for cfunc in callees:
         nb, time = callees[cfunc]
-        output.write('cfn=%s\n' % cfunc)
-        output.write('calls=%d 0\n' % nb)
-        output.write('0 %d\n' % time)
-    output.write('\n')
+        output.write("cfn=%s\n" % cfunc)
+        output.write("calls=%d 0\n" % nb)
+        output.write("0 %d\n" % time)
+    output.write("\n")
 
 
 # create output callgrind file
-output = open(sys.argv[2], 'w')
-output.write('events: Cycles\n')
-output.write('summary: %d\n' % totalcost)
-output.write('fl=GaudiProjectConfig.cmake\n')
+output = open(sys.argv[2], "w")
+output.write("events: Cycles\n")
+output.write("summary: %d\n" % totalcost)
+output.write("fl=GaudiProjectConfig.cmake\n")
 for func in calls:
     writeCalls(func, calls[func])
 for func in timeSpentInfunc:
     if func not in calls:
-        output.write('fn=%s\n' % func)
-        output.write('0 %d\n' % timeSpentInfunc[func])
+        output.write("fn=%s\n" % func)
+        output.write("0 %d\n" % timeSpentInfunc[func])
 output.close()

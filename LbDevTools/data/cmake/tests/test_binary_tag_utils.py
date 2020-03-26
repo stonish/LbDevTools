@@ -9,6 +9,6 @@ from cmake_test_utils import CMakeTestScripts
 
 class Tests(CMakeTestScripts):
     base_dir = dirname(__file__)
-    scripts_dir = join(base_dir, 'cmake_scripts')
+    scripts_dir = join(base_dir, "cmake_scripts")
 
-    tests = ['binary_tag_utils']
+    tests = ["binary_tag_utils"]

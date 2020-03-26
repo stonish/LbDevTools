@@ -8,13 +8,13 @@
 # granted to it by virtue of its status as an Intergovernmental Organization  #
 # or submit itself to any jurisdiction.                                       #
 ###############################################################################
-'''
+"""
 Wrapper for the glimpse command to look for a pattern in an LHCb projects and
 its dependencies.
 
 @author Marco Clemencic <marco.clemencic@cern.ch>
 @author Florence Ranjard
-'''
+"""
 
 from __future__ import absolute_import
 import os
@@ -42,15 +42,17 @@ def paths(project, version):
 
 def search():
     parser = ArgumentParser(
-        description='run the glimpse command on the project specified on the '
-        'command line and on all the projects it depends on')
+        description="run the glimpse command on the project specified on the "
+        "command line and on all the projects it depends on"
+    )
 
-    parser.add_argument('pattern', help='what to search in the projects')
+    parser.add_argument("pattern", help="what to search in the projects")
     parser.add_argument(
-        'project',
-        metavar='project/version',
-        help='which project/version to start the search from, descending its '
-        'dependencies')
+        "project",
+        metavar="project/version",
+        help="which project/version to start the search from, descending its "
+        "dependencies",
+    )
 
     addOutputLevel(parser)
 
@@ -58,22 +60,23 @@ def search():
     logging.basicConfig(level=args.log_level)
 
     try:
-        args.project, args.version = args.project.split('/', 1)
+        args.project, args.version = args.project.split("/", 1)
     except ValueError:
-        parser.error('invalid format for project/version: %r' % args.project)
+        parser.error("invalid format for project/version: %r" % args.project)
 
-    if not which('glimpse'):
-        sys.exit('error: glimpse command not available, check the environment')
+    if not which("glimpse"):
+        sys.exit("error: glimpse command not available, check the environment")
 
     if PREFERRED_PLATFORM:
-        args.version = expandVersionAlias(args.project, args.version,
-                                          PREFERRED_PLATFORM)
+        args.version = expandVersionAlias(
+            args.project, args.version, PREFERRED_PLATFORM
+        )
 
     for path in paths(args.project, args.version):
-        if os.path.exists(os.path.join(path, '.glimpse_filenames')):
-            logging.info('running glimpse in %s', path)
-            call(['glimpse', '-y', '-H', path, args.pattern])
+        if os.path.exists(os.path.join(path, ".glimpse_filenames")):
+            logging.info("running glimpse in %s", path)
+            call(["glimpse", "-y", "-H", path, args.pattern])
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     search()

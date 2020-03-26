@@ -1,4 +1,3 @@
-from __future__ import print_function
 ###############################################################################
 # (c) Copyright 2018 CERN                                                     #
 #                                                                             #
@@ -10,7 +9,9 @@ from __future__ import print_function
 # or submit itself to any jurisdiction.                                       #
 ###############################################################################
 from __future__ import absolute_import
-__author__ = 'Marco Clemencic <marco.clemencic@cern.ch>'
+from __future__ import print_function
+
+__author__ = "Marco Clemencic <marco.clemencic@cern.ch>"
 
 import os
 import git
@@ -62,17 +63,14 @@ except ImportError:
                     if "None" not in str(ex):
                         raise
                     print(
-                        "ERROR: {0!r} while cleaning up {1!r}".format(
-                            ex,
-                            self,
-                        ),
-                        file=_sys.stderr)
+                        "ERROR: {0!r} while cleaning up {1!r}".format(ex, self,),
+                        file=_sys.stderr,
+                    )
                     return
                 self._closed = True
                 if _warn:
                     # It should be ResourceWarning, but it exists only in Python 3
-                    self._warn("Implicitly cleaning up {1!r}".format(self),
-                               UserWarning)
+                    self._warn("Implicitly cleaning up {1!r}".format(self), UserWarning)
 
         def __exit__(self, exc, value, tb):
             self.cleanup()
@@ -99,8 +97,7 @@ except ImportError:
             for name in self._listdir(path):
                 fullname = self._path_join(path, name)
                 try:
-                    isdir = self._isdir(
-                        fullname) and not self._islink(fullname)
+                    isdir = self._isdir(fullname) and not self._islink(fullname)
                 except OSError:
                     isdir = False
                 if isdir:
@@ -117,51 +114,54 @@ except ImportError:
 
 
 def commits_cmp(a, b):
-    '''
+    """
     History wise comparison function for commit ids.
 
     Used as cmp argument to a sorting function, the commits are sorted from the
     oldest to the newest.
-    '''
+    """
     if a == b:
         return 0
     try:
-        next(a.repo.iter_commits('{.hexsha}..{.hexsha}'.format(a, b)))
+        next(a.repo.iter_commits("{.hexsha}..{.hexsha}".format(a, b)))
         return -1
     except StopIteration:
         return 1
 
 
 def is_subdir(a, b):
-    '''
+    """
     Return True if 'a' is a subdirectory of 'b' (or a == b).
-    '''
-    return a == b or a.startswith(b + '/')
+    """
+    return a == b or a.startswith(b + "/")
 
 
 def main():
-    '''Main function of the script.'''
-    from LbDevTools.GitTools.common import (add_verbosity_argument,
-                                            handle_verbosity_argument,
-                                            add_version_argument)
+    """Main function of the script."""
+    from LbDevTools.GitTools.common import (
+        add_verbosity_argument,
+        handle_verbosity_argument,
+        add_version_argument,
+    )
     from argparse import ArgumentParser
+
     parser = ArgumentParser()
     add_version_argument(parser)
 
-    parser.add_argument('remote')
-    parser.add_argument('branch')
-    parser.add_argument('paths', metavar='path', nargs='*')
+    parser.add_argument("remote")
+    parser.add_argument("branch")
+    parser.add_argument("paths", metavar="path", nargs="*")
 
     add_verbosity_argument(parser)
 
     parser.add_argument(
-        '-k',
-        '--keep-temp-branch',
-        action='store_true',
-        dest='keep_temp',
+        "-k",
+        "--keep-temp-branch",
+        action="store_true",
+        dest="keep_temp",
         default=False,
-        help='keep temporary branch after push instead of '
-        'deleting (default=off)')
+        help="keep temporary branch after push instead of " "deleting (default=off)",
+    )
 
     args = parser.parse_args()
     handle_verbosity_argument(args)
@@ -169,31 +169,32 @@ def main():
     try:
         repo = git.Repo(search_parent_directories=True)
     except git.InvalidGitRepositoryError:
-        logging.error('current directory is not a Git repository')
+        logging.error("current directory is not a Git repository")
         exit(1)
 
     # convert paths to relative to repo workingn directory
     curdir = os.getcwd()
     args.paths = set(
         os.path.relpath(os.path.join(curdir, path), repo.working_dir)
-        for path in args.paths)
+        for path in args.paths
+    )
 
-    logging.info('using repository at %s', repo.working_dir)
+    logging.info("using repository at %s", repo.working_dir)
 
     # find packages (directories) from the requested remote
-    configfile = os.path.join(repo.working_dir, '.git-lb-checkout')
+    configfile = os.path.join(repo.working_dir, ".git-lb-checkout")
     pkgs = {}
     remotes = set()
     with git.GitConfigParser([configfile], read_only=True) as conf:
         for section in conf.sections():
-            if section.startswith('lb-checkout'):
-                rem, pkg = section.split('"')[1].split('.', 1)
+            if section.startswith("lb-checkout"):
+                rem, pkg = section.split('"')[1].split(".", 1)
                 # collect the remotes name if we need to report errors
                 remotes.add(rem)
                 if rem == args.remote:
                     pkgs[pkg] = {
-                        'base': conf.get_value(section, 'base'),
-                        'imported': conf.get_value(section, 'imported'),
+                        "base": conf.get_value(section, "base"),
+                        "imported": conf.get_value(section, "imported"),
                     }
 
     if not pkgs:
@@ -217,25 +218,25 @@ def main():
         pkgs = new_pkgs
 
     if not pkgs:
-        logging.error('no directory selected, check your options')
+        logging.error("no directory selected, check your options")
         exit(1)
 
-    logging.info('considering directories %s', list(pkgs.keys()))
+    logging.info("considering directories %s", list(pkgs.keys()))
 
     # dictionary of dictionaries of sets
     commits_to_consider = defaultdict(lambda: defaultdict(set))
     for pkg in pkgs:
         first = True
-        all_commits = list(repo.iter_commits(pkgs[pkg]['base'] + '..', pkg))
+        all_commits = list(repo.iter_commits(pkgs[pkg]["base"] + "..", pkg))
         all_commits.reverse()
         for commit in all_commits:
-            commits_to_consider[commit]['packages'].add(pkg)
+            commits_to_consider[commit]["packages"].add(pkg)
             if first:
-                commits_to_consider[commit]['first'].add(pkg)
+                commits_to_consider[commit]["first"].add(pkg)
                 first = False
 
     if not commits_to_consider:
-        logging.error('nothing to push')
+        logging.error("nothing to push")
         exit(1)
 
     # we want to stage the commits in a temporary branch before pushing it to
@@ -244,74 +245,71 @@ def main():
     tmp_branch_name = args.branch
     cnt = 1
     while tmp_branch_name in branches:
-        tmp_branch_name = '{0}-tmp{1}'.format(args.branch, cnt)
+        tmp_branch_name = "{0}-tmp{1}".format(args.branch, cnt)
         cnt += 1
     if tmp_branch_name != args.branch:
-        logging.info('using temporary branch name %s', tmp_branch_name)
+        logging.info("using temporary branch name %s", tmp_branch_name)
 
     with TemporaryDirectory() as tmpdir:
         tmprepo = repo.clone(
             os.path.join(tmpdir, args.remote),
             no_checkout=True,
-            reference=repo.working_dir)
+            reference=repo.working_dir,
+        )
 
         first = True
-        logging.debug('sorting list of commits to consider')
+        logging.debug("sorting list of commits to consider")
         for commit in sorted(commits_to_consider, cmp=commits_cmp):
-            logging.info('applying commit %s', commit.hexsha)
+            logging.info("applying commit %s", commit.hexsha)
             commit_info = commits_to_consider[commit]
-            if commit_info['first']:
-                logging.debug('first commit for dirs: %s',
-                              list(commit_info['first']))
+            if commit_info["first"]:
+                logging.debug("first commit for dirs: %s", list(commit_info["first"]))
             # for all packages introduced with this commit, let's take the
             # imported version first
-            for pkg in commit_info['first']:
+            for pkg in commit_info["first"]:
                 if first:
                     # it's the very first one, we create the branch
-                    tmprepo.create_head(tmp_branch_name,
-                                        pkgs[pkg]['imported']).checkout()
+                    tmprepo.create_head(
+                        tmp_branch_name, pkgs[pkg]["imported"]
+                    ).checkout()
                     first = False
                 else:
                     # merging is a way to get a uniform starting point
-                    tmprepo.git.merge(pkgs[pkg]['imported'], quiet=True)
+                    tmprepo.git.merge(pkgs[pkg]["imported"], quiet=True)
                 # remove original version to take into account changes in the
                 # very first commit
                 rmtree(os.path.join(tmprepo.working_dir, pkg))
                 # checkout the local repo version of the pkg
-                tmprepo.git.checkout('--quiet', commit.hexsha, '--', pkg)
+                tmprepo.git.checkout("--quiet", commit.hexsha, "--", pkg)
             # for all packages changed (not introduced) in this commit
-            pkgs_to_patch = list(commit_info['packages'] -
-                                 commit_info['first'])
+            pkgs_to_patch = list(commit_info["packages"] - commit_info["first"])
             if pkgs_to_patch:
                 patch = tmprepo.git.format_patch(
-                    '--stdout', '{0}~..{0}'.format(commit.hexsha), '--',
-                    *pkgs_to_patch)
+                    "--stdout", "{0}~..{0}".format(commit.hexsha), "--", *pkgs_to_patch
+                )
                 if patch:
-                    proc = Popen(['git', 'am'],
-                                 stdin=PIPE,
-                                 cwd=tmprepo.working_dir)
+                    proc = Popen(["git", "am"], stdin=PIPE, cwd=tmprepo.working_dir)
                     proc.communicate(patch)
                     if proc.returncode:
-                        logging.error('failed to apply commit %s',
-                                      commit.hexsha)
+                        logging.error("failed to apply commit %s", commit.hexsha)
                         exit(proc.returncode)
-        tmprepo.remote('origin').push(tmp_branch_name)
+        tmprepo.remote("origin").push(tmp_branch_name)
 
     try:
-        repo.remote(args.remote).push('{0}:{1}'.format(tmp_branch_name,
-                                                       args.branch))
+        repo.remote(args.remote).push("{0}:{1}".format(tmp_branch_name, args.branch))
     except Exception as err:
         logging.error("Failed to push to %s", args.remote)
-        logging.error('%s: %s', type(err).__name__, err)
+        logging.error("%s: %s", type(err).__name__, err)
         if args.keep_temp:
             logging.error("Keeping temporary branch %s", tmp_branch_name)
         else:
-            logging.warning("For inspection with vanilla git (e.g. --force) "
-                            "use")
+            logging.warning("For inspection with vanilla git (e.g. --force) " "use")
             logging.warning(" git lb-push --keep-temp-branch ...")
         logging.info("")
-        logging.info("Possible reasons are: no push permission or branch with "
-                     "the same name exists and cannot be fast-forwarded.")
+        logging.info(
+            "Possible reasons are: no push permission or branch with "
+            "the same name exists and cannot be fast-forwarded."
+        )
     else:
         new_base = repo.head.commit.hexsha
         new_imported = getattr(repo.heads, tmp_branch_name).commit.hexsha
@@ -320,14 +318,18 @@ def main():
                 section = 'lb-checkout "{}.{}"'.format(args.remote, pkg)
                 if not conf.has_section(section):
                     conf.add_section(section)
-                conf.set(section, 'base', new_base)
-                conf.set(section, 'imported', new_imported)
+                conf.set(section, "base", new_base)
+                conf.set(section, "imported", new_imported)
         repo.index.add([configfile])
-        repo.index.commit('updated {} after push of {}/{}'.format(
-            os.path.basename(configfile), args.remote, args.branch))
+        repo.index.commit(
+            "updated {} after push of {}/{}".format(
+                os.path.basename(configfile), args.remote, args.branch
+            )
+        )
     finally:
         if args.keep_temp:
-            logging.warning('Keeping branch %s. It\'s up to you to delete it.',
-                            tmp_branch_name)
+            logging.warning(
+                "Keeping branch %s. It's up to you to delete it.", tmp_branch_name
+            )
         else:
             repo.delete_head(tmp_branch_name, force=True)

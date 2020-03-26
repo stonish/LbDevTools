@@ -102,8 +102,6 @@ def main():
 
     logging.basicConfig(level=args.log_level)
 
-    args.platform = checkPlatform(parser, args.platform)
-
     if args.version:
         logging.warning(
             'deprecated version specification: '
@@ -117,11 +115,27 @@ def main():
 
     try:
         project, version = args.project
-        version = expandVersionAlias(project, version, args.platform)
     except ValueError:
         parser.error('wrong number of arguments')
-
     project = fixProjectCase(project)
+
+    args.platform = checkPlatform(parser, args.platform) or "best"
+
+    version = expandVersionAlias(
+        project, version, args.platform if args.platform != "best" else "any")
+
+    if args.platform == "best":
+        from LbEnv.ProjectEnv.lookup import listPlatforms
+        from LbEnv.ProjectEnv.script import HOST_INFO
+        from LbPlatformUtils import host_supports_tag
+        try:
+            args.platform = next(
+                p for p in listPlatforms(project, version)
+                if host_supports_tag(HOST_INFO, p))
+        except StopIteration:
+            sys.stderr.write("none of the available platforms is supported:"
+                             " {!r}\n".format(listPlatforms(project, version)))
+            sys.exit(64)
 
     try:
         from LbEnv.ProjectEnv.lookup import InvalidNightlySlotError
@@ -131,7 +145,7 @@ def main():
                 localNightlyHelp(
                     parser.prog or os.path.basename(sys.argv[0]), args.nightly,
                     project, args.platform
-                    if args.platform not in ('best', None) else '$CMTCONFIG',
+                    if args.platform not in ('best', None) else '$BINARY_TAG',
                     sys.argv[1:]))
             sys.exit(64)
         if args.help_nightly_local:
@@ -144,8 +158,8 @@ def main():
                     InvalidNightlySlotError(args.nightly[0], args.nightly[1],
                                             []),
                     project,
-                    args.platform
-                    if args.platform not in ('best', None) else '$CMTCONFIG', [
+                    args.platform if args.platform not in ('best', None) else
+                    '$BINARY_TAG', [
                         a for a in sys.argv[1:]
                         if not '--help-nightly-local'.startswith(a)
                     ],
@@ -215,7 +229,7 @@ def main():
 
         if not use_cmake and not use_cmt:
             logging.error('neither CMake nor CMT configuration found '
-                          '(are you using the right CMTCONFIG?)')
+                          '(are you using the right BINARY_TAG?)')
             exit(1)
     except SystemExit as err:
         if args.nightly:
@@ -228,7 +242,7 @@ def main():
                         InvalidNightlySlotError(args.nightly[0],
                                                 args.nightly[1], []), project,
                         args.platform if args.platform not in ('best', None)
-                        else '$CMTCONFIG', sys.argv[1:]))
+                        else '$BINARY_TAG', sys.argv[1:]))
             except ImportError:
                 # old version of LbEnv
                 # (before https://gitlab.cern.ch/lhcb-core/LbEnv/merge_requests/19)
@@ -259,7 +273,9 @@ def main():
         local_version=local_version,
         with_fortran=' FORTRAN' if args.with_fortran else '',
         cmt_project=args.name,
-        datadir=DATA_DIR)
+        datadir=DATA_DIR,
+        platform=args.platform,
+    )
 
     # FIXME: improve generation of searchPath files, so that they match the command line
     templateDir = os.path.join(
@@ -353,7 +369,7 @@ def main():
 
     # Success report
     msg = '''
-Successfully created the local project {0} in {1}
+Successfully created the local project {0} for {4} in {1}
 
 To start working:
 
@@ -370,8 +386,14 @@ and optionally (CMake only)
 
   > make install
 
-You can customize the configuration by editing the files 'build.conf' and
-'CMakeLists.txt' (see http://cern.ch/gaudi/CMake for details).
+To build for another platform call
+
+  > make platform=<platform id>
+
+You can customize the configuration by editing the files 'build.conf' and 'CMakeLists.txt'
+(see https://twiki.cern.ch/twiki/bin/view/LHCb/GaudiCMakeConfiguration for details).
 '''
 
-    print(msg.format(args.name, args.dest_dir, devProjectDir, project))
+    print(
+        msg.format(args.name, args.dest_dir, devProjectDir, project,
+                   args.platform))

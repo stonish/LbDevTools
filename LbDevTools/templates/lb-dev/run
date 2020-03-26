@@ -1,29 +1,35 @@
 #!/bin/sh
 
-build_tool=${build_tool}
+root_dir=$$(dirname $$0)
 
-if [ -z "$$CMTCONFIG" ] ; then
-  echo "error: CMTCONFIG not defined"
+# Get build configuration parameters 
+. $${root_dir}/build.conf
+
+if [ -z "$${BINARY_TAG}" ] ; then
+  export BINARY_TAG=$${CMTCONFIG:-$${platform}}
+fi
+if [ -z "$${CMTCONFIG}" ] ; then
+  export CMTCONFIG=$${BINARY_TAG:-$${platform}}
+fi
+if [ "$${BINARY_TAG}" != "$${CMTCONFIG}" ] ; then
+  echo "error: invalid environment: inconsistent values for BINARY_TAG and CMTCONFIG"
   exit 1
 fi
 
-if [ "$build_tool" = "cmake" ] ; then
-  run_cmd=$$(dirname $$0)/build.$$CMTCONFIG/run
-  if [ -e "$$run_cmd" ] ; then
-    exec $$run_cmd "$$@"
-  else
-    echo "error: cannot find build.$$CMTCONFIG/run, did you build?"
+if [ "$$build_tool" = "cmake" ] ; then
+  run_cmd=$${root_dir}/build.$$BINARY_TAG/run
+  if [ ! -e "$$run_cmd" ] ; then
+    echo "error: cannot find build.$$BINARY_TAG/run, did you build?"
     exit 1
   fi
 else
   curdir=$$(pwd)
-  cd $$(dirname $$0)
-  . ./build_env.sh
-  cd $$curdir
-  . SetupProject.sh --keep-CMTPROJECTPATH --user $$(cd $$(dirname $$0)/.. ; pwd) ${cmt_project}
-  if [ "$$SetupProjectStatus" = 0 ] ; then
-    [ "$$#" = 0 ] && (printenv | sort) || exec "$$@"
-  else
-    exit $$SetupProjectStatus
+  cd $${root_dir}
+  if [ -r ./build_env.sh ] ; then
+    . ./build_env.sh
   fi
+  cd $$curdir
+  run_cmd="lb-run --user-area $$(cd $${root_dir}/.. ; pwd) ${cmt_project}"
 fi
+
+exec $$run_cmd "$$@"

@@ -399,7 +399,7 @@ Example:
     project_name = project_fullname.split('/')[-1]
 
     stack_config = None
-    dependencies = []
+    dependencies = {}
     if args.stack:
         with open(args.stack) as f:
             stack_config = json.load(f)

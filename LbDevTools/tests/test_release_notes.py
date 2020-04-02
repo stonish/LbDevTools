@@ -20,23 +20,23 @@ from subprocess import check_call
 from LbDevTools import ReleaseNotes
 
 
-def test_script():
+class TestScript(object):
     STACK = {
         "LCG": ["96b with ROOT 6.18.04", "96b with ROOT 6.18.04", []],
         "Gaudi": ["v33r0", "v33r0", ["LCG"]],
         "LHCb": ["v50r6", "v51r0", ["Gaudi"]],
         "Lbcom": ["v30r6", "v31r0", ["LHCb"]],
     }
+    PROJECT = "Lbcom"
 
-    old_path = os.getcwd()
-    path = tempfile.mkdtemp()
-    os.chdir(path)
-    try:
+    @classmethod
+    def setup_class(cls):
+        cls.old_path = os.getcwd()
+        cls.path = tempfile.mkdtemp()
+        os.chdir(cls.path)
+
         # Setup some minimal stack
-        with open("stack.json", "w") as f:
-            json.dump(STACK, f)
-
-        for p, (_, v1, _) in STACK.items():
+        for p, (_, v1, _) in cls.STACK.items():
             if p not in ["Gaudi", "LCG"]:
                 check_call(
                     [
@@ -48,34 +48,45 @@ def test_script():
                 )
                 check_call(["git", "checkout", "-q", v1], cwd=p)
 
-        project = "Lbcom"
-        # Run the script entry point
-        os.chdir(project)
+        os.chdir(cls.PROJECT)
         # force the use of the template from LbDevTools:
         os.remove("ReleaseNotes/release_notes_template.md")
-        ReleaseNotes.main(["-s", "../stack.json", "-o", "output.md"])
 
-        with open("output.md") as f:
+    @classmethod
+    def teardown_class(cls):
+        os.chdir(cls.old_path)
+        shutil.rmtree(cls.path)
+
+    def test_versions(self):
+        v_prev, v_next, _ = self.STACK[self.PROJECT]
+        ReleaseNotes.main([v_prev, v_next, "-o", "output1.md"])
+        self.check_output("output1.md", check_deps=False)
+
+    def test_stack_json(self):
+        # stack.json file must be in the directory containing the clones
+        with open("../stack.json", "w") as f:
+            json.dump(self.STACK, f)
+
+        ReleaseNotes.main(["-s", "../stack.json", "-o", "output2.md"])
+        self.check_output("output2.md")
+
+    def check_output(self, path, check_deps=True):
+        with open(path) as f:
             output = f.read()
         lines = output.splitlines()
 
+        project, v_prev, v_next, _ = [self.PROJECT] + self.STACK[self.PROJECT]
+
         # check preamble
-        assert (
-            "{} {} {}".format(datetime.date.today(), project, STACK[project][1])
-            in lines[0]
-        )
-        assert re.search(r"LHCb.*{}".format(STACK["LHCb"][1]), output)
-        assert re.search(
-            r"relative to {}.*{}".format(project, STACK[project][0]), output
-        )
+        assert "{} {} {}".format(datetime.date.today(), project, v_next) in lines[0]
+        assert re.search(r"relative to {}.*{}".format(project, v_prev), output)
         # check for changes
         assert (
             '~Calo ~"MC checking" | Allow relations changes in ' "LHCb, !385 (@graven)"
         ) in output
-        # check for highlights from upstream projects
-        assert (
-            "~Decoding ~Muon | Improve MuonRawToHits, " "LHCb!2177 (@rvazquez)"
-        ) in output
-    finally:
-        os.chdir(old_path)
-        shutil.rmtree(path)
+        if check_deps:
+            assert re.search(r"LHCb.*{}".format(self.STACK["LHCb"][1]), output)
+            # check for highlights from upstream projects
+            assert (
+                "~Decoding ~Muon | Improve MuonRawToHits, " "LHCb!2177 (@rvazquez)"
+            ) in output

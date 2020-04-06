@@ -67,10 +67,9 @@ def search():
     if not which("glimpse"):
         sys.exit("error: glimpse command not available, check the environment")
 
-    if PREFERRED_PLATFORM:
-        args.version = expandVersionAlias(
-            args.project, args.version, PREFERRED_PLATFORM
-        )
+    args.version = expandVersionAlias(
+        args.project, args.version, PREFERRED_PLATFORM or "any"
+    )
 
     for path in paths(args.project, args.version):
         if os.path.exists(os.path.join(path, ".glimpse_filenames")):

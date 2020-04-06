@@ -818,7 +818,8 @@ def main():
 
                     # remove the space character
                     summary["fields"].append(
-                        cleanSpace(cleanWebChar(NamedMeasurement.get("name"))))
+                        cleanSpace(cleanWebChar(
+                            NamedMeasurement.get("name"))).lower())
                     # or NamedMeasurement.get("name") == "Pass Reason" :
                     if NamedMeasurement.get("name") == "Causes":
                         if NamedMeasurement.find(

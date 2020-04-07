@@ -1,5 +1,5 @@
 ###############################################################################
-# (c) Copyright 2019 CERN for the benefit of the LHCb Collaboration           #
+# (c) Copyright 2019-2020 CERN for the benefit of the LHCb Collaboration      #
 #                                                                             #
 # This software is distributed under the terms of the GNU General Public      #
 # Licence version 3 (GPL Version 3), copied verbatim in the file "COPYING".   #
@@ -33,7 +33,8 @@ endforeach()
 string(APPEND metadata ")\n")
 
 file(WRITE ${CMAKE_BINARY_DIR}/.metadata.cmake "${metadata}")
-gaudi_install(CMAKE ${CMAKE_BINARY_DIR}/.metadata.cmake)
+install(FILES ${CMAKE_BINARY_DIR}/.metadata.cmake
+        DESTINATION "lib/cmake/${PROJECT_NAME}")
 
 # - dependencies
 set(targets)
@@ -50,14 +51,15 @@ endforeach()
 # Note: this is equivalent to the environment used at configure/build time,
 #       derived from the toolchain (or the view), so it does not contain
 #       the bare minimum of externals (it's a superset)
+string(TOUPPER "${PROJECT_NAME}" PROJECT_NAME_UPCASE)
 set(xenv_data
 "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <env:config xmlns:env=\"EnvSchema\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:schemaLocation=\"EnvSchema EnvSchema.xsd \">
   <env:default variable=\"LCG_releases_base\">@LCG_releases_base@</env:default>
   <env:set variable=\"GAUDIAPPNAME\">${PROJECT_NAME}</env:set>
   <env:set variable=\"GAUDIAPPVERSION\">${PROJECT_VERSION}</env:set>
-  <env:set variable=\"GAUDI_PROJECT_ROOT\">\${.}/../../</env:set>
-  <env:prepend variable=\"PATH\">\${.}/bin:$ENV{PATH}</env:prepend>
+  <env:set variable=\"${PROJECT_NAME_UPCASE}_PROJECT_ROOT\">\${.}/../../</env:set>
+  <env:prepend variable=\"PATH\">$ENV{PATH}</env:prepend>
   <env:prepend variable=\"PATH\">\${.}/bin</env:prepend>
   <env:prepend variable=\"LD_LIBRARY_PATH\">$ENV{LD_LIBRARY_PATH}</env:prepend>
   <env:prepend variable=\"LD_LIBRARY_PATH\">\${.}/lib</env:prepend>

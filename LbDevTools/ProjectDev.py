@@ -332,6 +332,8 @@ def main():
 
     if args.nightly:
         data["slot"], data["day"], data["base"] = args.nightly
+        # make sure the nightly build base path is an absolute path
+        data["base"] = os.path.abspath(data["base"])
     else:
         data["slot"] = data["day"] = data["base"] = ""
 

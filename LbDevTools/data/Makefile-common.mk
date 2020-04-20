@@ -28,6 +28,9 @@ ifneq ($(BINARY_TAG),$(CMTCONFIG))
   $(error Invalid environment: inconsistent values for BINARY_TAG and CMTCONFIG)
 endif
 
+# Make sure LCG_VERSION is propagated as an environment variable
+export LCG_VERSION := $(LCG_VERSION)
+
 ifeq ($(wildcard cmt/project.cmt),)
 # we cannot use the CMT version if we do not have a cmt/project.cmt
 override USE_CMT =

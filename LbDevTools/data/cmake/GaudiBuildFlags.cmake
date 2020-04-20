@@ -63,16 +63,24 @@ set(GAUDI_CPP11_DEFAULT ON)
 if(NOT ROOT_CXX_STANDARD)
   find_package(ROOT QUIET)
   if(ROOT_FOUND)
-    # the ROOTConfig.cmake delivered by ROOT does not define ROOT_INCLUDE_DIR
-    if(NOT DEFINED ROOT_INCLUDE_DIR)
-      list(GET ROOT_INCLUDE_DIRS 0 ROOT_INCLUDE_DIR)
-    endif()
-    file(STRINGS ${ROOT_INCLUDE_DIR}/RConfigure.h _RConfigure REGEX "define R__")
-    foreach(rconfig_line IN LISTS _RConfigure)
-      if(rconfig_line MATCHES "R__USE_CXX([^ ]+)")
-        set(ROOT_CXX_STANDARD "c++${CMAKE_MATCH_1}")
+    if(EXISTS ${ROOTSYS}/cmake/ROOTConfig.cmake)
+      file(READ ${ROOTSYS}/cmake/ROOTConfig.cmake _ROOT_CONFIG_CMAKE)
+      if(_ROOT_CONFIG_CMAKE MATCHES "ROOT_CXX_FLAGS.*-std=(c\\+\\+..)")
+        set(ROOT_CXX_STANDARD "${CMAKE_MATCH_1}")
       endif()
-    endforeach()
+    endif()
+    if(NOT ROOT_CXX_STANDARD)
+      # the ROOTConfig.cmake delivered by ROOT does not define ROOT_INCLUDE_DIR
+      if(NOT DEFINED ROOT_INCLUDE_DIR)
+        list(GET ROOT_INCLUDE_DIRS 0 ROOT_INCLUDE_DIR)
+      endif()
+      file(STRINGS ${ROOT_INCLUDE_DIR}/RConfigure.h _RConfigure REGEX "define R__")
+      foreach(rconfig_line IN LISTS _RConfigure)
+        if(rconfig_line MATCHES "R__USE_CXX([^ ]+)")
+          set(ROOT_CXX_STANDARD "c++${CMAKE_MATCH_1}")
+        endif()
+      endforeach()
+    endif()
     if(ROOT_CXX_STANDARD)
       set(ROOT_CXX_STANDARD "${ROOT_CXX_STANDARD}" CACHE INTERNAL
           "C++ standard used by ROOT")
@@ -188,9 +196,10 @@ endif()
 set(GAUDI_ARCH_DEFAULT)
 if(BINARY_TAG_MICROARCH)
   set(GAUDI_ARCH_DEFAULT ${BINARY_TAG_MICROARCH})
-elseif(BINARY_TAG_COMP_NAME STREQUAL "gcc" AND BINARY_TAG_COMP_VERSION VERSION_GREATER "5.0" AND
-   BINARY_TAG_ARCH STREQUAL "x86_64")
-  # Special case: x86_64-*-gcc6 or higher is equivalent to x86_64+sse4.2-*
+elseif( ( (BINARY_TAG_COMP_NAME STREQUAL "gcc"   AND BINARY_TAG_COMP_VERSION VERSION_GREATER "5.0" ) OR 
+          (BINARY_TAG_COMP_NAME STREQUAL "clang" AND BINARY_TAG_COMP_VERSION VERSION_GREATER "5.0" ) ) AND
+    BINARY_TAG_ARCH STREQUAL "x86_64")
+  # Special case: x86_64-*-{gcc6,clang6} or higher is equivalent to x86_64+sse4.2-*
   set(GAUDI_ARCH_DEFAULT "sse4.2")
 else()
   # if no extra flags and not special case, compare host and target architecture
@@ -210,11 +219,11 @@ endif()
 
 set(GAUDI_CXX_STANDARD "${GAUDI_CXX_STANDARD_DEFAULT}"
     CACHE STRING "Version of the C++ standard to be used.")
-if(ROOT_CXX_STANDARD AND NOT ROOT_CXX_STANDARD STREQUAL GAUDI_CXX_STANDARD)
-  message(WARNING "Requested ${GAUDI_CXX_STANDARD} but ROOT was compiled with ${ROOT_CXX_STANDARD}")
-endif()
 if(NOT GAUDI_CXX_STANDARD MATCHES "^c\\+\\+")
   string(PREPEND GAUDI_CXX_STANDARD "c++")
+endif()
+if(ROOT_CXX_STANDARD AND NOT ROOT_CXX_STANDARD STREQUAL GAUDI_CXX_STANDARD)
+  message(WARNING "Requested ${GAUDI_CXX_STANDARD} but ROOT was compiled with ${ROOT_CXX_STANDARD}")
 endif()
 
 # If modern c++ and gcc >= 5.1 and requested, use old ABI compatibility
@@ -223,6 +232,8 @@ if((NOT GAUDI_CXX_STANDARD STREQUAL "c++98") AND
    GAUDI_GCC_OLD_ABI)
   add_definitions(-D_GLIBCXX_USE_CXX11_ABI=0)
 endif()
+
+message(STATUS "C++ standard:     ${GAUDI_CXX_STANDARD}")
 
 # summary of options affecting cached build flags
 set(GAUDI_FLAGS_OPTIONS "${BINARY_TAG};${GAUDI_ARCH};${GAUDI_SLOW_DEBUG};${GAUDI_SUGGEST_OVERRIDE}")
@@ -251,6 +262,10 @@ if(NOT GAUDI_FLAGS_SET EQUAL GAUDI_FLAGS_OPTIONS)
         set(arch_opts "${arch_opts} -mprefer-vector-width=256")
       else()
         set(arch_opts "${arch_opts} -m${_arch_opt}")
+      endif()
+      # clang requires -ffp-contract=fast with -mfma
+      if(BINARY_TAG_COMP_NAME STREQUAL "clang" AND _arch_opt STREQUAL "fma")
+        set(arch_opts "${arch_opts} -ffp-contract=fast")
       endif()
     endforeach()
     message(STATUS "Arch Flags:       ${arch_opts}")

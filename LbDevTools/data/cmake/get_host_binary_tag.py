@@ -274,9 +274,29 @@ ARCH_DEFS = OrderedDict(
 
 
 def _Linux_os():
-    dist = platform.linux_distribution(full_distribution_name=False)
-    dist_name = dist[0].lower()
-    dist_version = dist[1]
+    if hasattr(platform, "linux_distribution"):
+        dist = platform.linux_distribution(full_distribution_name=False)
+        dist_name = dist[0].lower()
+        dist_version = dist[1]
+    else:
+        # Python 3 does not have platform.linux_distribution
+        if os.path.exists("/etc/redhat-release"):
+            dist_name = "redhat"
+            dist_version = re.search(
+                "release (\d+)", open("/etc/redhat-release").read()
+            )
+            if dist_version:
+                dist_version = dist_version.group(1)
+        elif os.path.exists("/etc/centos-release"):
+            dist_name = "centos"
+            dist_version = re.search(
+                "release (\d+)", open("/etc/centos-release").read()
+            )
+            if dist_version:
+                dist_version = dist_version.group(1)
+        else:
+            dist_name = dist_version = ""
+
     if dist_name in ("redhat", "centos"):
         if "CERN" in open("/etc/%s-release" % dist_name).read():
             dist_name = "slc"

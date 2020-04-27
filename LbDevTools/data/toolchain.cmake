@@ -22,7 +22,7 @@ if(NOT DEFINED GAUDI_OLD_STYLE_PROJECT)
   set(GAUDI_OLD_STYLE_PROJECT ${GAUDI_OLD_STYLE_PROJECT} CACHE BOOL "true if the top level CMakeLists file contains a call to gaudi_project")
 endif()
 
-if(NOT GAUDI_OLD_STYLE_PROJECT)
+if(NOT GAUDI_OLD_STYLE_PROJECT AND "$ENV{GAUDI_OLD_STYLE_PROJECT}" STREQUAL "")
   # for new style CMake projects, or vanilla CMake projects
   if("$ENV{BINARY_TAG}" STREQUAL "" OR "$ENV{LCG_VERSION}" STREQUAL "")
     message(FATAL_ERROR "The environment variables BINARY_TAG and LCG_VERSION mut be set for new style CMake projects")
@@ -73,5 +73,8 @@ if(NOT CMAKE_SOURCE_DIR MATCHES "CMakeTmp")
     # - xenv (conflicts with the version in the build environment)
     list(FILTER CMAKE_PREFIX_PATH EXCLUDE REGEX "(LCG_|lcg/nightlies).*(ninja|Gaudi|xenv)")
   endif()
+
+  # Make sure that when the toolchain is invoked again it uses this branch
+  set(ENV{GAUDI_OLD_STYLE_PROJECT} "${CMAKE_SOURCE_DIR}")
 endif()
 endif()

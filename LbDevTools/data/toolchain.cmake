@@ -78,7 +78,6 @@ if(NOT CMAKE_SOURCE_DIR MATCHES "CMakeTmp")
   if(IS_DIRECTORY "$ENV{LBENV_CURRENT_WORKSPACE}")
     file(GLOB workspace_dirs "$ENV{LBENV_CURRENT_WORKSPACE}/*/InstallArea/${BINARY_TAG}")
     list(INSERT CMAKE_PREFIX_PATH 0 ${workspace_dirs})
-    message(STATUS "$ENV{LBENV_CURRENT_WORKSPACE} -->> ${workspace_dirs}")
   endif()
 
   # Make sure that when the toolchain is invoked again it uses this branch

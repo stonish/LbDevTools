@@ -129,7 +129,11 @@ endif
 test: $(BUILDDIR)/$(BUILD_CONF_FILE)
 	$(RM) -r $(BUILDDIR)/Testing $(BUILDDIR)/html
 	-cd $(BUILDDIR) && $(CTEST) -T test $(ARGS)
-	+$(BUILD_CMD) HTMLSummary
+	+@if [ -x $(DEVTOOLS_DATADIR)/cmake/CTestXML2HTML ] ; then \
+             cd $(BUILDDIR) && $(DEVTOOLS_DATADIR)/cmake/CTestXML2HTML ; \
+         else \
+             $(BUILD_CMD) HTMLSummary ; \
+         fi
 
 ifeq ($(VERBOSE),)
 # less verbose install (see GAUDI-1018)

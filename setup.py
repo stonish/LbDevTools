@@ -176,7 +176,7 @@ setup(
     entry_points={
         "console_scripts": [
             "lb-project-init=LbDevTools.ProjectInit:main",
-            "lb-dev=LbDevTools.ProjectDev:main",
+            "lb-dev-legacy=LbDevTools.ProjectDev:main",
             "lb-devtools-datadir=LbDevTools:_print_data_location",
             "lb-gen-release-notes=LbDevTools.ReleaseNotes:main",
             "lb-check-copyright=LbDevTools.SourceTools:check_copyright",

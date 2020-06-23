@@ -4,7 +4,9 @@ stages:
   - deploy
 
 variables:
-  RPM_REPO_URL: "https://lhcb-repository.web.cern.ch/repository/lhcb-rpms/incubator/"
+  RPM_REPO: incubator
+  RPM_REPO_EOS: /eos/project/l/lhcbwebsites/www/lhcb-rpm/${RPM_REPO}
+  RPM_REPO_URL: "http://lhcb-rpm.web.cern.ch/lhcb-rpm/${RPM_REPO}/"
 
 centos7:
   image: gitlab-registry.cern.ch/lhcb-docker/python-deployment:centos7
@@ -131,14 +133,19 @@ deploy-rpm:
   stage: deploy
   dependencies:
     - compiler-wrappers-rpm
+  image: gitlab-registry.cern.ch/ci-tools/ci-web-deployer:latest
   script:
-    - test -z "$REPO_USERNAME" -o -z "$REPO_PASSWORD" && exit 0 || true
+    - test -z "$EOS_ACCOUNT_USERNAME" -o -z "$EOS_ACCOUNT_PASSWORD" && exit 0 || true
+    # Script that performs the deploy to EOS. Makes use of the variables defined in the project
+    # It will copy the generated content to the folder in EOS
+    - export EOS_PATH=${RPM_REPO_EOS}
     - if [ -e public/to_deploy ] ; then
-    -   cd public
-    -   for rpm in $(find -name "*.rpm") ; do
-    -     echo $rpm
-    -     curl --user "$REPO_USERNAME:$REPO_PASSWORD" -T $rpm $RPM_REPO_URL
-    -   done
+    -   rm -f public/to_deploy
+    -   echo "publishing $(find public -type f -ls | wc -l) files:"
+    -   find public -type f -ls
+    -   deploy-eos
+    - else
+    -   echo "nothing to publish"
     - fi
   # do not run any globally defined before_script or after_script for this step
   before_script: []

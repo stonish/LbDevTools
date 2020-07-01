@@ -1,3 +1,13 @@
+###############################################################################
+# (c) Copyright 1998-2020 CERN for the benefit of the LHCb Collaboration      #
+#                                                                             #
+# This software is distributed under the terms of the GNU General Public      #
+# Licence version 3 (GPL Version 3), copied verbatim in the file "COPYING".   #
+#                                                                             #
+# In applying this licence, CERN does not waive the privileges and immunities #
+# granted to it by virtue of its status as an Intergovernmental Organization  #
+# or submit itself to any jurisdiction.                                       #
+###############################################################################
 
 include(${CMAKE_CURRENT_LIST_DIR}/HEPToolsMacros.cmake)
 include(${CMAKE_CURRENT_LIST_DIR}/BinaryTagUtils.cmake)
@@ -27,11 +37,17 @@ macro(use_heptools heptools_version)
                             LCG_externals_${LCG_SYSTEM}-opt.txt)
   endif()
 
+  if("${BINARY_TAG_COMP_SUBTYPE}" MATCHES "py3")
+    set(_lcg_py3 python3)
+  else()
+    set(_lcg_py3)
+  endif()
+
   # Find the toolchain description
   find_file(LCG_TOOLCHAIN_INFO
             NAMES ${_info_names}
             HINTS ENV CMTPROJECTPATH
-            PATH_SUFFIXES LCG_${heptools_version})
+            PATH_SUFFIXES LCG_${heptools_version}${_lcg_py3})
 
   if(LCG_TOOLCHAIN_INFO)
     message(STATUS "Using heptools ${heptools_version} from ${LCG_TOOLCHAIN_INFO}")

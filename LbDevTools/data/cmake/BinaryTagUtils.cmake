@@ -1,3 +1,13 @@
+###############################################################################
+# (c) Copyright 1998-2020 CERN for the benefit of the LHCb Collaboration      #
+#                                                                             #
+# This software is distributed under the terms of the GNU General Public      #
+# Licence version 3 (GPL Version 3), copied verbatim in the file "COPYING".   #
+#                                                                             #
+# In applying this licence, CERN does not waive the privileges and immunities #
+# granted to it by virtue of its status as an Intergovernmental Organization  #
+# or submit itself to any jurisdiction.                                       #
+###############################################################################
 #.rst:
 # BinaryTagUtils
 # --------------
@@ -104,6 +114,11 @@ macro(parse_binary_tag)
     set(${_variable}_MICROARCH)
   endif()
 
+  if(${_variable}_COMP MATCHES "\\+")
+    string(REGEX MATCHALL "[^+]+" ${_variable}_COMP_SUBTYPE "${${_variable}_COMP}")
+    list(GET ${_variable}_COMP_SUBTYPE 0 ${_variable}_COMP)
+    list(REMOVE_AT ${_variable}_COMP_SUBTYPE 0)
+  endif()
   if(${_variable}_COMP MATCHES "([^0-9.]+)([0-9.]+)")
     set(${_variable}_COMP_NAME    ${CMAKE_MATCH_1})
     set(${_variable}_COMP_VERSION ${CMAKE_MATCH_2})
@@ -114,6 +129,11 @@ macro(parse_binary_tag)
       set(${_variable}_COMP_VERSION)
       list(GET _out 0 ${_variable}_COMP_VERSION)
       list(REMOVE_AT _out 0)
+      if(APPLE)
+        list(GET _out 0 _second)
+        set(${_variable}_COMP_VERSION ${${_variable}_COMP_VERSION}${_second})
+        list(REMOVE_AT _out 0)
+      endif()
       foreach(_n ${_out})
         set(${_variable}_COMP_VERSION "${${_variable}_COMP_VERSION}.${_n}")
       endforeach()
@@ -165,7 +185,7 @@ function(check_compiler)
       string(LENGTH "${BINARY_TAG_COMP_VERSION}." len)
       string(SUBSTRING "${CMAKE_CXX_COMPILER_VERSION}" 0 ${len} short_version)
       if(NOT "${BINARY_TAG_COMP_VERSION}." STREQUAL short_version)
-        message(WARNING "BINARY_TAG specifies compiler version ${BINARY_TAG_COMP_VERSION}. but we got ${CMAKE_CXX_COMPILER_VERSION}")
+        message(WARNING "BINARY_TAG specifies compiler version ${BINARY_TAG_COMP_VERSION}, but we got ${CMAKE_CXX_COMPILER_VERSION}")
       endif()
     endif()
   endif()
@@ -200,11 +220,19 @@ function(get_host_binary_tag variable)
   if(NOT HOST_BINARY_TAG)
     execute_process(COMMAND "${HOST_BINARY_TAG_COMMAND}"
                     OUTPUT_VARIABLE HOST_BINARY_TAG
+                    RESULT_VARIABLE HOST_BINARY_RETURN
+                    ERROR_VARIABLE  HOST_BINARY_ERROR
                     OUTPUT_STRIP_TRAILING_WHITESPACE)
     set(HOST_BINARY_TAG ${HOST_BINARY_TAG} CACHE STRING "BINARY_TAG of the host")
+    if(HOST_BINARY_RETURN OR NOT HOST_BINARY_TAG)
+      message(FATAL_ERROR "Error getting host binary tag\nFailed to execute ${HOST_BINARY_TAG_COMMAND}\n"
+                          "HOST_BINARY_TAG value: ${HOST_BINARY_TAG}\n"
+                          "Program Return Value: ${HOST_BINARY_RETURN}\n"
+                          "Error Message: ${HOST_BINARY_ERROR}\n")
+    endif()
     mark_as_advanced(HOST_BINARY_TAG)
   endif()
-  string(REGEX REPLACE "-opt\\$" "-${type}" value "${HOST_BINARY_TAG}")
+  string(REGEX REPLACE "-opt$" "-${type}" value "${HOST_BINARY_TAG}")
   set(${variable} ${value} PARENT_SCOPE)
 endfunction()
 
@@ -254,6 +282,17 @@ function(compatible_binary_tags variable)
   # - finally reverse the list
   list(REVERSE archs)
 
+  # prepare the list of compiler sub-types (if needed)
+  set(comps ${BINARY_TAG_COMP})
+  if(BINARY_TAG_COMP_SUBTYPE)
+    set(subtype ${BINARY_TAG_COMP})
+    foreach(st ${BINARY_TAG_COMP_SUBTYPE})
+      set(subtype "${subtype}+${st}")
+      list(APPEND comps "${subtype}")
+    endforeach()
+    list(REVERSE comps)
+  endif()
+
   # prepare the list of build sub-types (if needed)
   set(subtypes)
   if(BINARY_TAG_SUBTYPE)
@@ -268,11 +307,13 @@ function(compatible_binary_tags variable)
   set(out)
   foreach(a ${archs})
     foreach(t ${types})
-      foreach(st ${subtypes})
-        list(APPEND out "${a}-${BINARY_TAG_OS}-${BINARY_TAG_COMP}-${t}${st}")
+      foreach(c ${comps})
+        foreach(st ${subtypes})
+          list(APPEND out "${a}-${BINARY_TAG_OS}-${c}-${t}${st}")
+        endforeach()
+        # the list of subtypes might be empty, so we explicitly add the simple tag
+        list(APPEND out "${a}-${BINARY_TAG_OS}-${c}-${t}")
       endforeach()
-      # the list of subtypes might be empty, so we explicitly add the simple tag
-      list(APPEND out "${a}-${BINARY_TAG_OS}-${BINARY_TAG_COMP}-${t}")
     endforeach()
   endforeach()
 

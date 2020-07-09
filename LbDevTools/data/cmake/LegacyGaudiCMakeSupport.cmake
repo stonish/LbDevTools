@@ -16,6 +16,13 @@ if(NOT BINARY_TAG AND NOT "$ENV{BINARY_TAG}" STREQUAL "")
 endif()
 string(REGEX REPLACE "^LCG_" "" heptools_version ${LCG_VERSION})
 
+# When we use a platform like x86_64-centos7-gcc9+py3-opt we delegate from
+# LCG_XY to LCG_XYpython3, so we have to drop the suffix, otherwise other
+# projects may add it twice.
+if(heptools_version MATCHES "python3$" AND BINARY_TAG MATCHES "\\+py3")
+  string(REPLACE "python3" "" heptools_version ${heptools_version})
+endif()
+
 # variable to record the content of the metadata file
 set(metadata)
 # gather project infos

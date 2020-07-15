@@ -54,7 +54,7 @@ macro(use_heptools heptools_version)
 
     get_filename_component(LCG_releases ${LCG_TOOLCHAIN_INFO} PATH CACHE)
     set(LCG_external ${LCG_releases})
-    if(LCG_releases MATCHES "LCG_${heptools_version}\$")
+    if(LCG_releases MATCHES "LCG_${heptools_version}${_lcg_py3}\$")
       get_filename_component(LCG_releases_base ${LCG_releases} PATH)
     else()
       set(LCG_releases_base ${LCG_releases})
@@ -99,7 +99,7 @@ macro(use_heptools heptools_version)
     #    CACHE FILEPATH "The CMake toolchain file" FORCE)
 
   else()
-    message(FATAL_ERROR "Cannot find heptools ${heptools_version}.")
+    message(FATAL_ERROR "Cannot find heptools ${heptools_version} (using suffix LCG_${heptools_version}${_lcg_py3}).")
   endif()
 
 endmacro()

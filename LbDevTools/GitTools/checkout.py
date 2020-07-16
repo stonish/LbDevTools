@@ -120,6 +120,10 @@ def main():
         help="print the list of packages available from the " "requested branch",
     )
 
+    parser.add_argument(
+        "--force", action="store_true", help="ignore check for valid subdirectories",
+    )
+
     add_verbosity_argument(parser)
 
     parser.set_defaults(do_commit=True)
@@ -207,7 +211,7 @@ def main():
             os.path.join(os.getcwd(), args.path), repo.working_dir
         )
 
-        if full_path in pkgs:
+        if full_path in pkgs or args.force:
             paths = [full_path]
         elif full_path in hats:
             hat = full_path + "/"

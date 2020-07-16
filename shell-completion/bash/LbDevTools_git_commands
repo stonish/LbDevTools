@@ -72,7 +72,7 @@ _git_lb_checkout ()
   local cur="${COMP_WORDS[COMP_CWORD]}"
   case "$cur" in
   --*)
-    __gitcomp "--commit --no-commit --list --version --quiet --verbose --debug"
+    __gitcomp "--commit --no-commit --list --version --quiet --verbose --debug --force"
     ;;
   *)
     case $b in

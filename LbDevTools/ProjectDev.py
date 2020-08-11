@@ -308,7 +308,6 @@ def main():
         search_path_env=os.pathsep.join(LbEnv.ProjectEnv.path),
         # we use cmake if available
         build_tool=("cmake" if use_cmake else "cmt"),
-        PROJECT=project.upper(),
         local_project=local_project,
         local_version=local_version,
         with_fortran=" FORTRAN" if args.with_fortran else "",
@@ -334,8 +333,13 @@ def main():
         data["slot"], data["day"], data["base"] = args.nightly
         # make sure the nightly build base path is an absolute path
         data["base"] = os.path.abspath(data["base"])
+        data["CMT_PROJECT_BASE"] = "{project}_{version}"
     else:
         data["slot"] = data["day"] = data["base"] = ""
+        data["CMT_PROJECT_BASE"] = "{PROJECT} {PROJECT}_{version}"
+    data["CMT_PROJECT_BASE"] = data["CMT_PROJECT_BASE"].format(
+        project=project, PROJECT=project.upper(), version=version,
+    )
 
     # for backward compatibility, we create the CMT configuration and env helpers
     if use_cmt:

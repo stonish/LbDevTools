@@ -1,6 +1,6 @@
 project ${cmt_project}
 
-use ${PROJECT} ${PROJECT}_${version}
+use ${CMT_PROJECT_BASE}
 
 build_strategy with_installarea
 setup_strategy root

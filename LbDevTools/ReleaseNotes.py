@@ -253,8 +253,7 @@ def find_merge_request_issues(mr, project_fullname):
 
 
 def find_merge_requests(server, repo, since, milestone):
-    """
-    """
+    """"""
     project_fullname = find_project_fullname(repo)
     project = server.projects.get(project_fullname)
     git_mrs = find_merge_requests_git(project, repo, since)

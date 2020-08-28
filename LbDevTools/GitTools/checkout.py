@@ -121,7 +121,9 @@ def main():
     )
 
     parser.add_argument(
-        "--force", action="store_true", help="ignore check for valid subdirectories",
+        "--force",
+        action="store_true",
+        help="ignore check for valid subdirectories",
     )
 
     add_verbosity_argument(parser)

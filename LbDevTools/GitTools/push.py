@@ -63,7 +63,10 @@ except ImportError:
                     if "None" not in str(ex):
                         raise
                     print(
-                        "ERROR: {0!r} while cleaning up {1!r}".format(ex, self,),
+                        "ERROR: {0!r} while cleaning up {1!r}".format(
+                            ex,
+                            self,
+                        ),
                         file=_sys.stderr,
                     )
                     return

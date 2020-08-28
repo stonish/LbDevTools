@@ -44,7 +44,7 @@ def main():
     parser.add_argument(
         "--overwrite",
         action="store_true",
-        help="overwrite existing files [default: %default]",
+        help="overwrite existing files [default: %(default)s]",
     )
 
     add_verbosity_argument(parser)

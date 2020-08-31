@@ -116,22 +116,6 @@ except ImportError:
                 pass
 
 
-def commits_cmp(a, b):
-    """
-    History wise comparison function for commit ids.
-
-    Used as cmp argument to a sorting function, the commits are sorted from the
-    oldest to the newest.
-    """
-    if a == b:
-        return 0
-    try:
-        next(a.repo.iter_commits("{.hexsha}..{.hexsha}".format(a, b)))
-        return -1
-    except StopIteration:
-        return 1
-
-
 def is_subdir(a, b):
     """
     Return True if 'a' is a subdirectory of 'b' (or a == b).
@@ -262,7 +246,7 @@ def main():
 
         first = True
         logging.debug("sorting list of commits to consider")
-        for commit in sorted(commits_to_consider, cmp=commits_cmp):
+        for commit in sorted(commits_to_consider, key=lambda c: c.committed_datetime):
             logging.info("applying commit %s", commit.hexsha)
             commit_info = commits_to_consider[commit]
             if commit_info["first"]:

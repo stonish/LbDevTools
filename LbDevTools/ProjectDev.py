@@ -338,7 +338,9 @@ def main():
         data["slot"] = data["day"] = data["base"] = ""
         data["CMT_PROJECT_BASE"] = "{PROJECT} {PROJECT}_{version}"
     data["CMT_PROJECT_BASE"] = data["CMT_PROJECT_BASE"].format(
-        project=project, PROJECT=project.upper(), version=version,
+        project=project,
+        PROJECT=project.upper(),
+        version=version,
     )
 
     # for backward compatibility, we create the CMT configuration and env helpers

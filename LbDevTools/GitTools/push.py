@@ -16,6 +16,7 @@ __author__ = "Marco Clemencic <marco.clemencic@cern.ch>"
 import os
 import git
 import logging
+from functools import cmp_to_key
 from collections import defaultdict
 from shutil import rmtree
 from subprocess import Popen, PIPE
@@ -262,7 +263,7 @@ def main():
 
         first = True
         logging.debug("sorting list of commits to consider")
-        for commit in sorted(commits_to_consider, cmp=commits_cmp):
+        for commit in sorted(commits_to_consider, key=cmp_to_key(commits_cmp)):
             logging.info("applying commit %s", commit.hexsha)
             commit_info = commits_to_consider[commit]
             if commit_info["first"]:

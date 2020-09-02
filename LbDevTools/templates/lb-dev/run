@@ -2,7 +2,7 @@
 
 root_dir=$$(dirname $$0)
 
-# Get build configuration parameters 
+# Get build configuration parameters
 . $${root_dir}/build.conf
 
 if [ -z "$${BINARY_TAG}" ] ; then
@@ -29,7 +29,11 @@ else
     . ./build_env.sh
   fi
   cd $$curdir
-  run_cmd="lb-run --user-area $$(cd $${root_dir}/.. ; pwd) ${cmt_project}"
+  run_cmd="lb-run"
+  if [ "$$nightly_slot" != "" ] ; then
+    run_cmd+=" --nightly $${nightly_slot}/$${nightly_day}"
+  fi
+  run_cmd+=" --user-area $$(cd $${root_dir}/.. ; pwd) ${cmt_project}"
 fi
 
 exec $$run_cmd "$$@"

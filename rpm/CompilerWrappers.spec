@@ -1,7 +1,7 @@
 Name:       CompilerWrappers
 # IMPORTANT: update version and/or release to deploy a new RPM
 Version:    3
-Release:    3
+Release:    5
 Vendor:     LHCb
 Summary:    Wrappers for available compiler versions.
 License:    GPLv3

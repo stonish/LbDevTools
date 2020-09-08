@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 ###############################################################################
 # (c) Copyright 2018 CERN                                                     #
 #                                                                             #
@@ -120,11 +120,6 @@ setup_clang() {
 
         if [ -e "$_prefix/version.txt" ] ; then
             _gcc_full_version=$(tr '/' '\n' < "$_prefix/version.txt" | grep ^gcc | cut -d= -f2 | head -1)
-        fi
-
-        if [ "${_clang_version}" = "10.0.0" ] ; then
-          # override LCG preferred gcc version for clang 10 (see https://its.cern.ch/jira/browse/LBCORE-1923)
-          _gcc_full_version=9.3.0
         fi
 
         if [ -z "${_gcc_full_version}" ] ; then

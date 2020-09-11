@@ -24,7 +24,7 @@ from datetime import date
 
 COPYRIGHT_SIGNATURE = re.compile(r"\bcopyright\b", re.I)
 CHECKED_FILES = re.compile(
-    r".*(\.(i?[ch](pp|xx|c)?|cc|hh|py|C|cmake|[yx]ml|qm[ts]|dtd|xsd|ent|bat|[cz]?sh|js|html?)|"
+    r".*(\.(i?[ch](pp|xx|c)?|cc|hh|py|cuh?|C|cmake|[yx]ml|qm[ts]|dtd|xsd|ent|bat|[cz]?sh|js|html?)|"
     r"CMakeLists.txt|Jenkinsfile)$"
 )
 
@@ -204,7 +204,9 @@ def lang_family(path):
     """
     if re.match(r".*\.(xml|xsd|dtd|html?|qm[ts]|ent)$", path):
         return "xml"
-    elif re.match(r"(.*\.(i?[ch](pp|xx|c)?|cc|hh|C|opts|js)|" r"Jenkinsfile)$", path):
+    elif re.match(
+        r"(.*\.(i?[ch](pp|xx|c)?|cuh?|cc|hh|C|opts|js)|" r"Jenkinsfile)$", path
+    ):
         return "c"
     elif re.match(r".*\.py$", path) or re.match(
         r"^#!.*python", open(path).readline(120)

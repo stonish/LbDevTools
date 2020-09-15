@@ -466,7 +466,7 @@ macro(gaudi_project project version)
       # Avoid interference from user environment
       unset(ENV{GIT_DIR})
       unset(ENV{GIT_WORK_TREE})
-      execute_process(COMMAND git clone -b 0.0.1 https://gitlab.cern.ch/gaudi/xenv.git ${CMAKE_BINARY_DIR}/contrib/xenv)
+      execute_process(COMMAND git clone -b 1.0.0 https://gitlab.cern.ch/gaudi/xenv.git ${CMAKE_BINARY_DIR}/contrib/xenv)
     endif()
     # I'd like to generate the script with executable permission, but I only
     # found this workaround: https://stackoverflow.com/a/45515418
@@ -567,6 +567,7 @@ main()")
 
   #--- Project Installations------------------------------------------------------------------------
   install(DIRECTORY cmake/ DESTINATION cmake
+                           USE_SOURCE_PERMISSIONS
                            FILES_MATCHING
                            PATTERN "*.cmake"
                            PATTERN "*.cmake.in"
@@ -2770,6 +2771,11 @@ function(gaudi_install_headers)
       # add special dummy library to test build of public headers
       set(srcs)
       foreach(hdr ${hdrs})
+        if(hdr MATCHES "^\.\./.*")
+          # This is most likely a generated header in the build
+          # area. These should not be subject to this test.
+          continue()
+        endif()
         set(src ${CMAKE_CURRENT_BINARY_DIR}/${package}_test_public_headers/${hdr}.cpp)
         get_filename_component(src_dir "${src}" DIRECTORY)
         file(MAKE_DIRECTORY ${src_dir})
@@ -2779,7 +2785,7 @@ function(gaudi_install_headers)
       # avoid creating the target twice if gaudi_install_headers gets called twice
       # (can happen if both gaudi_install_headers and gaudi_add_library get called)
       # and warn user about the duplication
-      if(NOT TARGET ${library}_headers)
+      if(srcs AND NOT TARGET ${library}_headers)
         add_custom_target(${library}_headers SOURCES ${hdrs})
         add_library(test_public_headers_build_${library} STATIC EXCLUDE_FROM_ALL ${srcs})
         # some headers are special and we need to do something special to compile

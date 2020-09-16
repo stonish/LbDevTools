@@ -466,7 +466,7 @@ macro(gaudi_project project version)
       # Avoid interference from user environment
       unset(ENV{GIT_DIR})
       unset(ENV{GIT_WORK_TREE})
-      execute_process(COMMAND git clone -b 0.0.1 https://gitlab.cern.ch/gaudi/xenv.git ${CMAKE_BINARY_DIR}/contrib/xenv)
+      execute_process(COMMAND git clone -b 1.0.0 https://gitlab.cern.ch/gaudi/xenv.git ${CMAKE_BINARY_DIR}/contrib/xenv)
     endif()
     # I'd like to generate the script with executable permission, but I only
     # found this workaround: https://stackoverflow.com/a/45515418
@@ -567,6 +567,7 @@ main()")
 
   #--- Project Installations------------------------------------------------------------------------
   install(DIRECTORY cmake/ DESTINATION cmake
+                           USE_SOURCE_PERMISSIONS
                            FILES_MATCHING
                            PATTERN "*.cmake"
                            PATTERN "*.cmake.in"
@@ -1269,10 +1270,13 @@ function(gaudi_resolve_include_dirs variable)
   foreach(package ${ARGN})
     # we need to ensure that the user can call this function also for directories
     if(TARGET ${package})
-      get_target_property(to_incl ${package} SOURCE_DIR)
-      if(to_incl)
-        #message(STATUS "include_package_directories1 include_directories(${to_incl})")
-        list(APPEND collected ${to_incl})
+      get_property(target_type TARGET ${package} PROPERTY TYPE)
+      if(NOT target_type MATCHES "INTERFACE_LIBRARY")
+        get_target_property(to_incl ${package} SOURCE_DIR)
+        if(to_incl)
+          #message(STATUS "include_package_directories1 include_directories(${to_incl})")
+          list(APPEND collected ${to_incl})
+        endif()
       endif()
     elseif(${package} MATCHES "^${CMAKE_SOURCE_DIR}/")
       # ignore pathes starting with ${CMAKE_SOURCE_DIR} but not caught
@@ -1608,27 +1612,28 @@ function(gaudi_resolve_link_libraries variable)
     endif()
     if(TARGET ${package})
       get_property(target_type TARGET ${package} PROPERTY TYPE)
-      if(NOT target_type MATCHES "(SHARED|STATIC|UNKNOWN)_LIBRARY")
-        message(FATAL_ERROR "${package} is a ${target_type}: you cannot link against it")
-      endif()
-      #message(STATUS "${package} is a TARGET")
-      get_property(already_resolved TARGET ${package}
-                   PROPERTY RESOLVED_REQUIRED_LIBRARIES SET)
-      if(already_resolved)
-        #message(STATUS "(${package} required libraries cached)")
-        get_target_property(libs ${package} RESOLVED_REQUIRED_LIBRARIES)
-      else()
-        #message(STATUS "(${package} required libraries to be resolved)")
-        get_target_property(libs ${package} REQUIRED_LIBRARIES)
-        if(libs)
-          gaudi_resolve_link_libraries(libs ${libs})
-          set_property(TARGET ${package}
-                       PROPERTY RESOLVED_REQUIRED_LIBRARIES ${libs})
+      if(target_type MATCHES "(SHARED|STATIC|UNKNOWN)_LIBRARY")
+        #message(STATUS "${package} is a TARGET")
+        get_property(already_resolved TARGET ${package}
+                     PROPERTY RESOLVED_REQUIRED_LIBRARIES SET)
+        if(already_resolved)
+          #message(STATUS "(${package} required libraries cached)")
+          get_target_property(libs ${package} RESOLVED_REQUIRED_LIBRARIES)
         else()
-          # this is to avoid that libs gets defined as libs-NOTFOUND
-          # (it may happen in some rare conditions)
-          set(libs)
+          #message(STATUS "(${package} required libraries to be resolved)")
+          get_target_property(libs ${package} REQUIRED_LIBRARIES)
+          if(libs)
+            gaudi_resolve_link_libraries(libs ${libs})
+            set_property(TARGET ${package}
+                         PROPERTY RESOLVED_REQUIRED_LIBRARIES ${libs})
+          else()
+            # this is to avoid that libs gets defined as libs-NOTFOUND
+            # (it may happen in some rare conditions)
+            set(libs)
+          endif()
         endif()
+      elseif(NOT target_type MATCHES "INTERFACE_LIBRARY")
+        message(FATAL_ERROR "${package} is a ${target_type}: you cannot link against it")
       endif()
       set(collected ${collected} ${package} ${libs})
     elseif(EXISTS ${package}) # it's a real file
@@ -2011,7 +2016,12 @@ function(gaudi_get_required_include_dirs output)
     set(req)
     if(TARGET ${lib})
       list(APPEND collected ${lib})
-      get_property(req TARGET ${lib} PROPERTY REQUIRED_INCLUDE_DIRS)
+      get_property(target_type TARGET ${lib} PROPERTY TYPE)
+      if(NOT target_type MATCHES "INTERFACE_LIBRARY")
+        get_property(req TARGET ${lib} PROPERTY REQUIRED_INCLUDE_DIRS)
+      else()
+        get_property(req TARGET ${lib} PROPERTY INTERFACE_INCLUDE_DIRECTORIES)
+      endif()
       if(req)
         list(APPEND collected ${req})
       endif()
@@ -2770,6 +2780,11 @@ function(gaudi_install_headers)
       # add special dummy library to test build of public headers
       set(srcs)
       foreach(hdr ${hdrs})
+        if(hdr MATCHES "^\.\./.*")
+          # This is most likely a generated header in the build
+          # area. These should not be subject to this test.
+          continue()
+        endif()
         set(src ${CMAKE_CURRENT_BINARY_DIR}/${package}_test_public_headers/${hdr}.cpp)
         get_filename_component(src_dir "${src}" DIRECTORY)
         file(MAKE_DIRECTORY ${src_dir})
@@ -2779,7 +2794,7 @@ function(gaudi_install_headers)
       # avoid creating the target twice if gaudi_install_headers gets called twice
       # (can happen if both gaudi_install_headers and gaudi_add_library get called)
       # and warn user about the duplication
-      if(NOT TARGET ${library}_headers)
+      if(srcs AND NOT TARGET ${library}_headers)
         add_custom_target(${library}_headers SOURCES ${hdrs})
         add_library(test_public_headers_build_${library} STATIC EXCLUDE_FROM_ALL ${srcs})
         # some headers are special and we need to do something special to compile

@@ -582,7 +582,7 @@ def updateAnnotations(site, Testing, outputTemp, annotationsList):
         if cpuinfo:
             annotations['cpuinfo'] = [
                 'ncpus: {0}'.format(len(cpuinfo)),
-                'model name: {0}'.format(cpuinfo[0].get('model name', 'Unknown')),
+                'model name: {0}'.format(cpuinfo[0].get('model name', os.uname()[-1])),
                 'flags: {0}'.format(' '.join(cpuinfo[0].get('flags') or cpuinfo[0].get('Features') or [])),
             ]
 

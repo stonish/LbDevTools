@@ -21,7 +21,10 @@ class Test:
         assert exists(cmd)
 
         proc = Popen(
-            [cmd], stdout=PIPE, stderr=PIPE, cwd=join(base_dir, "data", "html"),
+            [cmd],
+            stdout=PIPE,
+            stderr=PIPE,
+            cwd=join(base_dir, "data", "html"),
         )
         out, _ = proc.communicate()
         expected_out = "Converting *Test.xml files from . to HTML format in htmlProcess the file : ./Test.xmlSome tests failed:  FAIL: 1  ERROR: 0"

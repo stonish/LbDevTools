@@ -478,11 +478,10 @@ class TestOrganizer:
             @param depthMax: The maximum depth to search in. A negative value
                 correspond to no limit.
             """
-            iterator = master.getchildren()
-            if len(iterator) == 0 or depthMax == 0:
+            if len(master) == 0 or depthMax == 0:
                 return None
             found = False
-            for element in iterator:
+            for element in master:
                 found = True
                 for atributes in attributeDictionnary.items():
                     if atributes[0] in self.swicthtests:
@@ -498,7 +497,7 @@ class TestOrganizer:
 
                     return element
 
-            for element in iterator:
+            for element in master:
                 elementFound = self.findElement(attributeDictionnary, element,
                                                 depthMax - 1)
                 if elementFound is not None:
@@ -583,8 +582,8 @@ def updateAnnotations(site, Testing, outputTemp, annotationsList):
         if cpuinfo:
             annotations['cpuinfo'] = [
                 'ncpus: {0}'.format(len(cpuinfo)),
-                'model name: {0}'.format(cpuinfo[0]['model name']),
-                'flags: {0}'.format(' '.join(cpuinfo[0]['flags'])),
+                'model name: {0}'.format(cpuinfo[0].get('model name', os.uname()[-1])),
+                'flags: {0}'.format(' '.join(cpuinfo[0].get('flags') or cpuinfo[0].get('Features') or [])),
             ]
 
     else:

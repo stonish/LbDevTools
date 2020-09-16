@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Site BuildName="(empty)"
+	BuildStamp="20200916-0743-Experimental"
+	Name="(empty)"
+	Generator="ctest-3.18.2"
+	CompilerName=""
+	CompilerVersion=""
+	OSName="Linux"
+	Hostname="techlab-arm64-thunderx2-03"
+	OSRelease="4.18.0-80.7.2.el7.aarch64"
+	OSVersion="#1 SMP Thu Sep 12 16:13:20 UTC 2019"
+	OSPlatform="aarch64"
+	Is64Bits="1"
+	VendorString=""
+	VendorID="Unknown Manufacturer"
+	FamilyID="8"
+	ModelID="0"
+	ProcessorCacheSize="0"
+	NumberOfLogicalCPU="256"
+	NumberOfPhysicalCPU="1"
+	TotalVirtualMemory="4095"
+	TotalPhysicalMemory="261059"
+	LogicalProcessorsPerPhysical="256"
+	ProcessorClockFrequency="0"
+	>
+	<Testing>
+		<StartDateTime>Sep 16 09:43 CEST</StartDateTime>
+		<StartTestTime>1600242182</StartTestTime>
+		<TestList>
+			<Test>./TrackKernel.test_traj</Test>		
+		</TestList>
+		<Test Status="failed">
+			<Name>TrackKernel.test_traj</Name>
+			<Path>.</Path>
+			<FullName>./TrackKernel.test_traj</FullName>
+			<FullCommandLine>/cvmfs/lhcbdev.cern.ch/test/lbenv-arm/bin/xenv "--xml" "/data/user/hackathon/Rec/build.aarch64-centos7-gcc9-opt/config/Rec-build.xenv" "test_traj.exe"</FullCommandLine>
+			<Results>
+				<NamedMeasurement type="text/string" name="Exit Code">
+					<Value>Failed</Value>
+				</NamedMeasurement>
+				<NamedMeasurement type="text/string" name="Exit Value">
+					<Value>201</Value>
+				</NamedMeasurement>
+				<NamedMeasurement type="numeric/double" name="Execution Time">
+					<Value>1.0122</Value>
+				</NamedMeasurement>
+				<NamedMeasurement type="numeric/double" name="Processors">
+					<Value>1</Value>
+				</NamedMeasurement>
+				<NamedMeasurement type="text/string" name="Completion Status">
+					<Value>Completed</Value>
+				</NamedMeasurement>
+				<NamedMeasurement type="text/string" name="Command Line">
+					<Value>/cvmfs/lhcbdev.cern.ch/test/lbenv-arm/bin/xenv "--xml" "/data/user/hackathon/Rec/build.aarch64-centos7-gcc9-opt/config/Rec-build.xenv" "test_traj.exe"</Value>
+				</NamedMeasurement>
+				<NamedMeasurement type="text/string" name="Environment">
+					<Value>#CTEST_RESOURCE_GROUP_COUNT=</Value>
+				</NamedMeasurement>
+				<Measurement>
+					<Value encoding="base64" compression="gzip">eJztmE1PGzEQhu/8BS5WTi1Vhpnxd1AOiEZqVFEq2KJWHFAU3JYWAtqE/197k1JOdNfbuFJVKQdHifzsO/POeLynD4vF9eKLMGIVlisxny3DEgB2AParOn5m8+9vQ70IN/vp9+X+sp43q8tVPfsG8/v7FyT55UjsXtCBpAPlb0Nd39Ujcb0Qg6M3k6O3l4dVNRgJHI9ZMgK73Qs8kD79tRNFtqQMEYiMZpvJsW04Q+lBsfERx1aC1jqTplvREJCM8ZbH47hEJKudzA1kO4EpihaVbAKKxE5Kkwls6w9pwJMvYg9ruJA9LJB0lGvGVvaIRUXSYDlzbAp5Y43GmFu2hlcoSxiDnNyqMZ4kKBIJnQXMBXZoHRq1f3SH19k9uJXGdRkn3NqW2+4aJAEdlXBH6ofl3LHpIYXdse3ekSr5Z+NI4P/u6OiOVL7F3LGepIqZY5Ot/v4w+Dzu/cnZtJqevIvMj1EoEYImKcbjeHRrsA5VJpdacz9FrjYIMcBrLiJ4LqLX69SbTYONK2nRZ8523fQSoJTswiu0DdshOFtEsSUF6F2iWmcgfi2i1yhF1EhlUgrKZHdoPRCibrgKnCmkVgE5q/gxu4QWrMm8GHWUrFmBZi4tmUB6xSpKNv0lW/c8+vjD5eSsmh4fVpPUKuMATugT1sReiT7z7OlGTW3ZMzcJ9vFM4Nzy7YolHWupEas4HhGFtMYq0rhW60Arl3s77R5kY+KNuzfX/+bUfT05nZ4fVtPzBjtiIWOYo7ESmFhl1pD3Hag0kn+I2kOrjEMO5L7f6CO3H7iH4mEa5SD33t5Hck9ynyyzJvgLintx/wW9O7822tvbExrF59n1zUMdlmJWB3EVVmG+Cldp+9XXsH4TfXt39XATxODxuQY7T3b8Ac6Xgpk=</Value>
+				</Measurement>
+			</Results>
+			<Labels>
+				<Label>TrackKernel</Label>
+			</Labels>
+		</Test>
+		<EndDateTime>Sep 16 09:50 CEST</EndDateTime>
+		<EndTestTime>1600242645</EndTestTime>
+		<ElapsedMinutes>7</ElapsedMinutes>
+	</Testing>
+</Site>

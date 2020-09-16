@@ -478,11 +478,10 @@ class TestOrganizer:
             @param depthMax: The maximum depth to search in. A negative value
                 correspond to no limit.
             """
-            iterator = master.getchildren()
-            if len(iterator) == 0 or depthMax == 0:
+            if len(master) == 0 or depthMax == 0:
                 return None
             found = False
-            for element in iterator:
+            for element in master:
                 found = True
                 for atributes in attributeDictionnary.items():
                     if atributes[0] in self.swicthtests:
@@ -498,7 +497,7 @@ class TestOrganizer:
 
                     return element
 
-            for element in iterator:
+            for element in master:
                 elementFound = self.findElement(attributeDictionnary, element,
                                                 depthMax - 1)
                 if elementFound is not None:

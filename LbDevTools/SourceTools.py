@@ -30,7 +30,9 @@ CHECKED_FILES = re.compile(
 
 COPYRIGHT_STATEMENT = """
 (c) Copyright {} CERN for the benefit of the LHCb Collaboration
+"""
 
+LICENSE_STATEMENT = """
 This software is distributed under the terms of the GNU General Public
 Licence version 3 (GPL Version 3), copied verbatim in the file "{}".
 
@@ -226,19 +228,17 @@ def find_encoding_declaration_line(lines, limit=2):
             return i
 
 
-def add_copyright_to_file(path, year=None, license_fn=None):
+def add_copyright_to_file(path, year=None, license_fn=None, add_license=True):
     """
     Add copyright statement to the given file for the specified year (or range
     of years).  If the year argument is not specified, the current year is
     used.
     """
     lang = lang_family(path)
-    text = to_comment(
-        COPYRIGHT_STATEMENT.format(
-            year or date.today().year, license_fn or "COPYING"
-        ).strip(),
-        lang,
-    )
+    statement = COPYRIGHT_STATEMENT.format(year or date.today().year)
+    if add_license:
+        statement += LICENSE_STATEMENT.format(license_fn or "COPYING")
+    text = to_comment(statement.strip(), lang)
     with open(path, "rb") as f:
         data = f.readlines()
 
@@ -246,7 +246,7 @@ def add_copyright_to_file(path, year=None, license_fn=None):
     encoding_offset = find_encoding_declaration_line(data)
     if encoding_offset is not None:
         offset = encoding_offset + 1
-    elif data[0].startswith(b"#!"):
+    elif data and data[0].startswith(b"#!"):
         offset = 1
     elif lang == "xml":
         offset = 1 if not path.endswith(".ent") else 0
@@ -513,6 +513,11 @@ def add_copyright():
         "--license-fn", help="Name of the license file (default: COPYING)"
     )
     parser.add_argument(
+        "--no-license",
+        action="store_true",
+        help="Don't add the license statement",
+    )
+    parser.add_argument(
         "--force",
         action="store_true",
         help="add copyright also to non supported file types",
@@ -529,7 +534,7 @@ def add_copyright():
         elif has_copyright(path):
             print("warning: {} already has a copyright statement".format(path))
         else:
-            add_copyright_to_file(path, args.year, args.license_fn)
+            add_copyright_to_file(path, args.year, args.license_fn, not args.no_license)
 
 
 def format():

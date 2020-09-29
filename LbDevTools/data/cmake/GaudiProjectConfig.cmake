@@ -591,7 +591,7 @@ main()")
     unset(HOST_BINARY_TAG)
     unset(HOST_BINARY_TAG CACHE)
     find_program(HOST_BINARY_TAG_COMMAND
-                 NAMES host-binary-tag get_host_binary_tag.py
+                 NAMES lb-host-binary-tag host-binary-tag get_host_binary_tag.py
                  HINTS ${CMAKE_MODULE_PATH})
     if(HOST_BINARY_TAG_COMMAND)
       # the host detection command might not be executable...

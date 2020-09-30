@@ -292,7 +292,7 @@ def main():
                     "--stdout",
                     "{0}~..{0}".format(commit.hexsha), "--",
                     *pkgs_to_patch,
-                    stdout_as_string=False,
+                    stdout_as_string=False
                 )
                 if patch:
                     proc = Popen(["git", "am"], stdin=PIPE, cwd=tmprepo.working_dir)

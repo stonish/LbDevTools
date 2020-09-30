@@ -289,7 +289,11 @@ def main():
             pkgs_to_patch = list(commit_info["packages"] - commit_info["first"])
             if pkgs_to_patch:
                 patch = tmprepo.git.format_patch(
-                    "--stdout", "{0}~..{0}".format(commit.hexsha), "--", *pkgs_to_patch
+                    "--stdout",
+                    "{0}~..{0}".format(commit.hexsha),
+                    "--",
+                    *pkgs_to_patch,
+                    stdout_as_string=False
                 )
                 if patch:
                     proc = Popen(["git", "am"], stdin=PIPE, cwd=tmprepo.working_dir)

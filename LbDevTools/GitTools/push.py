@@ -290,7 +290,8 @@ def main():
             if pkgs_to_patch:
                 patch = tmprepo.git.format_patch(
                     "--stdout",
-                    "{0}~..{0}".format(commit.hexsha), "--",
+                    "{0}~..{0}".format(commit.hexsha),
+                    "--",
                     *pkgs_to_patch,
                     stdout_as_string=False
                 )

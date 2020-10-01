@@ -32,7 +32,7 @@ COPYRIGHT_STATEMENT = """
 (c) Copyright {} CERN for the benefit of the LHCb Collaboration
 """
 
-LICENSE_STATEMENT = """
+GPLV3_STATEMENT = """
 This software is distributed under the terms of the GNU General Public
 Licence version 3 (GPL Version 3), copied verbatim in the file "{}".
 
@@ -40,6 +40,17 @@ In applying this licence, CERN does not waive the privileges and immunities
 granted to it by virtue of its status as an Intergovernmental Organization
 or submit itself to any jurisdiction.
 """
+
+APACHEV2_STATEMENT = """
+This software is distributed under the terms of the Apache License
+version 2 (Apache Version 2), copied verbatim in the file "{}".
+
+In applying this licence, CERN does not waive the privileges and immunities
+granted to it by virtue of its status as an Intergovernmental Organization
+or submit itself to any jurisdiction.
+"""
+
+licenses = {"GPLv3": GPLV3_STATEMENT, "Apachev2": APACHEV2_STATEMENT, "": ""}
 
 # see https://www.python.org/dev/peps/pep-0263 for the regex
 ENCODING_DECLARATION = re.compile(
@@ -125,7 +136,7 @@ def get_files(reference=None):
     return (path for path in all if to_check(path))
 
 
-def report(filenames, inverted=False, target=None):
+def report(filenames, inverted=False, target=None, license="GPLv3"):
     """
     Print a report with the list of filenames.
 
@@ -139,14 +150,19 @@ def report(filenames, inverted=False, target=None):
     )
     print("\n- ".join(filenames))
     if not inverted:
+        license_arg = " --license={}".format(license) if license != "GPLv3" else ""
         if target:
             print(
-                "\nYou can fix the {} files without copyright statement "
-                "with:\n\n  $ lb-check-copyright --porcelain {} "
-                "| xargs -r lb-add-copyright\n".format(len(filenames), target)
+                "\nYou can fix the {0} files without copyright statement "
+                "with:\n\n  $ lb-check-copyright --porcelain {1}{2} "
+                "| xargs -r lb-add-copyright{2}\n".format(
+                    len(filenames), target, license_arg
+                )
             )
         else:
-            print("\nyou can fix them with the command lb-add-copyright\n")
+            print("\nyou can fix them with the command lb-add-copyright{}\n").format(
+                license_arg
+            )
 
 
 def to_comment(text, lang_family="#", width=80):
@@ -228,7 +244,7 @@ def find_encoding_declaration_line(lines, limit=2):
             return i
 
 
-def add_copyright_to_file(path, year=None, license_fn=None, add_license=True):
+def add_copyright_to_file(path, year=None, license_fn=None, add_license="GPLv3"):
     """
     Add copyright statement to the given file for the specified year (or range
     of years).  If the year argument is not specified, the current year is
@@ -236,8 +252,11 @@ def add_copyright_to_file(path, year=None, license_fn=None, add_license=True):
     """
     lang = lang_family(path)
     statement = COPYRIGHT_STATEMENT.format(year or date.today().year)
-    if add_license:
-        statement += LICENSE_STATEMENT.format(license_fn or "COPYING")
+    if add_license == "GPLv3":
+        statement += GPLV3_STATEMENT.format(license_fn or "COPYING")
+    elif add_license == "Apachev2":
+        statement += APACHEV2_STATEMENT.format(license_fn or "COPYING")
+
     text = to_comment(statement.strip(), lang)
     with open(path, "rb") as f:
         data = f.readlines()
@@ -463,6 +482,12 @@ def check_copyright():
         help="when using --porcelain, paths are separated with NUL character",
     )
     parser.add_argument(
+        "--license",
+        default="GPLv3",
+        choices=["GPLv3", "None", "Apachev2"],
+        help="Add a license statement of the specified type",
+    )
+    parser.add_argument(
         "--inverted",
         action="store_true",
         help="list files w/ copyright, instead of w/o (Default)",
@@ -493,7 +518,7 @@ def check_copyright():
     if missing:
         missing.sort()
         if not args.porcelain:
-            report(missing, args.inverted, args.reference)
+            report(missing, args.inverted, args.reference, args.license)
         else:
             print(args.separator.join(missing), end=args.separator)
         exit(1)
@@ -513,9 +538,10 @@ def add_copyright():
         "--license-fn", help="Name of the license file (default: COPYING)"
     )
     parser.add_argument(
-        "--no-license",
-        action="store_true",
-        help="Don't add the license statement",
+        "--license",
+        default="GPLv3",
+        choices=["GPLv3", "None", "Apachev2"],
+        help="Add a license statement of the specified type",
     )
     parser.add_argument(
         "--force",
@@ -534,7 +560,7 @@ def add_copyright():
         elif has_copyright(path):
             print("warning: {} already has a copyright statement".format(path))
         else:
-            add_copyright_to_file(path, args.year, args.license_fn, not args.no_license)
+            add_copyright_to_file(path, args.year, args.license_fn, args.license)
 
 
 def format():

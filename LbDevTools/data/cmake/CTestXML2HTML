@@ -338,7 +338,7 @@ class TestOrganizer:
         # insert the test
         container.insert(index, span)
 
-        for namedMeasurment in testElement.find("Results").getiterator(
+        for namedMeasurment in testElement.find("Results").iter(
                 "NamedMeasurement"):
             name = namedMeasurment.get("name")
             if name == 'Causes':
@@ -582,21 +582,25 @@ def updateAnnotations(site, Testing, outputTemp, annotationsList):
         if cpuinfo:
             annotations['cpuinfo'] = [
                 'ncpus: {0}'.format(len(cpuinfo)),
-                'model name: {0}'.format(cpuinfo[0].get('model name', os.uname()[-1])),
-                'flags: {0}'.format(' '.join(cpuinfo[0].get('flags') or cpuinfo[0].get('Features') or [])),
+                'model name: {0}'.format(cpuinfo[0].get(
+                    'model name',
+                    os.uname()[-1])),
+                'flags: {0}'.format(' '.join(cpuinfo[0].get('flags')
+                                             or cpuinfo[0].get('Features')
+                                             or [])),
             ]
 
     else:
         annotations = annotationsList.pop(0)
         # update the start time
         startTimeOld = annotations["start_ts"]
-        startTimeNew = time.gmtime(int(Testing.find("StartTestTime").text))
+        startTimeNew = int(Testing.find("StartTestTime").text)
         if startTimeNew < startTimeOld:
             annotations["start_time"] = time.strftime(
                 "%b %d %H:%M %Z", time.localtime(startTimeNew))
             annotations["start_ts"] = startTimeNew
         # update the end time
-        endTimeOld = int(annotations["end_ts"])
+        endTimeOld = annotations["end_ts"]
         endTimeNew = int(Testing.find("EndTestTime").text or '0')
         delta = endTimeOld - endTimeNew
         if endTimeOld < endTimeNew:
@@ -812,8 +816,7 @@ def main():
                     failures_count[summary['outcome']] += 1
 
                 # Fill the summary fields
-                for NamedMeasurement in Results.getiterator(
-                        "NamedMeasurement"):
+                for NamedMeasurement in Results.iter("NamedMeasurement"):
 
                     # remove the space character
                     summary["fields"].append(
@@ -876,8 +879,7 @@ def main():
 
                 if "ctest" not in site.get("Generator"):
                     # write the other files
-                    for NamedMeasurement in Results.getiterator(
-                            "NamedMeasurement"):
+                    for NamedMeasurement in Results.iter("NamedMeasurement"):
                         value = NamedMeasurement.find("Value")
                         cleanName = cleanSpace(
                             cleanWebChar(
@@ -895,8 +897,7 @@ def main():
                 else:
                     executionTime = float(0)
                     # write the other files
-                    for NamedMeasurement in Results.getiterator(
-                            "NamedMeasurement"):
+                    for NamedMeasurement in Results.iter("NamedMeasurement"):
                         value = NamedMeasurement.find("Value")
                         cleanName = cleanSpace(
                             cleanWebChar(

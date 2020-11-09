@@ -75,8 +75,20 @@ set(xenv_data
   <env:set variable=\"PYTHONHOME\">$ENV{PYTHONHOME}</env:set>
   <env:prepend variable=\"ROOT_INCLUDE_PATH\">$ENV{ROOT_INCLUDE_PATH}</env:prepend>
   <env:prepend variable=\"ROOT_INCLUDE_PATH\">\${.}/include</env:prepend>
-</env:config>
 ")
+
+# special environment variables to be propagated for sanitizer builds
+string(TOUPPER "${CMAKE_BUILD_TYPE}" _build_type_up)
+if(_build_type_up MATCHES "^(A|L|T|UB)SAN$")
+  string(TOLOWER "${CMAKE_BUILD_TYPE}" _sanitizer_name)
+  string(APPEND xenv_data
+"  <env:set variable=\"PRELOAD_SANITIZER_LIB\">lib${_sanitizer_name}.so</env:set>
+  <env:set variable=\"${_build_type_up}_OPTIONS\">${SANITIZER_OPTIONS_${_build_type_up}}</env:set>
+")
+endif()
+
+string(APPEND xenv_data "</env:config>\n")
+
 string(REPLACE "${LCG_releases_base}" "\${LCG_releases_base}" xenv_data "${xenv_data}")
 string(CONFIGURE "${xenv_data}" xenv_data @ONLY)
 file(WRITE ${CMAKE_BINARY_DIR}/${PROJECT_NAME}.xenv "${xenv_data}")

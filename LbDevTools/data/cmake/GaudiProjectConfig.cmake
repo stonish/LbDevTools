@@ -3454,7 +3454,7 @@ macro(gaudi_external_project_environment)
   endforeach()
 
   foreach(val ${binary_path})
-    if(NOT val MATCHES "^(/usr|/usr/local)?/bin" )
+    if(NOT val MATCHES "^(/usr|/usr/local|.*LbEnv.*)?/bin" )
       set(project_environment ${project_environment} PREPEND PATH ${val})
     endif()
   endforeach()

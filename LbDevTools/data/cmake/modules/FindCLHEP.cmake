@@ -12,6 +12,27 @@
 #
 # Note: version detection inspired by FindBoost.cmake
 
+# Try to delegate to CLHEPConfig.cmake
+if(CLHEP_FIND_COMPONENTS)
+  set(fwd_components COMPONENTS ${CLHEP_FIND_COMPONENTS})
+endif()
+find_package(CLHEP ${fwd_components} CONFIG)
+
+set(_CLHEP_COMPONENTS Cast Evaluator Exceptions GenericFunctions Geometry Random RandomObjects RefCount Vector Matrix)
+
+if(TARGET CLHEP::CLHEP)
+  # We found CLHEPConfig.cmake, so we set some legacy variables
+  foreach(component IN LISTS _CLHEP_COMPONENTS)
+    if(TARGET CLHEP::${component})
+      set(CLHEP_${component}_LIBRARY CLHEP::${component})
+    endif()
+  endforeach()
+  if(NOT CLHEP_FIND_QUIETLY)
+    message(STATUS "Found CLHEP: ${CLHEP_DIR} (found version \"${CLHEP_VERSION}\")")
+  endif()
+else()
+
+# Legacy implementation
 find_path(CLHEP_INCLUDE_DIR CLHEP/ClhepVersion.h
           HINTS $ENV{CLHEP_ROOT_DIR}/include ${CLHEP_ROOT_DIR}/include)
 if(CLHEP_INCLUDE_DIR)
@@ -54,3 +75,5 @@ INCLUDE(FindPackageHandleStandardArgs)
 FIND_PACKAGE_HANDLE_STANDARD_ARGS(CLHEP DEFAULT_MSG CLHEP_INCLUDE_DIR CLHEP_LIBRARIES)
 
 mark_as_advanced(CLHEP_FOUND CLHEP_INCLUDE_DIR)
+
+endif()

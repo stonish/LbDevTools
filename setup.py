@@ -188,6 +188,7 @@ setup(
             "git-lb-checkout=LbDevTools.GitTools.checkout:main",
             "git-lb-push=LbDevTools.GitTools.push:main",
             "git-lb-clone-pkg=LbDevTools.GitTools.clone_pkg:main",
+            "git-lb-reset-mtime=LbDevTools.GitTools.reset_mtime:main",
         ],
     },
     # The package can be safely distributed as a ZIP file

@@ -42,26 +42,29 @@ def main():
     args = parser.parse_args()
 
     # Created the Repo and collect the list of files in the workdir
-    repo = Repo(args.repopath)
-    if repo.is_dirty():
-        raise RuntimeError(
-            "Can only reset times on repositories when no files have been modified"
-        )
-    fileset = set()
-    build_file_list(repo.working_dir, fileset)
+    with Repo(args.repopath) as repo:
+        if repo.is_dirty():
+            raise RuntimeError(
+                "Can only reset times on repositories when no files have been modified"
+            )
+        fileset = set()
+        build_file_list(repo.working_dir, fileset)
 
-    # Now iterating on commits to set the file modification date
-    for commit in list(repo.iter_commits()):
-        if len(fileset) == 0:
-            # we're done, all file mtimes have been set
-            break
+        # Now iterating on commits to set the file modification date
+        # We use the statistics available with each commit to know whether they have been
+        # modified in that commit (this is easier that doing the diffs between the commit tree
+        # and the one for the previous commit)
+        for commit in list(repo.iter_commits()):
+            if len(fileset) == 0:
+                # we're done, all file mtimes have been set
+                break
 
-        for f in commit.stats.files:
-            if f in fileset:
-                mtime = commit.committed_date
-                fullpath = os.path.join(repo.working_dir, f)
-                os.utime(fullpath, times=(mtime, mtime))
-                fileset.remove(f)
+            for f in commit.stats.files:
+                if f in fileset:
+                    mtime = commit.committed_date
+                    fullpath = os.path.join(repo.working_dir, f)
+                    os.utime(fullpath, times=(mtime, mtime))
+                    fileset.remove(f)
 
 
 if __name__ == "__main__":

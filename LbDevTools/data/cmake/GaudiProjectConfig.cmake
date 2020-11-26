@@ -3081,7 +3081,9 @@ get_filename_component(_dir \"\${CMAKE_CURRENT_LIST_FILE}\" PATH)
 
 # Set useful properties
 get_filename_component(_dir \"\${_dir}\" PATH)
-set(${CMAKE_PROJECT_NAME}_INCLUDE_DIRS \${_dir}/include)
+if(EXISTS \${_dir}/include)
+  set(${CMAKE_PROJECT_NAME}_INCLUDE_DIRS \${_dir}/include)
+endif()
 set(${CMAKE_PROJECT_NAME}_LIBRARY_DIRS \${_dir}/lib)
 
 set(${CMAKE_PROJECT_NAME}_BINARY_PATH \${_dir}/bin \${_dir}/scripts)

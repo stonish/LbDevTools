@@ -50,7 +50,7 @@ granted to it by virtue of its status as an Intergovernmental Organization
 or submit itself to any jurisdiction.
 """
 
-licenses = {"GPL-3.0-only": GPL3_STATEMENT, "Apache-2.0": APACHE2_STATEMENT, "": ""}
+licenses = {"GPL-3.0-only": GPL3_STATEMENT, "Apache-2.0": APACHE2_STATEMENT}
 
 # see https://www.python.org/dev/peps/pep-0263 for the regex
 ENCODING_DECLARATION = re.compile(
@@ -252,10 +252,7 @@ def add_copyright_to_file(path, year=None, license_fn=None, add_license="GPL-3.0
     """
     lang = lang_family(path)
     statement = COPYRIGHT_STATEMENT.format(year or date.today().year)
-    if add_license == "GPL-3.0-only":
-        statement += GPL3_STATEMENT.format(license_fn or "COPYING")
-    elif add_license == "Apache-2.0":
-        statement += APACHE2_STATEMENT.format(license_fn or "COPYING")
+    statement += licenses[add_license].format(license_fn or "COPYING")
 
     text = to_comment(statement.strip(), lang)
     with open(path, "rb") as f:
@@ -540,7 +537,7 @@ def add_copyright():
     parser.add_argument(
         "--license",
         default="GPL-3.0-only",
-        choices=["GPL-3.0-only", "None", "Apache-2.0"],
+        choices=["GPL-3.0-only", "Apache-2.0"],
         help="Add a license statement of the specified type",
     )
     parser.add_argument(

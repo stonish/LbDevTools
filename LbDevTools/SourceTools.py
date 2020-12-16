@@ -150,7 +150,9 @@ def report(filenames, inverted=False, target=None, license="GPL-3.0-only-only"):
     )
     print("\n- ".join(filenames))
     if not inverted:
-        license_arg = " --license={}".format(license) if license != "GPL-3.0-only" else ""
+        license_arg = (
+            " --license={}".format(license) if license != "GPL-3.0-only" else ""
+        )
         if target:
             print(
                 "\nYou can fix the {0} files without copyright statement "

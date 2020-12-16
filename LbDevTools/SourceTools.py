@@ -32,7 +32,7 @@ COPYRIGHT_STATEMENT = """
 (c) Copyright {} CERN for the benefit of the LHCb Collaboration
 """
 
-GPLV3_STATEMENT = """
+GPL3_STATEMENT = """
 This software is distributed under the terms of the GNU General Public
 Licence version 3 (GPL Version 3), copied verbatim in the file "{}".
 
@@ -41,16 +41,16 @@ granted to it by virtue of its status as an Intergovernmental Organization
 or submit itself to any jurisdiction.
 """
 
-APACHEV2_STATEMENT = """
+APACHE2_STATEMENT = """
 This software is distributed under the terms of the Apache License
-version 2 (Apache Version 2), copied verbatim in the file "{}".
+version 2 (Apache-2.0), copied verbatim in the file "{}".
 
 In applying this licence, CERN does not waive the privileges and immunities
 granted to it by virtue of its status as an Intergovernmental Organization
 or submit itself to any jurisdiction.
 """
 
-licenses = {"GPLv3": GPLV3_STATEMENT, "Apachev2": APACHEV2_STATEMENT, "": ""}
+licenses = {"GPL-3.0-only": GPL3_STATEMENT, "Apache-2.0": APACHE2_STATEMENT, "": ""}
 
 # see https://www.python.org/dev/peps/pep-0263 for the regex
 ENCODING_DECLARATION = re.compile(
@@ -136,7 +136,7 @@ def get_files(reference=None):
     return (path for path in all if to_check(path))
 
 
-def report(filenames, inverted=False, target=None, license="GPLv3"):
+def report(filenames, inverted=False, target=None, license="GPL-3.0-only-only"):
     """
     Print a report with the list of filenames.
 
@@ -150,7 +150,7 @@ def report(filenames, inverted=False, target=None, license="GPLv3"):
     )
     print("\n- ".join(filenames))
     if not inverted:
-        license_arg = " --license={}".format(license) if license != "GPLv3" else ""
+        license_arg = " --license={}".format(license) if license != "GPL-3.0-only" else ""
         if target:
             print(
                 "\nYou can fix the {0} files without copyright statement "
@@ -244,7 +244,7 @@ def find_encoding_declaration_line(lines, limit=2):
             return i
 
 
-def add_copyright_to_file(path, year=None, license_fn=None, add_license="GPLv3"):
+def add_copyright_to_file(path, year=None, license_fn=None, add_license="GPL-3.0-only"):
     """
     Add copyright statement to the given file for the specified year (or range
     of years).  If the year argument is not specified, the current year is
@@ -252,10 +252,10 @@ def add_copyright_to_file(path, year=None, license_fn=None, add_license="GPLv3")
     """
     lang = lang_family(path)
     statement = COPYRIGHT_STATEMENT.format(year or date.today().year)
-    if add_license == "GPLv3":
-        statement += GPLV3_STATEMENT.format(license_fn or "COPYING")
-    elif add_license == "Apachev2":
-        statement += APACHEV2_STATEMENT.format(license_fn or "COPYING")
+    if add_license == "GPL-3.0-only":
+        statement += GPL3_STATEMENT.format(license_fn or "COPYING")
+    elif add_license == "Apache-2.0":
+        statement += APACHE2_STATEMENT.format(license_fn or "COPYING")
 
     text = to_comment(statement.strip(), lang)
     with open(path, "rb") as f:
@@ -483,8 +483,8 @@ def check_copyright():
     )
     parser.add_argument(
         "--license",
-        default="GPLv3",
-        choices=["GPLv3", "None", "Apachev2"],
+        default="GPL-3.0-only",
+        choices=["GPL-3.0-only", "None", "Apache-2.0"],
         help="Add a license statement of the specified type",
     )
     parser.add_argument(
@@ -539,8 +539,8 @@ def add_copyright():
     )
     parser.add_argument(
         "--license",
-        default="GPLv3",
-        choices=["GPLv3", "None", "Apachev2"],
+        default="GPL-3.0-only",
+        choices=["GPL-3.0-only", "None", "Apache-2.0"],
         help="Add a license statement of the specified type",
     )
     parser.add_argument(

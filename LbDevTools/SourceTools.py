@@ -136,7 +136,7 @@ def get_files(reference=None):
     return (path for path in all if to_check(path))
 
 
-def report(filenames, inverted=False, target=None, license="GPL-3.0-only-only"):
+def report(filenames, inverted=False, target=None, license="GPL-3.0-only"):
     """
     Print a report with the list of filenames.
 
@@ -483,7 +483,7 @@ def check_copyright():
     parser.add_argument(
         "--license",
         default="GPL-3.0-only",
-        choices=["GPL-3.0-only", "None", "Apache-2.0"],
+        choices=["GPL-3.0-only", "Apache-2.0"],
         help="Add a license statement of the specified type",
     )
     parser.add_argument(

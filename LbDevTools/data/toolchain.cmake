@@ -86,7 +86,8 @@ if(NOT CMAKE_SOURCE_DIR MATCHES "CMakeTmp")
     # - ninja (it requires LD_LIBRARY_PATH set to run)
     # - Gaudi (we do not want to use it from LCG)
     # - xenv (conflicts with the version in the build environment)
-    list(FILTER CMAKE_PREFIX_PATH EXCLUDE REGEX "(LCG_|lcg/nightlies).*(ninja|Gaudi|xenv)")
+    # - git (requires a special environment provided only by LCG views)
+    list(FILTER CMAKE_PREFIX_PATH EXCLUDE REGEX "(LCG_|lcg/nightlies).*(ninja|Gaudi|xenv|git)/")
   endif()
 
   # special handling for LBENV_CURRENT_WORKSPACE location

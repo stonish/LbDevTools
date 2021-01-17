@@ -620,6 +620,9 @@ main()")
   endif()
   # Add generated headers to the include path.
   include_directories(${CMAKE_BINARY_DIR}/include)
+  # Make sure we create an empty directory to avoid Fortran warnings of the type
+  # f951: Warning: Nonexistent include directory 'build/include' [-Wmissing-include-dirs]
+  file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/include)
 
   #--- Collect settings for subdirectories
   set(library_path)

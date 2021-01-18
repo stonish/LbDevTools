@@ -620,6 +620,9 @@ main()")
   endif()
   # Add generated headers to the include path.
   include_directories(${CMAKE_BINARY_DIR}/include)
+  # Make sure we create an empty directory to avoid Fortran warnings of the type
+  # f951: Warning: Nonexistent include directory 'build/include' [-Wmissing-include-dirs]
+  file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/include)
 
   #--- Collect settings for subdirectories
   set(library_path)
@@ -1245,7 +1248,7 @@ macro(_gaudi_handle_data_packages)
     list_pop_front(ARGN_ _data_package)
     if(ARGN_) # we can look for the version only if we still have data)
       list(GET ARGN_ 0 _data_pkg_vers)
-      if(_data_pkg_vers STREQUAL VERSION)
+      if(_data_pkg_vers STREQUAL "VERSION")
         list(GET ARGN_ 1 _data_pkg_vers)
         list(REMOVE_AT ARGN_ 0 1)
       else()

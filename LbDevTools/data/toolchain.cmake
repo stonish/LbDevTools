@@ -98,6 +98,10 @@ if(NOT CMAKE_SOURCE_DIR MATCHES "CMakeTmp")
     endif()
   endif()
 
+  # make sure pkg-config looks for packages on CMAKE_PREFIX_PATH and system
+  set(PKG_CONFIG_USE_CMAKE_PREFIX_PATH ON)
+  list(APPEND CMAKE_PREFIX_PATH /usr)
+
   # Make sure that when the toolchain is invoked again it uses this branch
   set(ENV{GAUDI_OLD_STYLE_PROJECT} "${CMAKE_SOURCE_DIR}")
 endif()

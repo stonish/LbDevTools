@@ -12,8 +12,14 @@
 # Old style config compatibility layer #
 ########################################
 # make sure we have a BINARY_TAG CMake variable set
-if(NOT BINARY_TAG AND NOT "$ENV{BINARY_TAG}" STREQUAL "")
-  set(BINARY_TAG $ENV{BINARY_TAG})
+if(NOT BINARY_TAG)
+  if(NOT "$ENV{BINARY_TAG}" STREQUAL "")
+    set(BINARY_TAG $ENV{BINARY_TAG})
+  elseif(LHCB_PLATFORM)
+    set(BINARY_TAG ${LHCB_PLATFORM})
+  else()
+    message(AUTHOR_WARNING "BINARY_TAG not set")
+  endif()
 endif()
 
 # map LCG_VERSION to heptools_version

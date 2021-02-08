@@ -239,6 +239,25 @@ macro(gaudi_project project version)
     set(CMAKE_PROJECT_VERSION_TWEAK 0)
   endif()
 
+  # -MIGRATION-
+  set(MIGRATION_DIR "${CMAKE_BINARY_DIR}/migration")
+  file(MAKE_DIRECTORY "${MIGRATION_DIR}")
+  file(WRITE "${MIGRATION_DIR}/run.sh" "#!/bin/bash
+cp -rfv ${MIGRATION_DIR}/. ${CMAKE_SOURCE_DIR}/.
+")
+  file(WRITE "${MIGRATION_DIR}/CMakeLists.txt"
+"
+cmake_minimum_required(VERSION 3.15)
+
+project(${project} VERSION ${CMAKE_PROJECT_VERSION_MAJOR}.${CMAKE_PROJECT_VERSION_MINOR}
+        LANGUAGES CXX)
+
+# Enable testing with CTest/CDash
+include(CTest)
+
+# -- Dependencies
+")
+
   # Prevent use of new style Gaudi helper functions
   set(GAUDI_NO_TOOLBOX TRUE)
 
@@ -414,6 +433,8 @@ macro(gaudi_project project version)
   # Locate and import used projects.
   if(PROJECT_USE)
     _gaudi_use_other_projects(${PROJECT_USE})
+    # -MIGRATION-
+    file(APPEND "${MIGRATION_DIR}/CMakeLists.txt" "\n")
     # reset _proj_versions to the values we found
     list_unzip(PROJECT_USE _proj_names _proj_versions)
     set(_proj_versions)
@@ -647,6 +668,9 @@ main()")
     list(SUBLIST packages 0 ${GAUDIPROJECT_LIMIT_PKGS} packages)
   endif()
 
+  # -MIGRATION-
+  file(APPEND "${MIGRATION_DIR}/CMakeLists.txt" "# -- Subdirectories\nset(subdirs\n")
+
   file(WRITE ${CMAKE_BINARY_DIR}/subdirs_deps.dot "digraph subdirs_deps {\n")
   # Add all subdirectories to the project build.
   list(LENGTH packages packages_count)
@@ -656,9 +680,33 @@ main()")
     message(STATUS "Adding directory ${package} (${package_idx}/${packages_count})")
     #message(STATUS "CMAKE_PREFIX_PATH -> ${CMAKE_PREFIX_PATH}")
     #message(STATUS "CMAKE_MODULE_PATH -> ${CMAKE_MODULE_PATH}")
+
+    # -MIGRATION-
+    file(APPEND "${MIGRATION_DIR}/CMakeLists.txt" "    # ${package}\n")
+    
     add_subdirectory(${package})
   endforeach()
   file(APPEND ${CMAKE_BINARY_DIR}/subdirs_deps.dot "}\n")
+
+  # -MIGRATION-
+  file(APPEND "${MIGRATION_DIR}/CMakeLists.txt"
+")
+foreach(subdir IN LISTS subdirs)
+    message(STATUS \"entering \${subdir}\")
+    add_subdirectory(\${subdir})
+endforeach()
+
+# Optionally enable compatibility with old-style CMake configurations, via helper module
+option(GAUDI_LEGACY_CMAKE_SUPPORT \"Enable compatibility with old-style CMake builds\" \"\$ENV{GAUDI_LEGACY_CMAKE_SUPPORT}\")
+if(GAUDI_LEGACY_CMAKE_SUPPORT)
+  find_file(legacy_cmake_config_support NAMES LegacyGaudiCMakeSupport.cmake)
+  if(legacy_cmake_config_support)
+    include(\${legacy_cmake_config_support})
+  else()
+    message(FATAL_ERROR \"GAUDI_LEGACY_CMAKE_SUPPORT set to TRUE, but cannot find LegacyGaudiCMakeSupport.cmake\")
+  endif()
+endif()
+")
 
   #--- Special global targets for merging files.
   gaudi_merge_files(ConfDB lib ${CMAKE_PROJECT_NAME}.confdb)
@@ -942,8 +990,6 @@ macro(_gaudi_use_other_projects)
     endif()
     list_pop_front(ARGN_ other_project other_project_version)
 
-    if(GAUDI_STRICT_VERSION_CHECK)
-      message(STATUS "project -> ${other_project}, version -> ${other_project_version}")
       if(other_project_version MATCHES "${GAUDI_VERSION_REGEX}")
         set(other_project_cmake_version "${CMAKE_MATCH_1}.${CMAKE_MATCH_2}")
         foreach(_i 4 7)
@@ -955,6 +1001,14 @@ macro(_gaudi_use_other_projects)
         # Anything not recognised as a LHCb or ATLAS numbered version (mapped to 999.999).
         set(other_project_cmake_version "999.999")
       endif()
+    
+    # -MIGRATION-
+    file(APPEND "${MIGRATION_DIR}/CMakeLists.txt"
+      "find_package(${other_project} ${other_project_cmake_version} REQUIRED)\n")
+    
+    
+    if(GAUDI_STRICT_VERSION_CHECK)
+      message(STATUS "project -> ${other_project}, version -> ${other_project_version}")
     else()
       message(STATUS "project -> ${other_project}, version hint -> ${other_project_version}")
       set(other_project_cmake_version)
@@ -1511,6 +1565,20 @@ macro(gaudi_subdir name)
   if (NOT _guessed_name STREQUAL "${name}")
     message(WARNING "Declared subdir name (${name}) does not match the name of the directory (${_guessed_name})")
   endif()
+  # -MIGRATION-
+  file(GLOB _subdir_name RELATIVE "${CMAKE_SOURCE_DIR}" "${CMAKE_CURRENT_SOURCE_DIR}")
+  file(MAKE_DIRECTORY "${MIGRATION_DIR}/${_subdir_name}")
+  string(LENGTH "${_subdir_name}" _subdir_name_length)
+  set(_subdir_name_underline "")
+  foreach(_ RANGE 1 ${_subdir_name_length})
+    set(_subdir_name_underline "${_subdir_name_underline}-")
+  endforeach()
+  file(WRITE "${MIGRATION_DIR}/${_subdir_name}/CMakeLists.txt"
+"#[=======================================================================[.rst:
+${_subdir_name}
+${_subdir_name_underline}
+#]=======================================================================]
+")
 
   # Set useful variables and properties
   set(subdir_name ${name})
@@ -2132,6 +2200,9 @@ macro(gaudi_common_add_build)
     set(ARG_LINK_LIBRARIES ${ARG_LINK_LIBRARIES} ${ARG_LIBRARIES})
   endif()
 
+  # -MIGRATION-
+  set(ARG_LINK_LIBRARIES_ORIG ${ARG_LINK_LIBRARIES})
+
   #message(STATUS "gaudi_common_add_build calling gaudi_resolve_link_libraries")
   gaudi_resolve_link_libraries(ARG_LINK_LIBRARIES ${ARG_LINK_LIBRARIES})
 
@@ -2245,6 +2316,25 @@ function(gaudi_add_library library)
     message(WARNING "Library ${library} (in ${package}) does not declare PUBLIC_HEADERS. Use the option NO_PUBLIC_HEADERS if it is intended.")
   endif()
 
+  # -MIGRATION-
+  file(GLOB _subdir_name RELATIVE "${CMAKE_SOURCE_DIR}" "${CMAKE_CURRENT_SOURCE_DIR}")
+  file(APPEND "${MIGRATION_DIR}/${_subdir_name}/CMakeLists.txt"
+  "\ngaudi_add_library(${library}\n    SOURCES\n")
+  foreach(_s IN LISTS srcs)
+    file(GLOB _s RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}"
+         "${_s}")
+    file(APPEND "${MIGRATION_DIR}/${_subdir_name}/CMakeLists.txt"
+      "        ${_s}\n")
+  endforeach()
+  file(APPEND "${MIGRATION_DIR}/${_subdir_name}/CMakeLists.txt"
+  "    LINK\n        PUBLIC\n")
+  foreach(_s IN LISTS ARG_LINK_LIBRARIES_ORIG)
+    file(APPEND "${MIGRATION_DIR}/${_subdir_name}/CMakeLists.txt"
+      "            # ${_s}\n")
+  endforeach()
+  file(APPEND "${MIGRATION_DIR}/${_subdir_name}/CMakeLists.txt"
+  ")\n")
+
   if(WIN32)
     add_library( ${library}-arc STATIC EXCLUDE_FROM_ALL ${srcs})
     set_target_properties(${library}-arc PROPERTIES COMPILE_DEFINITIONS GAUDI_LINKER_LIBRARY)
@@ -2299,6 +2389,25 @@ function(gaudi_add_module library)
   gaudi_common_add_build(${ARG_UNPARSED_ARGUMENTS} LIBRARIES ${ARG_LIBRARIES}
                          LINK_LIBRARIES ${ARG_LINK_LIBRARIES} INCLUDE_DIRS ${ARG_INCLUDE_DIRS})
 
+  # -MIGRATION-
+  file(GLOB _subdir_name RELATIVE "${CMAKE_SOURCE_DIR}" "${CMAKE_CURRENT_SOURCE_DIR}")
+  file(APPEND "${MIGRATION_DIR}/${_subdir_name}/CMakeLists.txt"
+  "\ngaudi_add_module(${library}\n    SOURCES\n")
+  foreach(_s IN LISTS srcs)
+    file(GLOB _s RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}"
+         "${_s}")
+    file(APPEND "${MIGRATION_DIR}/${_subdir_name}/CMakeLists.txt"
+      "        ${_s}\n")
+  endforeach()
+  file(APPEND "${MIGRATION_DIR}/${_subdir_name}/CMakeLists.txt"
+  "    LINK\n")
+  foreach(_s IN LISTS ARG_LINK_LIBRARIES_ORIG)
+    file(APPEND "${MIGRATION_DIR}/${_subdir_name}/CMakeLists.txt"
+      "        # ${_s}\n")
+  endforeach()
+  file(APPEND "${MIGRATION_DIR}/${_subdir_name}/CMakeLists.txt"
+  ")\n")
+
   add_library(${library} MODULE ${srcs})
   target_link_libraries(${library} ${ARG_LINK_LIBRARIES})
   if(TARGET Gaudi::GaudiPluginService)
@@ -2352,6 +2461,16 @@ function(gaudi_add_dictionary dictionary header selection)
   # this function uses an extra option: 'OPTIONS'
   CMAKE_PARSE_ARGUMENTS(ARG "SPLIT_CLASSDEF" "" "LIBRARIES;LINK_LIBRARIES;INCLUDE_DIRS;OPTIONS" ${ARGN})
   gaudi_common_add_build(${ARG_UNPARSED_ARGUMENTS} LIBRARIES ${ARG_LIBRARIES} LINK_LIBRARIES ${ARG_LINK_LIBRARIES} INCLUDE_DIRS ${ARG_INCLUDE_DIRS})
+
+  # -MIGRATION-
+  file(GLOB _subdir_name RELATIVE "${CMAKE_SOURCE_DIR}" "${CMAKE_CURRENT_SOURCE_DIR}")
+  file(APPEND "${MIGRATION_DIR}/${_subdir_name}/CMakeLists.txt"
+    "\ngaudi_add_dictionary(${dictionary}Dict\n    HEADERFILES ${header}\n    SELECTION ${selection}\n    LINK\n")
+  foreach(_s IN LISTS ARG_LINK_LIBRARIES_ORIG)
+    file(APPEND "${MIGRATION_DIR}/${_subdir_name}/CMakeLists.txt"
+      "        # ${_s}\n")
+  endforeach()
+  file(APPEND "${MIGRATION_DIR}/${_subdir_name}/CMakeLists.txt" ")\n")
 
   # FIXME: With ROOT 6 the '_Instantiations' dummy class used in the
   #        dictionaries must have a different name in each dictionary.
@@ -2445,6 +2564,27 @@ endfunction()
 function(gaudi_add_executable executable)
   gaudi_common_add_build(${ARGN})
 
+  # -MIGRATION-
+  if(NOT _in_gaudi_add_unit_test)
+    file(GLOB _subdir_name RELATIVE "${CMAKE_SOURCE_DIR}" "${CMAKE_CURRENT_SOURCE_DIR}")
+    file(APPEND "${MIGRATION_DIR}/${_subdir_name}/CMakeLists.txt"
+    "\ngaudi_add_executable(${executable}\n    SOURCES\n")
+    foreach(_s IN LISTS srcs)
+      file(GLOB _s RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}"
+          "${_s}")
+      file(APPEND "${MIGRATION_DIR}/${_subdir_name}/CMakeLists.txt"
+        "        ${_s}\n")
+    endforeach()
+    file(APPEND "${MIGRATION_DIR}/${_subdir_name}/CMakeLists.txt"
+    "    LINK\n")
+    foreach(_s IN LISTS ARG_LINK_LIBRARIES_ORIG _link)
+      file(APPEND "${MIGRATION_DIR}/${_subdir_name}/CMakeLists.txt"
+        "        # ${_s}\n")
+    endforeach()
+    file(APPEND "${MIGRATION_DIR}/${_subdir_name}/CMakeLists.txt"
+    ")\n")
+  endif()
+  
   add_executable(${executable} ${srcs})
   target_link_libraries(${executable} ${ARG_LINK_LIBRARIES})
   _gaudi_detach_debinfo(${executable})
@@ -2519,11 +2659,36 @@ function(gaudi_add_unit_test executable)
       set(_include ${${executable}_UNIT_TEST_TYPE})
     endif()
 
+    # -MIGRATION-
+    set(_in_gaudi_add_unit_test TRUE)
+
     gaudi_add_executable(${executable} ${srcs}
                          LINK_LIBRARIES ${ARG_LINK_LIBRARIES} ${_link}
                          INCLUDE_DIRS ${ARG_INCLUDE_DIRS} ${_include})
 
+    # -MIGRATION-
+    set(_in_gaudi_add_unit_test FALSE)
+
     gaudi_get_package_name(package)
+
+    # -MIGRATION-
+    file(GLOB _subdir_name RELATIVE "${CMAKE_SOURCE_DIR}" "${CMAKE_CURRENT_SOURCE_DIR}")
+    file(APPEND "${MIGRATION_DIR}/${_subdir_name}/CMakeLists.txt"
+    "\ngaudi_add_executable(${executable}\n    SOURCES\n")
+    foreach(_s IN LISTS srcs)
+      file(GLOB _s RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}"
+          "${_s}")
+      file(APPEND "${MIGRATION_DIR}/${_subdir_name}/CMakeLists.txt"
+        "        ${_s}\n")
+    endforeach()
+    file(APPEND "${MIGRATION_DIR}/${_subdir_name}/CMakeLists.txt"
+    "    LINK\n")
+    foreach(_s IN LISTS ARG_LINK_LIBRARIES_ORIG _link)
+      file(APPEND "${MIGRATION_DIR}/${_subdir_name}/CMakeLists.txt"
+        "        # ${_s}\n")
+    endforeach()
+    file(APPEND "${MIGRATION_DIR}/${_subdir_name}/CMakeLists.txt"
+    "    TEST\n)\n")
 
     get_target_property(exec_suffix ${executable} SUFFIX)
     if(NOT exec_suffix)
@@ -2599,6 +2764,10 @@ function(gaudi_add_test name)
   endif()
 
   if(ARG_QMTEST)
+    # -MIGRATION-
+    file(GLOB _subdir_name RELATIVE "${CMAKE_SOURCE_DIR}" "${CMAKE_CURRENT_SOURCE_DIR}")
+    file(APPEND "${MIGRATION_DIR}/${_subdir_name}/CMakeLists.txt" "\ngaudi_add_tests(QMTest)\n")
+
     # add .qmt files as tests
     message(STATUS "Addind QMTest tests...")
     set(qmtest_root_dir ${CMAKE_CURRENT_SOURCE_DIR}/tests/qmtest)
@@ -2775,8 +2944,16 @@ endfunction()
 #---------------------------------------------------------------------------------------------------
 function(gaudi_install_headers)
   gaudi_get_package_name(package)
+  
+  # -MIGRATION-
+  file(APPEND "${MIGRATION_DIR}/run.sh" "mkdir -p ${CMAKE_CURRENT_SOURCE_DIR}/include\n")
+  
   set(has_local_headers FALSE)
   foreach(hdr_dir ${ARGN})
+    # -MIGRATION-
+    file(APPEND "${MIGRATION_DIR}/run.sh"
+      "(cd ${CMAKE_CURRENT_SOURCE_DIR} && git mv ${hdr_dir} include)\n")
+    
     install(DIRECTORY ${hdr_dir}
             DESTINATION include)
     if(NOT IS_ABSOLUTE ${hdr_dir})
@@ -2854,6 +3031,10 @@ endfunction()
 # FIXME: it should be cleaner
 #-------------------------------------------------------------------------------
 function(gaudi_install_python_modules)
+  # -MIGRATION-
+  file(GLOB _subdir_name RELATIVE "${CMAKE_SOURCE_DIR}" "${CMAKE_CURRENT_SOURCE_DIR}")
+  file(APPEND "${MIGRATION_DIR}/${_subdir_name}/CMakeLists.txt" "\ngaudi_install(PYTHON)\n")
+
   install(DIRECTORY python/
           DESTINATION python
           FILES_MATCHING
@@ -2889,6 +3070,10 @@ endfunction()
 # Declare that the package needs to install the content of the 'scripts' directory.
 #---------------------------------------------------------------------------------------------------
 function(gaudi_install_scripts)
+  # -MIGRATION-
+  file(GLOB _subdir_name RELATIVE "${CMAKE_SOURCE_DIR}" "${CMAKE_CURRENT_SOURCE_DIR}")
+  file(APPEND "${MIGRATION_DIR}/${_subdir_name}/CMakeLists.txt" "\ngaudi_install(SCRIPTS)\n")
+
   install(DIRECTORY scripts/ DESTINATION scripts
           FILE_PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ
                            GROUP_EXECUTE GROUP_READ

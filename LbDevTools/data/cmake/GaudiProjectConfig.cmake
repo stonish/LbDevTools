@@ -683,8 +683,20 @@ main()")
 
     # -MIGRATION-
     file(APPEND "${MIGRATION_DIR}/CMakeLists.txt" "    # ${package}\n")
+    set_property(DIRECTORY ${package} PROPERTY MIGRATION_DIR_WITH_HEADERS FALSE)
+    set_property(DIRECTORY ${package} PROPERTY MIGRATION_DIR_WITH_LIBRARY FALSE)
     
     add_subdirectory(${package})
+
+    # -MIGRATION-
+    get_property(_dir_has_lib DIRECTORY ${package} PROPERTY MIGRATION_DIR_WITH_LIBRARY)
+    get_property(_dir_has_hdr DIRECTORY ${package} PROPERTY MIGRATION_DIR_WITH_HEADERS)
+    if(_dir_has_hdr AND NOT _dir_has_lib)
+      get_filename_component(_dir_name "${package}" NAME)
+      file(APPEND "${MIGRATION_DIR}/${package}/CMakeLists.txt"
+      "\ngaudi_add_header_only_library(${_dir_name}\n    # LINK ...\n)\n")
+    endif()
+
   endforeach()
   file(APPEND ${CMAKE_BINARY_DIR}/subdirs_deps.dot "}\n")
 
@@ -2334,6 +2346,7 @@ function(gaudi_add_library library)
   endforeach()
   file(APPEND "${MIGRATION_DIR}/${_subdir_name}/CMakeLists.txt"
   ")\n")
+  set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY MIGRATION_DIR_WITH_LIBRARY TRUE)
 
   if(WIN32)
     add_library( ${library}-arc STATIC EXCLUDE_FROM_ALL ${srcs})
@@ -2953,6 +2966,7 @@ function(gaudi_install_headers)
     # -MIGRATION-
     file(APPEND "${MIGRATION_DIR}/run.sh"
       "(cd ${CMAKE_CURRENT_SOURCE_DIR} && git mv ${hdr_dir} include)\n")
+    set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY MIGRATION_DIR_WITH_HEADERS TRUE)
     
     install(DIRECTORY ${hdr_dir}
             DESTINATION include)

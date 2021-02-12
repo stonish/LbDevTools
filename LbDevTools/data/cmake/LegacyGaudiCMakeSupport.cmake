@@ -82,6 +82,10 @@ foreach(subdir IN LISTS subdirs)
   string(APPEND metadata "     ${subdir}\n")
 endforeach()
 string(APPEND metadata ")\n")
+# - environment
+if(${PROJECT_NAME}_ENVIRONMENT)
+  string(APPEND metadata "set(${PROJECT_NAME}_ENVIRONMENT ${${PROJECT_NAME}_ENVIRONMENT})\n")
+endif()
 # - write metadata file and schedule install
 file(WRITE ${CMAKE_BINARY_DIR}/.metadata.cmake "${metadata}")
 install(FILES ${CMAKE_BINARY_DIR}/.metadata.cmake

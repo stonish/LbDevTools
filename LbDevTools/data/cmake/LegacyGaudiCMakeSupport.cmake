@@ -45,6 +45,8 @@ endif()
 get_property(subdirs DIRECTORY PROPERTY SUBDIRECTORIES)
 # - found packages
 get_property(packages_found GLOBAL PROPERTY PACKAGES_FOUND)
+# - found (LHCb) data packages
+get_property(data_packages_found GLOBAL PROPERTY DATA_PACKAGES_FOUND)
 # - targets
 get_property(targets DIRECTORY ${CMAKE_SOURCE_DIR} PROPERTY BUILDSYSTEM_TARGETS)
 foreach(subdir IN LISTS subdirs)
@@ -177,14 +179,43 @@ set(manifest_data
     <lcg_system>${LCG_SYSTEM}</lcg_system>
     <packages>
 ")
+set(projects)
 foreach(pack IN LISTS packages_found)
-  string(APPEND manifest_data "      <package name=\"${pack}\" />\n")
+  if("${${pack}_DIR}${${pack}_ROOT_DIR}" MATCHES "/InstallArea/")
+    # it looks like an LHCb project, so we treat it differently
+    list(APPEND projects ${pack})
+  else()
+    string(APPEND manifest_data "      <package name=\"${pack}\" ")
+    if(DEFINED ${pack}_VERSION)
+      string(APPEND manifest_data "version=\"${${pack}_VERSION}\" ")
+    endif()
+    string(APPEND manifest_data "/>\n")
+  endif()
 endforeach()
-string(APPEND manifest_data
-"    </packages>
-</heptools>
-</manifest>
-")
+string(APPEND manifest_data "    </packages>\n  </heptools>\n")
+
+if(projects)
+  string(APPEND manifest_data "  <used_projects>\n")
+  foreach(project IN LISTS projects)
+    string(APPEND manifest_data "    <project name=\"${project}\" version=\"${${project}_VERSION}\" />\n")
+  endforeach()
+  string(APPEND manifest_data "  </used_projects>\n")
+endif()
+
+if(data_packages_found)
+  string(APPEND manifest_data "  <used_data_pkgs>\n")
+  foreach(pack IN LISTS data_packages_found)
+    if(pack MATCHES "^([^:]*):(.*)\$")
+      string(APPEND manifest_data "    <package name=\"${CMAKE_MATCH_1}\" version=\"${CMAKE_MATCH_2}\" />\n")
+    else()
+      string(APPEND manifest_data "    <package name=\"${pack}\" version=\"*\" />\n")
+    endif()
+  endforeach()
+  string(APPEND manifest_data "  </used_data_pkgs>\n")
+endif()
+
+string(APPEND manifest_data "</manifest>\n")
+
 # - write manifest.xml file and schedule install
 file(WRITE ${CMAKE_BINARY_DIR}/manifest.xml "${manifest_data}")
 install(FILES ${CMAKE_BINARY_DIR}/manifest.xml DESTINATION .)

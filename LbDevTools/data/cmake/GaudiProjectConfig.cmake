@@ -687,8 +687,6 @@ main()")
 
     # -MIGRATION-
     file(APPEND "${MIGRATION_DIR}/CMakeLists.txt" "    # ${package}\n")
-    set_property(DIRECTORY ${package} PROPERTY MIGRATION_DIR_WITH_HEADERS FALSE)
-    set_property(DIRECTORY ${package} PROPERTY MIGRATION_DIR_WITH_LIBRARY FALSE)
     
     add_subdirectory(${package})
 

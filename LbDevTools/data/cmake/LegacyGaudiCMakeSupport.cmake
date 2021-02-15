@@ -244,5 +244,19 @@ string(APPEND manifest_data "</manifest>\n")
 file(WRITE ${CMAKE_BINARY_DIR}/manifest.xml "${manifest_data}")
 install(FILES ${CMAKE_BINARY_DIR}/manifest.xml DESTINATION .)
 
+# now we know if we use other LHCb projects and for those we have to pull
+# the metadata file from our metadatafile
+if(projects)
+  file(APPEND ${CMAKE_BINARY_DIR}/.metadata.cmake
+"# helper to resolve library names to the correct targets
+list(APPEND gaudi_target_namespaces ${PROJECT_NAME} ${projects})
+# get metadata from upstream projects
+foreach(_p IN ITEMS ${projects})
+    if(EXISTS \"\${\${_p}_DIR}/.metadata.cmake\")
+        include(\"\${\${_p}_DIR}/.metadata.cmake\")
+    endif()
+endforeach()\n")
+endif()
+
 # default install prefix when building in legacy mode
 set(CMAKE_INSTALL_PREFIX ${CMAKE_SOURCE_DIR}/InstallArea/${BINARY_TAG})

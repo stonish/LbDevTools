@@ -446,7 +446,11 @@ include(CTest)
   if(used_gaudi_projects)
     list(REMOVE_DUPLICATES used_gaudi_projects)
   endif()
+  if(gaudi_target_namespaces)
+    list(REMOVE_DUPLICATES gaudi_target_namespaces)
+  endif()
   #message(STATUS "used_gaudi_projects -> ${used_gaudi_projects}")
+  #message(STATUS "gaudi_target_namespaces -> ${gaudi_target_namespaces}")
   #message(STATUS "inherited_data_packages_decl -> ${inherited_data_packages_decl}")
 
   # Allow ATLAS to override some CMake modules during the Gaudi build:
@@ -1099,6 +1103,7 @@ macro(_gaudi_use_other_projects)
         # Note: we add them to used_gaudi_projects in reverse order so that they
         # appear in the correct inclusion order in the environment XML.
         set(used_gaudi_projects ${other_project} ${used_gaudi_projects})
+        list(APPEND gaudi_target_namespaces ${other_project})
         if(${other_project}_USES)
           list(APPEND ARGN_ ${${other_project}_USES})
         endif()
@@ -1690,7 +1695,7 @@ function(gaudi_resolve_link_libraries variable)
         find_package(Boost COMPONENTS ${CMAKE_MATCH_1} QUIET)
       else()
         # the target might be in a project namespace
-        foreach(_p IN LISTS used_gaudi_projects)
+        foreach(_p IN LISTS gaudi_target_namespaces)
           if(TARGET ${_p}::${package})
             #message(STATUS "using ${_p}::${package} for ${package}")
             set(package ${_p}::${package})

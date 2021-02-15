@@ -241,9 +241,12 @@ macro(gaudi_project project version)
 
   # -MIGRATION-
   set(MIGRATION_DIR "${CMAKE_BINARY_DIR}/migration")
+  set(MIGRATION_DEPS "${CMAKE_BINARY_DIR}/migration/cmake/${project}Dependencies.cmake")
   file(MAKE_DIRECTORY "${MIGRATION_DIR}")
+  file(MAKE_DIRECTORY "${MIGRATION_DIR}/cmake")
   file(WRITE "${MIGRATION_DIR}/run.sh" "#!/bin/bash
 cp -rfv ${MIGRATION_DIR}/. ${CMAKE_SOURCE_DIR}/.
+rm -f ${CMAKE_SOURCE_DIR}/run.sh
 ")
   file(WRITE "${MIGRATION_DIR}/CMakeLists.txt"
 "
@@ -255,8 +258,14 @@ project(${project} VERSION ${CMAKE_PROJECT_VERSION_MAJOR}.${CMAKE_PROJECT_VERSIO
 # Enable testing with CTest/CDash
 include(CTest)
 
-# -- Dependencies
+list(PREPEND CMAKE_MODULE_PATH
+    \${PROJECT_SOURCE_DIR}/cmake
+)
+
+include(${project}Dependencies)
+
 ")
+  file(WRITE "${MIGRATION_DEPS}" "")
 
   # Prevent use of new style Gaudi helper functions
   set(GAUDI_NO_TOOLBOX TRUE)
@@ -434,7 +443,7 @@ include(CTest)
   if(PROJECT_USE)
     _gaudi_use_other_projects(${PROJECT_USE})
     # -MIGRATION-
-    file(APPEND "${MIGRATION_DIR}/CMakeLists.txt" "\n")
+    file(APPEND "${MIGRATION_DEPS}" "\n")
     # reset _proj_versions to the values we found
     list_unzip(PROJECT_USE _proj_names _proj_versions)
     set(_proj_versions)
@@ -1017,7 +1026,7 @@ macro(_gaudi_use_other_projects)
       endif()
     
     # -MIGRATION-
-    file(APPEND "${MIGRATION_DIR}/CMakeLists.txt"
+    file(APPEND "${MIGRATION_DEPS}"
       "find_package(${other_project} ${other_project_cmake_version} REQUIRED)\n")
     
     
@@ -1315,11 +1324,25 @@ macro(_gaudi_handle_data_packages)
   while(ARGN_)
     # extract data package name and (optional) version from the list
     list_pop_front(ARGN_ _data_package)
+
+    # -MIGRATION-
+    if(NOT _are_inherited STREQUAL "INHERITED")
+      file(APPEND "${MIGRATION_DEPS}"
+      "find_data_package(${_data_package}")
+    endif()
+
     if(ARGN_) # we can look for the version only if we still have data)
       list(GET ARGN_ 0 _data_pkg_vers)
       if(_data_pkg_vers STREQUAL "VERSION")
         list(GET ARGN_ 1 _data_pkg_vers)
         list(REMOVE_AT ARGN_ 0 1)
+
+        # -MIGRATION-
+        if(NOT _are_inherited STREQUAL "INHERITED")
+          file(APPEND "${MIGRATION_DEPS}"
+            " ${_data_pkg_vers}")
+        endif()
+
       else()
         set(_data_pkg_vers *) # default version value
       endif()
@@ -1345,6 +1368,12 @@ macro(_gaudi_handle_data_packages)
     if(${_data_package}_FOUND)
       set(${data_pkg_list} ${${data_pkg_list}} ${_data_package})
     endif()
+
+    # -MIGRATION-
+    if(NOT _are_inherited STREQUAL "INHERITED")
+      file(APPEND "${MIGRATION_DEPS}" ")\n")
+    endif()
+
   endwhile()
 endmacro()
 

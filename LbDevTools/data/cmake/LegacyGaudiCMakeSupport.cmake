@@ -150,8 +150,21 @@ string(TOUPPER "${PROJECT_NAME}" PROJECT_NAME_UPCASE)
 set(xenv_data
 "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <env:config xmlns:env=\"EnvSchema\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:schemaLocation=\"EnvSchema EnvSchema.xsd \">
-  <env:default variable=\"LCG_releases_base\">@LCG_releases_base@</env:default>
-  <env:set variable=\"GAUDIAPPNAME\">${PROJECT_NAME}</env:set>
+@RELOC_DEFAULTS@")
+
+set(relocations
+  "${LCG_releases_base} ==> \${LCG_releases_base}"
+  "${PROJECT_SOURCE_DIR} ==> \${${PROJECT_NAME_UPCASE}_PROJECT_ROOT}"
+)
+foreach(pack IN LISTS packages_found)
+  if(${pack}_DIR MATCHES "^(.*)/InstallArea")
+    string(TOUPPER "${pack}" pack_upcase)
+    list(APPEND relocations "${CMAKE_MATCH_1} ==> \${${pack_upcase}_PROJECT_ROOT}")
+  endif()
+endforeach()
+
+string(APPEND xenv_data
+"  <env:set variable=\"GAUDIAPPNAME\">${PROJECT_NAME}</env:set>
   <env:set variable=\"GAUDIAPPVERSION\">${PROJECT_VERSION}</env:set>
   <env:set variable=\"${PROJECT_NAME_UPCASE}_PROJECT_ROOT\">\${.}/../../</env:set>
   <env:prepend variable=\"PATH\">$ENV{PATH}</env:prepend>
@@ -195,8 +208,23 @@ endif()
 
 string(APPEND xenv_data "</env:config>\n")
 
-# - make the environment relocatable (from LCG_releases_base)
-string(REPLACE "${LCG_releases_base}" "\${LCG_releases_base}" xenv_data "${xenv_data}")
+# - make the environment relocatable
+#   - list of user relocation replacements, used to make the environment relocatable,
+#     in the form of "<build-time-value> ==> <relocatable-version>"
+get_property(user_relocations GLOBAL PROPERTY ENVIRONMENT_RELOCATION_RULES)
+set(RELOC_DEFAULTS "")
+foreach(reloc IN LISTS relocations user_relocations)
+  if(reloc MATCHES "^(.*) ==> (.*)\$")
+    set(_from "${CMAKE_MATCH_1}")
+    set(_to "${CMAKE_MATCH_2}")
+    string(REPLACE "${_from}/" "${_to}/" xenv_data "${xenv_data}")
+    if(_to MATCHES "^\\\$\\{([^}]+)\\}\$" AND NOT _from STREQUAL "${PROJECT_SOURCE_DIR}")
+      string(APPEND RELOC_DEFAULTS "  <env:default variable=\"${CMAKE_MATCH_1}\">${_from}</env:default>\n")
+    endif()
+  else()
+    message(FATAL_ERROR "invalid relocation rule '${reloc}', it must be in the form 'string ==> string'")
+  endif()
+endforeach()
 string(CONFIGURE "${xenv_data}" xenv_data @ONLY)
 # - write .xenv file and schedule install
 file(WRITE ${CMAKE_BINARY_DIR}/${PROJECT_NAME}.xenv "${xenv_data}")

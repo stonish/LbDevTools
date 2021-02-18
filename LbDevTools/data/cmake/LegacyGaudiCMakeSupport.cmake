@@ -8,6 +8,78 @@
 # granted to it by virtue of its status as an Intergovernmental Organization  #
 # or submit itself to any jurisdiction.                                       #
 ###############################################################################
+#[========================================================================[.rst:
+LegacyGaudiCMakeSupport.cmake
+=============================
+
+Compatibility layer to be able to use new style (modern) CMake projects
+from old style (GaudiProjectConfig) projects.
+
+When included at the end of a project configuration file, this module
+scans the configuration of the project to generate the metadata artifacts
+old style projects need for their own configuration.
+
+We also initialize ``CMAKE_INSTALL_PREFIX`` to the old style value.
+
+``.metadata.cmake``
+-------------------
+Old style projects add some special information to the generated
+``${PROJECT_NAME}Config.cmake``. New style projects do not, so we produce a
+special file called ``.metadata.cmake`` to fill the gap.
+
+This file sets the variables
+
+  ``${PROJECT_NAME}_heptools_version``
+      the version of LCG used for the build
+  ``${PROJECT_NAME}_heptools_system``
+      the LCG platform used (without optimization level)
+  ``known_packages`` (append)
+      list of subdirectory in this projects (expected downstream for
+      subdirectory dependencies)
+  ``gaudi_target_namespaces`` (append)
+      used to resolve namespaced targets in ``gaudi_add_*`` functions
+
+Finally we load all the ``.metadata.cmake`` files of the projects we
+depend on.
+
+``${PROJECT_NAME}.xenv``
+------------------------
+The environment of old style projects is set by the ``xenv`` tool, which
+processes ``.xenv`` files, so we have to produce one that mimics the old
+behaviour.
+
+For the environment file we start from the current environment and we
+extend the ``LD_LIBRARY_PATH`` using the directory needed by all targets
+we build.
+
+Then we prepare the ``${PROJECT_NAME}.xenv`` file so that it sets ``PATH``,
+``LD_LIBRARY_PATH``, ``PYTHONPATH`` and ``ROOT_INCLUDE_PATH`` to the
+current value plus the entries from the current project.
+
+We add to the environment all the changes declared in the global property
+``${PROJECT_NAME}_ENVIRONMENT`` (filled, for example, by the command
+``lhcb_env`` in ``LHCbConfigUtils.cmake``).
+
+Since the generated ``${PROJECT_NAME}.xenv`` must be relocatable we apply
+a set of relocation rules (some built-in, some user provided via the global
+property ``ENVIRONMENT_RELOCATION_RULES``) to the file.
+A relocation rule is a string in the format::
+
+    <original string> ==> <relocation string>
+
+For example ``"/path/to/lcg/releases ==> ${LCG_releases_base}"``.
+For each relocation rule that uses a variable as relocation string, we
+inject a *default* value for the variable, then, for all cases, we replace
+in the file all occurrences of the original string with the relocation one.
+
+``manifest.xml``
+This file is used by ``lb-run`` an by the packaging to discover the
+dependencies of the project.
+
+It contains some platform information, the list of LHcb projects, the list
+of data packages and the list of external targets used.
+
+#]========================================================================]
 if(NOT CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
   message(WARNING "LegacyGaudiCMakeSupport is ignored in subprojects")
   return()

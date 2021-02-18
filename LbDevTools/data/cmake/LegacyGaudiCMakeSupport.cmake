@@ -8,6 +8,7 @@
 # granted to it by virtue of its status as an Intergovernmental Organization  #
 # or submit itself to any jurisdiction.                                       #
 ###############################################################################
+message(STATUS "Enabling compatibility with old-style CMake builds")
 ########################################
 # Old style config compatibility layer #
 ########################################
@@ -20,6 +21,12 @@ if(NOT BINARY_TAG)
   else()
     message(AUTHOR_WARNING "BINARY_TAG not set")
   endif()
+endif()
+
+# default install prefix when building in legacy mode
+if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
+  set(CMAKE_INSTALL_PREFIX "${CMAKE_SOURCE_DIR}/InstallArea/${BINARY_TAG}"
+    CACHE PATH "Install prefix" FORCE)
 endif()
 
 # map LCG_VERSION to heptools_version
@@ -257,6 +264,3 @@ foreach(_p IN ITEMS ${projects})
     endif()
 endforeach()\n")
 endif()
-
-# default install prefix when building in legacy mode
-set(CMAKE_INSTALL_PREFIX ${CMAKE_SOURCE_DIR}/InstallArea/${BINARY_TAG})

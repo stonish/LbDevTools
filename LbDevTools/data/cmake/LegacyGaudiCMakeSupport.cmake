@@ -8,6 +8,10 @@
 # granted to it by virtue of its status as an Intergovernmental Organization  #
 # or submit itself to any jurisdiction.                                       #
 ###############################################################################
+if(NOT CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
+  message(WARNING "LegacyGaudiCMakeSupport is ignored in subprojects")
+  return()
+endif()
 message(STATUS "Enabling compatibility with old-style CMake builds")
 ########################################
 # Old style config compatibility layer #

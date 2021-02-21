@@ -267,6 +267,10 @@ include(${project}Dependencies)
 ")
   file(WRITE "${MIGRATION_DEPS}" "")
 
+  # Initialize the headers db file
+  file(WRITE "${CMAKE_BINARY_DIR}/headers_db.csv" "header,target,directory\n")
+  install(FILES "${CMAKE_BINARY_DIR}/headers_db.csv" DESTINATION cmake)
+
   # Prevent use of new style Gaudi helper functions
   set(GAUDI_NO_TOOLBOX TRUE)
 
@@ -705,7 +709,10 @@ main()")
     if(_dir_has_hdr AND NOT _dir_has_lib)
       get_filename_component(_dir_name "${package}" NAME)
       file(APPEND "${MIGRATION_DIR}/${package}/CMakeLists.txt"
-      "\ngaudi_add_header_only_library(${_dir_name}\n    # LINK ...\n)\n")
+      "\ngaudi_add_header_only_library(${_dir_name}Lib\n    # LINK ...\n)\n")
+      _gpc_update_headers_db(${package} ${_dir_name}Lib ${_dir_has_hdr})
+    elseif(_dir_has_hdr)
+      _gpc_update_headers_db(${package} ${_dir_has_lib} ${_dir_has_hdr})
     endif()
 
   endforeach()
@@ -1130,6 +1137,21 @@ macro(_gaudi_use_other_projects)
     endif()
 
   endwhile()
+endmacro()
+
+# Function to generate a CSV file mapping public headers to target providing them to directory
+# where it is defined.
+macro(_gpc_update_headers_db dir target)
+    if(NOT "${ARGN}" STREQUAL "")
+        set(_headers)
+        foreach(_hd IN ITEMS ${ARGN})
+            file(GLOB_RECURSE _headers_part RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}/${dir}" "${CMAKE_CURRENT_SOURCE_DIR}/${dir}/${_hd}/*")
+            list(APPEND _headers ${_headers_part})
+        endforeach()
+        foreach(header IN LISTS _headers)
+            file(APPEND "${CMAKE_BINARY_DIR}/headers_db.csv" "${header},${PROJECT_NAME}::${target},${dir}\n")
+        endforeach()
+    endif()
 endmacro()
 
 #-------------------------------------------------------------------------------
@@ -2389,7 +2411,7 @@ function(gaudi_add_library library)
   endforeach()
   file(APPEND "${MIGRATION_DIR}/${_subdir_name}/CMakeLists.txt"
   ")\n")
-  set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY MIGRATION_DIR_WITH_LIBRARY TRUE)
+  set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY MIGRATION_DIR_WITH_LIBRARY ${library})
 
   if(WIN32)
     add_library( ${library}-arc STATIC EXCLUDE_FROM_ALL ${srcs})
@@ -3009,7 +3031,7 @@ function(gaudi_install_headers)
     # -MIGRATION-
     file(APPEND "${MIGRATION_DIR}/run.sh"
       "(cd ${CMAKE_CURRENT_SOURCE_DIR} && git mv ${hdr_dir} include)\n")
-    set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY MIGRATION_DIR_WITH_HEADERS TRUE)
+    set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} APPEND PROPERTY MIGRATION_DIR_WITH_HEADERS ${hdr_dir})
     
     install(DIRECTORY ${hdr_dir}
             DESTINATION include)

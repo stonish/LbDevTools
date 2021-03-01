@@ -1,21 +1,25 @@
-CMAKE_MINIMUM_REQUIRED(VERSION 2.8.5)
+cmake_minimum_required(VERSION 3.15)
 
-#---------------------------------------------------------------
-# Load macros and functions for Gaudi-based projects
-find_package(GaudiProject)
-#---------------------------------------------------------------
+project(${local_project}
+    VERSION ${local_version}
+    LANGUAGES CXX${with_fortran})
 
-if(EXISTS $${CMAKE_SOURCE_DIR}/Online/RootCnv)
-  set(override_subdirs RootCnv)
-endif()
+# Enable tests support
+include(CTest)
 
-# Declare project name and version
-# Syntax:
-#    gaudi_project(this_project this_version
-#                  USE dep_project_1 version_1 [project_2 version_2 ...]
-#                  [DATA pkg1 [VERSION vers1] [pkg2 ...]])
-gaudi_project(${local_project} ${local_version}${with_fortran}
-              USE ${project} ${version})
+# Load "lhcb_find_package" function
+include(${datadir}/cmake/LHCbFindPackage.cmake)
+
+include($${CMAKE_CURRENT_LIST_DIR}/cmake/${local_project}Dependencies.cmake)
+
+lhcb_add_subdirectories(
+    # -- begin: list of subdirectories --
+    # -- end: list of subdirectories --
+)
+
+# Final configuration steps
+set(GAUDI_LEGACY_CMAKE_SUPPORT TRUE)
+lhcb_finalize_configuration(NO_EXPORT)
 
 # Enable Ganga integration
 include(${datadir}/cmake/GangaTools.cmake)

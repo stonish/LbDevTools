@@ -463,14 +463,23 @@ def main():
         )
 
     # Success report
+    base_tag = "vXrY"  # in cas we cannot guess, use a placeholder
+    if re.match(r"^\d+\.\d+(\.\d+)*$", version):
+        # convert new style CMake project version to tag name
+        parts = version.split(".")
+        if len(parts) == 2:
+            base_tag = "v{}r{}".format(*parts)
+        elif len(parts) == 3:
+            base_tag = "v{}r{}p{}".format(*parts)
+
     msg = """
-Successfully created the local project {0} for {4} in {1}
+Successfully created the local project {name} for {platform} in {dest_dir}
 
 To start working:
 
-  > cd {2}
-  > git lb-use {3}
-  > git lb-checkout {3}/vXrY MyPackage
+  > cd {proj_dir}
+  > git lb-use {base_proj}
+  > git lb-checkout {base_proj}/{base_tag} MyPackage
 
 then
 
@@ -489,4 +498,13 @@ You can customize the configuration by editing the files 'build.conf' and 'CMake
 (see https://twiki.cern.ch/twiki/bin/view/LHCb/GaudiCMakeConfiguration for details).
 """
 
-    print(msg.format(args.name, args.dest_dir, devProjectDir, project, args.platform))
+    print(
+        msg.format(
+            name=args.name,
+            dest_dir=args.dest_dir,
+            proj_dir=devProjectDir,
+            base_proj=project,
+            base_tag=base_tag,
+            platform=args.platform,
+        )
+    )

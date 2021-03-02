@@ -229,9 +229,9 @@ set(relocations
   "${PROJECT_SOURCE_DIR} ==> \${${PROJECT_NAME_UPCASE}_PROJECT_ROOT}"
 )
 foreach(pack IN LISTS packages_found)
-  if(${pack}_DIR MATCHES "^(.*)/InstallArea")
-    string(TOUPPER "${pack}" pack_upcase)
-    list(APPEND relocations "${CMAKE_MATCH_1} ==> \${${pack_upcase}_PROJECT_ROOT}")
+  string(TOUPPER "${pack}" pack_upcase)
+  if(DEFINED ${pack_upcase}_PROJECT_ROOT)
+    list(APPEND relocations "${${pack_upcase}_PROJECT_ROOT} ==> \${${pack_upcase}_PROJECT_ROOT}")
   endif()
 endforeach()
 
@@ -271,13 +271,17 @@ while(env_instructions)
     message(FATAL_ERROR "invalid environment action ${action}")
   endif()
 endwhile()
-# make sure that the current project is first in the key path variables
-string(APPEND xenv_data
+
+if(PROJECT_NAME STREQUAL Gaudi)
+  # Gaudi does not use lhcb_env to set it's environment so it requires some help
+  string(APPEND xenv_data
 "  <env:prepend variable=\"PATH\">\${.}/bin</env:prepend>
   <env:prepend variable=\"LD_LIBRARY_PATH\">\${.}/lib</env:prepend>
   <env:prepend variable=\"PYTHONPATH\">\${.}/python</env:prepend>
   <env:prepend variable=\"ROOT_INCLUDE_PATH\">\${.}/include</env:prepend>
 ")
+endif()
+
 string(APPEND xenv_data "</env:config>\n")
 
 # - make the environment relocatable

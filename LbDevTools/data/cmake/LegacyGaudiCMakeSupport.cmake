@@ -229,9 +229,9 @@ set(relocations
   "${PROJECT_SOURCE_DIR} ==> \${${PROJECT_NAME_UPCASE}_PROJECT_ROOT}"
 )
 foreach(pack IN LISTS packages_found)
-  if(${pack}_DIR MATCHES "^(.*)/InstallArea")
-    string(TOUPPER "${pack}" pack_upcase)
-    list(APPEND relocations "${CMAKE_MATCH_1} ==> \${${pack_upcase}_PROJECT_ROOT}")
+  string(TOUPPER "${pack}" pack_upcase)
+  if(DEFINED ${pack_upcase}_PROJECT_ROOT)
+    list(APPEND relocations "${${pack_upcase}_PROJECT_ROOT} ==> \${${pack_upcase}_PROJECT_ROOT}")
   endif()
 endforeach()
 

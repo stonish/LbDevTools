@@ -240,14 +240,10 @@ string(APPEND xenv_data
   <env:set variable=\"GAUDIAPPVERSION\">${PROJECT_VERSION}</env:set>
   <env:set variable=\"${PROJECT_NAME_UPCASE}_PROJECT_ROOT\">\${.}/../../</env:set>
   <env:prepend variable=\"PATH\">$ENV{PATH}</env:prepend>
-  <env:prepend variable=\"PATH\">\${.}/bin</env:prepend>
   <env:prepend variable=\"LD_LIBRARY_PATH\">$ENV{LD_LIBRARY_PATH}</env:prepend>
-  <env:prepend variable=\"LD_LIBRARY_PATH\">\${.}/lib</env:prepend>
   <env:prepend variable=\"PYTHONPATH\">$ENV{PYTHONPATH}</env:prepend>
-  <env:prepend variable=\"PYTHONPATH\">\${.}/python</env:prepend>
   <env:set variable=\"PYTHONHOME\">$ENV{PYTHONHOME}</env:set>
   <env:prepend variable=\"ROOT_INCLUDE_PATH\">$ENV{ROOT_INCLUDE_PATH}</env:prepend>
-  <env:prepend variable=\"ROOT_INCLUDE_PATH\">\${.}/include</env:prepend>
 ")
 
 # - special environment variables to be propagated for sanitizer builds
@@ -275,7 +271,13 @@ while(env_instructions)
     message(FATAL_ERROR "invalid environment action ${action}")
   endif()
 endwhile()
-
+# make sure that the current project is first in the key path variables
+string(APPEND xenv_data
+"  <env:prepend variable=\"PATH\">\${.}/bin</env:prepend>
+  <env:prepend variable=\"LD_LIBRARY_PATH\">\${.}/lib</env:prepend>
+  <env:prepend variable=\"PYTHONPATH\">\${.}/python</env:prepend>
+  <env:prepend variable=\"ROOT_INCLUDE_PATH\">\${.}/include</env:prepend>
+")
 string(APPEND xenv_data "</env:config>\n")
 
 # - make the environment relocatable

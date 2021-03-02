@@ -17,6 +17,7 @@ import os
 import logging
 import stat
 import sys
+import re
 
 from string import Template
 
@@ -230,7 +231,7 @@ def main():
         args.name = "{project}Dev_{version}".format(project=project, version=version)
         local_project, local_version = project + "Dev", version
     else:
-        local_project, local_version = args.name, "HEAD"
+        local_project, local_version = args.name, "0"
 
     devProjectDir = os.path.join(args.dest_dir, args.name)
 
@@ -251,7 +252,14 @@ def main():
             parser.error(str(x))
 
         # Check if it is a CMake-enabled project
-        use_cmake = os.path.exists(os.path.join(projectDir, project + "Config.cmake"))
+        if os.path.exists(os.path.join(projectDir, project + "Config.cmake")):
+            use_cmake = "legacy"
+        else:
+            use_cmake = os.path.exists(
+                os.path.join(
+                    projectDir, "lib", "cmake", project, project + "Config.cmake"
+                )
+            )
         if not use_cmake:
             logging.warning("%s %s does not seem a CMake project", project, version)
 
@@ -300,6 +308,21 @@ def main():
     else:
         os.makedirs(devProjectDir)
 
+    if use_cmt or use_cmake == "legacy":  # CMT or old style CMake
+        templateDir = os.path.join(
+            os.path.dirname(__file__), "templates", "lb-dev-legacy"
+        )
+        if local_version == "0":
+            # old style CMake wants the special version "HEAD"
+            local_version = "HEAD"
+    else:  # new style CMake
+        templateDir = os.path.join(os.path.dirname(__file__), "templates", "lb-dev")
+        if re.match(r"v\d+r\d+", version):
+            # convert vXrY in "X.Y"
+            version = ".".join(re.findall(r"\d+", version))
+            if local_version != "0":
+                local_version = version
+
     data = dict(
         project=project,
         version=version,
@@ -314,17 +337,19 @@ def main():
         cmt_project=args.name,
         datadir=DATA_DIR,
         platform=args.platform,
+        lcg_version=LbEnv.ProjectEnv.lookup.getHepToolsInfo(
+            os.path.join(projectDir, "manifest.xml")
+        )[0],
     )
 
     # FIXME: improve generation of searchPath files, so that they match the command line
-    templateDir = os.path.join(os.path.dirname(__file__), "templates", "lb-dev")
     templates = [
-        "CMakeLists.txt",
-        "toolchain.cmake",
-        "Makefile",
-        "searchPath.py",
         "build.conf",
+        "CMakeLists.txt",
+        "Makefile",
         "run",
+        "searchPath.py",
+        "toolchain.cmake",
     ]
     # generated files that need exec permissions
     execTemplates = set(["run"])
@@ -357,6 +382,20 @@ def main():
         if templateName in execTemplates:
             mode = stat.S_IMODE(os.stat(dest).st_mode) | stat.S_IXUSR | stat.S_IXGRP
             os.chmod(dest, mode)
+
+    if use_cmake and use_cmake != "legacy":
+        # this does not use a template because the filename is variable
+        logging.debug('creating "cmake/%sDependencies.cmake"', local_project)
+        os.makedirs(os.path.join(devProjectDir, "cmake"))
+        dest = os.path.join(
+            devProjectDir, "cmake", "{}Dependencies.cmake".format(local_project)
+        )
+        with open(dest, "w") as f:
+            f.write(
+                "# Dependencies\nlhcb_find_package({project} {version} REQUIRED)\n".format(
+                    project=project, version=version
+                )
+            )
 
     # generate searchPath.cmake
     if args.dev_dirs and use_cmake:
@@ -424,14 +463,23 @@ def main():
         )
 
     # Success report
+    base_tag = "vXrY"  # in cas we cannot guess, use a placeholder
+    if re.match(r"^\d+\.\d+(\.\d+)*$", version):
+        # convert new style CMake project version to tag name
+        parts = version.split(".")
+        if len(parts) == 2:
+            base_tag = "v{}r{}".format(*parts)
+        elif len(parts) == 3:
+            base_tag = "v{}r{}p{}".format(*parts)
+
     msg = """
-Successfully created the local project {0} for {4} in {1}
+Successfully created the local project {name} for {platform} in {dest_dir}
 
 To start working:
 
-  > cd {2}
-  > git lb-use {3}
-  > git lb-checkout {3}/vXrY MyPackage
+  > cd {proj_dir}
+  > git lb-use {base_proj}
+  > git lb-checkout {base_proj}/{base_tag} MyPackage
 
 then
 
@@ -450,4 +498,13 @@ You can customize the configuration by editing the files 'build.conf' and 'CMake
 (see https://twiki.cern.ch/twiki/bin/view/LHCb/GaudiCMakeConfiguration for details).
 """
 
-    print(msg.format(args.name, args.dest_dir, devProjectDir, project, args.platform))
+    print(
+        msg.format(
+            name=args.name,
+            dest_dir=args.dest_dir,
+            proj_dir=devProjectDir,
+            base_proj=project,
+            base_tag=base_tag,
+            platform=args.platform,
+        )
+    )

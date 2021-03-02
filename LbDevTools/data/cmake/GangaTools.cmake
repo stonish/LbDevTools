@@ -61,11 +61,19 @@ endfunction()
 function(ganga_input_sandbox)
   set(dist_base_dir ${GANGA_BINARY_DIR}/${CMAKE_PROJECT_NAME}_${CMAKE_PROJECT_VERSION})
 
+  if(TARGET post-install)
+    # only old-style CMake projects have a post-install target
+    set(POST_INSTALL_COMMANDS
+      COMMAND mkdir -p ${CMAKE_INSTALL_PREFIX}/python
+      COMMAND ${CMAKE_MAKE_PROGRAM} post-install
+    )
+  else()
+    set(POST_INSTALL_COMMANDS)
+  endif()
   add_custom_target(ganga-clean-install
                     COMMAND rm -r -f ${CMAKE_INSTALL_PREFIX}
                     COMMAND ${CMAKE_MAKE_PROGRAM} install
-                    COMMAND mkdir -p ${CMAKE_INSTALL_PREFIX}/python
-                    COMMAND ${CMAKE_MAKE_PROGRAM} post-install
+                    ${POST_INSTALL_COMMANDS}
                     COMMENT "Preparing InstallArea for input sandbox")
 
   set(copy_sources)

@@ -114,6 +114,12 @@ macro(use_heptools heptools_version)
     #set(CMAKE_TOOLCHAIN_FILE ${CMAKE_CURRENT_LIST}
     #    CACHE FILEPATH "The CMake toolchain file" FORCE)
 
+    # Automatically add IntelAmplifier to the search path (as in lcg-toolchains)
+    set(INTELAMPLIFIER_ROOT /cvmfs/projects.cern.ch/intelsw/psxe/linux/x86_64/2019/vtune_amplifier_2019.4.0.597835)
+    if(EXISTS "${INTELAMPLIFIER_ROOT}")
+      list(APPEND CMAKE_PREFIX_PATH "${INTELAMPLIFIER_ROOT}")
+    endif()
+
   else()
     message(FATAL_ERROR "Cannot find heptools ${heptools_version} (using suffix LCG_${heptools_version}${_lcg_py3}${_LCG_LAYER}).")
   endif()

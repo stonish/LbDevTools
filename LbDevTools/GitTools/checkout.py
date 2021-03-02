@@ -240,6 +240,28 @@ def main():
             _checkout(repo, args.commit, remote, path, configfile)
 
         repo.index.add([configfile])
+
+        top_cmake = os.path.join(repo.working_dir, "CMakeLists.txt")
+        if os.path.exists(top_cmake):
+            # try to add the added subdirectory to the list
+            # - read the top CMakeLists.txt
+            with open(top_cmake) as f:
+                lines = f.readlines()
+            # - look for the subdirectories markers
+            start = end = -1
+            for i, l in enumerate(lines):
+                if start < 0 and "begin: list of subdirectories" in l:
+                    start = i
+                elif end < 0 and "end: list of subdirectories" in l:
+                    end = i
+            # - if we have something that make sense, we just add the
+            #   required lines at the end (not trying to be too clever)
+            if end > start:
+                lines.insert(end, "    {}\n".format("\n    ".join(paths)))
+                with open(top_cmake, "w") as f:
+                    f.writelines(lines)
+                repo.index.add([top_cmake])
+
         diffs = repo.head.commit.diff()
 
         if not diffs:
@@ -263,9 +285,9 @@ def main():
         if args.log_level <= logging.DEBUG:
             [logging.debug(" %s  %s", d.change_type, d.b_path) for d in diffs]
 
-        if os.path.exists(os.path.join(repo.working_dir, "CMakeLists.txt")):
-            # "touch" top CMakeLists.txt
-            os.utime(os.path.join(repo.working_dir, "CMakeLists.txt"), None)
+        if os.path.exists(top_cmake):
+            # "touch" top CMakeLists.txt to make sure we force a reconfigure
+            os.utime(top_cmake, None)
 
     except Exception as err:
         logging.error("%s: %s", type(err).__name__, err)

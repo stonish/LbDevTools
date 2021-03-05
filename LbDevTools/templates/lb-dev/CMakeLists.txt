@@ -12,6 +12,7 @@ include(${datadir}/cmake/LHCbFindPackage.cmake)
 
 include($${CMAKE_CURRENT_LIST_DIR}/cmake/${local_project}Dependencies.cmake)
 
+set(GAUDI_PREFER_LOCAL_TARGETS TRUE)
 lhcb_add_subdirectories(
     # -- begin: list of subdirectories --
     # -- end: list of subdirectories --

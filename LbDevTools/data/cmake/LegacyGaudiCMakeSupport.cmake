@@ -272,8 +272,9 @@ while(env_instructions)
   endif()
 endwhile()
 
-if(PROJECT_NAME STREQUAL Gaudi)
-  # Gaudi does not use lhcb_env to set it's environment so it requires some help
+if(PROJECT_NAME MATCHES "^(Gaudi|Detector|GitCondDB)\$")
+  # these projects have support for LHCb old style installation, but
+  # do not use lhcb_env for the environment, so they need special treatment
   string(APPEND xenv_data
 "  <env:prepend variable=\"PATH\">\${.}/bin</env:prepend>
   <env:prepend variable=\"LD_LIBRARY_PATH\">\${.}/lib</env:prepend>

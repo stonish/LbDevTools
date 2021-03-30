@@ -162,8 +162,10 @@ def report(filenames, inverted=False, target=None, license="GPL-3.0-only"):
                 )
             )
         else:
-            print("\nyou can fix them with the command lb-add-copyright{}\n").format(
-                license_arg
+            print(
+                "\nyou can fix them with the command lb-add-copyright{}\n".format(
+                    license_arg
+                )
             )
 
 

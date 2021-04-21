@@ -20,20 +20,6 @@ centos7:
     when: always
     expire_in: 1 week
 
-slc5:
-  except:
-    - tags
-  image: gitlab-registry.cern.ch/lhcb-docker/python-deployment:slc5
-  script:
-    - python --version
-    - pip install -e .
-    - python setup.py nosetests --cover-package ${CI_PROJECT_NAME}
-  artifacts:
-    paths:
-      - cover
-    when: always
-    expire_in: 1 week
-
 python2.7:
   image: gitlab-registry.cern.ch/lhcb-docker/python-deployment:python-2.7
   script:

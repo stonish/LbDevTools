@@ -20,34 +20,8 @@ centos7:
     when: always
     expire_in: 1 week
 
-slc5:
-  except:
-    - tags
-  image: gitlab-registry.cern.ch/lhcb-docker/python-deployment:slc5
-  script:
-    - python --version
-    - pip install -e .
-    - python setup.py nosetests --cover-package ${CI_PROJECT_NAME}
-  artifacts:
-    paths:
-      - cover
-    when: always
-    expire_in: 1 week
-
 python2.7:
   image: gitlab-registry.cern.ch/lhcb-docker/python-deployment:python-2.7
-  script:
-    - python --version
-    - pip install -e .
-    - python setup.py nosetests --cover-package ${CI_PROJECT_NAME}
-  artifacts:
-    paths:
-      - cover
-    when: always
-    expire_in: 1 week
-
-python3.5:
-  image: gitlab-registry.cern.ch/lhcb-docker/python-deployment:python-3.5
   script:
     - python --version
     - pip install -e .
@@ -72,6 +46,30 @@ python3.6:
 
 python3.7:
   image: gitlab-registry.cern.ch/lhcb-docker/python-deployment:python-3.7
+  script:
+    - python --version
+    - pip install -e .
+    - python setup.py nosetests --cover-package ${CI_PROJECT_NAME}
+  artifacts:
+    paths:
+      - cover
+    when: always
+    expire_in: 1 week
+
+python3.8:
+  image: gitlab-registry.cern.ch/lhcb-docker/python-deployment:python-3.8
+  script:
+    - python --version
+    - pip install -e .
+    - python setup.py nosetests --cover-package ${CI_PROJECT_NAME}
+  artifacts:
+    paths:
+      - cover
+    when: always
+    expire_in: 1 week
+
+python3.9:
+  image: gitlab-registry.cern.ch/lhcb-docker/python-deployment:python-3.9
   script:
     - python --version
     - pip install -e .

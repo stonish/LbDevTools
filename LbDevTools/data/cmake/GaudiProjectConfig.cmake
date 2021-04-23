@@ -265,6 +265,9 @@ list(PREPEND CMAKE_MODULE_PATH
 include(${project}Dependencies)
 
 ")
+  file(WRITE "${MIGRATION_DIR}/lhcbproject.yml"
+  "---\nname: ${project}\nlicense: GPL-3.0-only\ndependencies:\n")
+
   file(WRITE "${MIGRATION_DEPS}" "if(NOT COMMAND lhcb_find_package)
   # Look for LHCb find_package wrapper
   find_file(LHCbFindPackage_FILE LHCbFindPackage.cmake)
@@ -1032,6 +1035,7 @@ macro(_gaudi_use_other_projects)
     # -MIGRATION-
     file(APPEND "${MIGRATION_DEPS}"
       "lhcb_find_package(${other_project} ${other_project_cmake_version} REQUIRED)\n")
+    file(APPEND "${MIGRATION_DIR}/lhcbproject.yml" "  - ${other_project}\n")
     
     
     if(GAUDI_STRICT_VERSION_CHECK)

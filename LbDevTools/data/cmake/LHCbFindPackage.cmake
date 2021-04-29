@@ -22,8 +22,10 @@ Special wrapper around ``find_package`` allowing a project to be in the same
 directories like ``<PROJECT>/<PROJECT>_<VERSION>/InstalArea/<platform>``.
 #]========================================================================]
 macro(lhcb_find_package project)
-    # check if the project requested is in the same master project
-    if(NOT IS_DIRECTORY "${CMAKE_SOURCE_DIR}/${project}")
+    # check if we are in a master project and the project requested is available
+    # from the master project
+    if(CMAKE_SOURCE_DIR STREQUAL PROJECT_SOURCE_DIR
+            OR NOT EXISTS "${CMAKE_SOURCE_DIR}/${project}/CMakeLists.txt")
         # otherwise we look for it
         unset(old_CMAKE_PREFIX_PATH)
         if(NOT ${project}_FOUND AND DEFINED LHCB_PLATFORM)

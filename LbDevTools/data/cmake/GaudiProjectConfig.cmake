@@ -262,10 +262,31 @@ list(PREPEND CMAKE_MODULE_PATH
     \${PROJECT_SOURCE_DIR}/cmake
 )
 
+# Public dependencies
 include(${project}Dependencies)
 
+# Private dependencies
+# ...
+
 ")
-  file(WRITE "${MIGRATION_DEPS}" "")
+  file(WRITE "${MIGRATION_DIR}/lhcbproject.yml"
+  "---\nname: ${project}\nlicense: GPL-3.0-only\ndependencies:\n")
+
+  file(WRITE "${MIGRATION_DEPS}" "if(NOT COMMAND lhcb_find_package)
+  # Look for LHCb find_package wrapper
+  find_file(LHCbFindPackage_FILE LHCbFindPackage.cmake)
+  if(LHCbFindPackage_FILE)
+      include(\${LHCbFindPackage_FILE})
+  else()
+      # if not found, use the standard find_package
+      macro(lhcb_find_package)
+          find_package(\$\{ARGV})
+      endmacro()
+  endif()
+endif()
+
+# -- public dependencies
+")
 
   # Initialize the headers db file
   file(WRITE "${CMAKE_BINARY_DIR}/headers_db.csv" "header,target,directory\n")
@@ -686,7 +707,8 @@ main()")
   endif()
 
   # -MIGRATION-
-  file(APPEND "${MIGRATION_DIR}/CMakeLists.txt" "# -- Subdirectories\nset(subdirs\n")
+  file(APPEND "${MIGRATION_DIR}/CMakeLists.txt" "# -- Subdirectories\nlhcb_add_subdirectories(\n")
+  set_property(GLOBAL PROPERTY MIGRATION_PROJECT_WITH_LIBRARIES FALSE)
 
   file(WRITE ${CMAKE_BINARY_DIR}/subdirs_deps.dot "digraph subdirs_deps {\n")
   # Add all subdirectories to the project build.
@@ -699,7 +721,7 @@ main()")
     #message(STATUS "CMAKE_MODULE_PATH -> ${CMAKE_MODULE_PATH}")
 
     # -MIGRATION-
-    file(APPEND "${MIGRATION_DIR}/CMakeLists.txt" "    # ${package}\n")
+    file(APPEND "${MIGRATION_DIR}/CMakeLists.txt" "    ${package}\n")
     
     add_subdirectory(${package})
 
@@ -710,6 +732,7 @@ main()")
       get_filename_component(_dir_name "${package}" NAME)
       file(APPEND "${MIGRATION_DIR}/${package}/CMakeLists.txt"
       "\ngaudi_add_header_only_library(${_dir_name}Lib\n    # LINK ...\n)\n")
+      set_property(GLOBAL PROPERTY MIGRATION_PROJECT_WITH_LIBRARIES TRUE)
       _gpc_update_headers_db(${package} ${_dir_name}Lib ${_dir_has_hdr})
     elseif(_dir_has_hdr)
       _gpc_update_headers_db(${package} ${_dir_has_lib} ${_dir_has_hdr})
@@ -719,24 +742,12 @@ main()")
   file(APPEND ${CMAKE_BINARY_DIR}/subdirs_deps.dot "}\n")
 
   # -MIGRATION-
-  file(APPEND "${MIGRATION_DIR}/CMakeLists.txt"
-")
-foreach(subdir IN LISTS subdirs)
-    message(STATUS \"entering \${subdir}\")
-    add_subdirectory(\${subdir})
-endforeach()
-
-# Optionally enable compatibility with old-style CMake configurations, via helper module
-option(GAUDI_LEGACY_CMAKE_SUPPORT \"Enable compatibility with old-style CMake builds\" \"\$ENV{GAUDI_LEGACY_CMAKE_SUPPORT}\")
-if(GAUDI_LEGACY_CMAKE_SUPPORT)
-  find_file(legacy_cmake_config_support NAMES LegacyGaudiCMakeSupport.cmake)
-  if(legacy_cmake_config_support)
-    include(\${legacy_cmake_config_support})
-  else()
-    message(FATAL_ERROR \"GAUDI_LEGACY_CMAKE_SUPPORT set to TRUE, but cannot find LegacyGaudiCMakeSupport.cmake\")
+  file(APPEND "${MIGRATION_DIR}/CMakeLists.txt" ")\n\nlhcb_finalize_configuration(")
+  get_property(MIGRATION_PROJECT_WITH_LIBRARIES GLOBAL PROPERTY MIGRATION_PROJECT_WITH_LIBRARIES)
+  if(NOT MIGRATION_PROJECT_WITH_LIBRARIES)
+      file(APPEND "NO_EXPORT")
   endif()
-endif()
-")
+  file(APPEND ")\n")
 
   #--- Special global targets for merging files.
   gaudi_merge_files(ConfDB lib ${CMAKE_PROJECT_NAME}.confdb)
@@ -1034,7 +1045,8 @@ macro(_gaudi_use_other_projects)
     
     # -MIGRATION-
     file(APPEND "${MIGRATION_DEPS}"
-      "find_package(${other_project} ${other_project_cmake_version} REQUIRED)\n")
+      "lhcb_find_package(${other_project} ${other_project_cmake_version} REQUIRED)\n")
+    file(APPEND "${MIGRATION_DIR}/lhcbproject.yml" "  - ${other_project}\n")
     
     
     if(GAUDI_STRICT_VERSION_CHECK)
@@ -2412,6 +2424,7 @@ function(gaudi_add_library library)
   file(APPEND "${MIGRATION_DIR}/${_subdir_name}/CMakeLists.txt"
   ")\n")
   set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY MIGRATION_DIR_WITH_LIBRARY ${library})
+  set_property(GLOBAL PROPERTY MIGRATION_PROJECT_WITH_LIBRARIES TRUE)
 
   if(WIN32)
     add_library( ${library}-arc STATIC EXCLUDE_FROM_ALL ${srcs})

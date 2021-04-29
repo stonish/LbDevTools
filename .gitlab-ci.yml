@@ -83,7 +83,7 @@ python3.9:
 formatting:
   image: gitlab-registry.cern.ch/lhcb-docker/python-deployment:python-3.7
   script:
-    - pip install black
+    - pip install black==20.8b1
     - black --check --exclude templates .
 
 # Packaging step

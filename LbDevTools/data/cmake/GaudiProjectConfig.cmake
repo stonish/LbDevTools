@@ -747,7 +747,7 @@ main()")
   if(NOT MIGRATION_PROJECT_WITH_LIBRARIES)
       file(APPEND "NO_EXPORT")
   endif()
-  file(APPEND ")\n")
+  file(APPEND "${MIGRATION_DIR}/CMakeLists.txt" ")\n")
 
   #--- Special global targets for merging files.
   gaudi_merge_files(ConfDB lib ${CMAKE_PROJECT_NAME}.confdb)

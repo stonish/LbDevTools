@@ -262,11 +262,9 @@ list(PREPEND CMAKE_MODULE_PATH
     \${PROJECT_SOURCE_DIR}/cmake
 )
 
-# Public dependencies
+# Dependencies
+set(WITH_${project}_PRIVATE_DEPENDENCIES TRUE)
 include(${project}Dependencies)
-
-# Private dependencies
-# ...
 
 ")
   file(WRITE "${MIGRATION_DIR}/lhcbproject.yml"
@@ -285,7 +283,7 @@ include(${project}Dependencies)
   endif()
 endif()
 
-# -- public dependencies
+# -- Public dependencies
 ")
 
   # Initialize the headers db file
@@ -709,6 +707,8 @@ main()")
   # -MIGRATION-
   file(APPEND "${MIGRATION_DIR}/CMakeLists.txt" "# -- Subdirectories\nlhcb_add_subdirectories(\n")
   set_property(GLOBAL PROPERTY MIGRATION_PROJECT_WITH_LIBRARIES FALSE)
+  file(APPEND "${MIGRATION_DEPS}"
+  "\n# -- Private dependencies\nif(WITH_${project}_PRIVATE_DEPENDENCIES)\n    # ...\nendif()\n")
 
   file(WRITE ${CMAKE_BINARY_DIR}/subdirs_deps.dot "digraph subdirs_deps {\n")
   # Add all subdirectories to the project build.
@@ -745,7 +745,7 @@ main()")
   file(APPEND "${MIGRATION_DIR}/CMakeLists.txt" ")\n\nlhcb_finalize_configuration(")
   get_property(MIGRATION_PROJECT_WITH_LIBRARIES GLOBAL PROPERTY MIGRATION_PROJECT_WITH_LIBRARIES)
   if(NOT MIGRATION_PROJECT_WITH_LIBRARIES)
-      file(APPEND "NO_EXPORT")
+      file(APPEND "${MIGRATION_DIR}/CMakeLists.txt" "NO_EXPORT")
   endif()
   file(APPEND "${MIGRATION_DIR}/CMakeLists.txt" ")\n")
 
@@ -2422,7 +2422,7 @@ function(gaudi_add_library library)
       "            # ${_s}\n")
   endforeach()
   file(APPEND "${MIGRATION_DIR}/${_subdir_name}/CMakeLists.txt"
-  ")\n")
+  "        PRIVATE\n            # ...\n)\n")
   set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY MIGRATION_DIR_WITH_LIBRARY ${library})
   set_property(GLOBAL PROPERTY MIGRATION_PROJECT_WITH_LIBRARIES TRUE)
 

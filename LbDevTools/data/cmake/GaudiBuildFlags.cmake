@@ -253,6 +253,23 @@ if(NOT GAUDI_FLAGS_SET EQUAL GAUDI_FLAGS_OPTIONS)
   else()
     # special architecture flags
     string(REPLACE "_" "-" _gcc_arch_name ${BINARY_TAG_ARCH})
+    # (microarchitecture levels workaround for gcc < 11.0, clang < 12.0 and any other compiler)
+    if(_gcc_arch_name MATCHES "^x86-64-v[2-4]"
+            AND ((CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS "11.0")
+                OR (CMAKE_CXX_COMPILER_ID STREQUAL "Clang" AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS "12.0")
+                OR NOT (CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR CMAKE_CXX_COMPILER_ID STREQUAL "Clang")))
+      # v2
+      list(APPEND GAUDI_ARCH popcnt sse3 sse4.1 sse4.2 ssse3 cx16 sahf)
+      if(_gcc_arch_name MATCHES "x86-64-v[3-4]")
+        # v3
+        list(APPEND GAUDI_ARCH avx avx2 bmi bmi2 f16c fma lzcnt movbe xsave)
+      endif()
+      if(_gcc_arch_name MATCHES "x86-64-v4")
+        # v4
+        list(APPEND GAUDI_ARCH avx512f avx512bw avx512cd avx512dq avx512vl)
+      endif()
+      set(_gcc_arch_name "x86-64")
+    endif()
     set(arch_opts "-march=${_gcc_arch_name}")
     foreach(_arch_opt ${GAUDI_ARCH})
       if(_arch_opt STREQUAL "native")

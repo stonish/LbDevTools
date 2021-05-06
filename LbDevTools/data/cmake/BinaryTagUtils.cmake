@@ -65,13 +65,16 @@
 set(BTU_KNOWN_x86_ARCHS
   x86_64
   core2
+  x86_64_v2
   nehalem
   westmere
   sandybridge
   ivybridge
+  x86_64_v3
   haswell
   broadwell
   skylake
+  x86_64_v4
   skylake_avx512
   canonlake
 
@@ -172,12 +175,12 @@ function(check_compiler)
     parse_binary_tag()
   endif()
 
-  if(BINARY_TAG_COMP_NAME STREQUAL "gcc" AND NOT CMAKE_COMPILER_IS_GNUCXX)
+  if(BINARY_TAG_COMP_NAME STREQUAL "gcc" AND NOT CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
     message(WARNING "BINARY_TAG states compiler is gcc, but ${CMAKE_CXX_COMPILER} is not GNU")
-  elseif(BINARY_TAG_COMP_NAME STREQUAL "clang" AND NOT CMAKE_CXX_COMPILER MATCHES "clang")
-    message(WARNING "BINARY_TAG states compiler is clang, but ${CMAKE_CXX_COMPILER} is not")
-  elseif(BINARY_TAG_COMP_NAME STREQUAL "icc" AND NOT CMAKE_CXX_COMPILER MATCHES "icpc")
-    message(WARNING "BINARY_TAG states compiler is Intel, but ${CMAKE_CXX_COMPILER} is not")
+  elseif(BINARY_TAG_COMP_NAME STREQUAL "clang" AND NOT CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+    message(WARNING "BINARY_TAG states compiler is clang, but ${CMAKE_CXX_COMPILER} is not Clang")
+  elseif(BINARY_TAG_COMP_NAME STREQUAL "icc" AND NOT CMAKE_CXX_COMPILER_ID STREQUAL "Intel")
+    message(WARNING "BINARY_TAG states compiler is Intel, but ${CMAKE_CXX_COMPILER} is not Intel")
   endif()
 
   if(BINARY_TAG_COMP_VERSION)

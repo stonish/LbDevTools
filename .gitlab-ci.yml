@@ -96,6 +96,7 @@ compiler-wrappers-rpm:
   variables:
     NO_LBLOGIN: "1"
   script:
+    - set -xv
     - mkdir -p ~/rpmbuild/SOURCES public
     - cp bin/lb-gen-compiler-wrapper /userhome/rpmbuild/SOURCES
     - rpmbuild -bb rpm/CompilerWrappers.spec
@@ -127,7 +128,7 @@ deploy-packages:
   before_script: []
   after_script: []
 
-deploy-rpm:
+.deploy-rpm:
   stage: deploy
   dependencies:
     - compiler-wrappers-rpm

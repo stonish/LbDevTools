@@ -6,7 +6,7 @@ stages:
 variables:
   RPM_REPO: incubator
   RPM_REPO_EOS: /eos/project/l/lhcbwebsites/www/lhcb-rpm/${RPM_REPO}
-  RPM_REPO_URL: "http://lhcb-rpm.web.cern.ch/lhcb-rpm/${RPM_REPO}/"
+  RPM_REPO_URL: "https://lhcb-rpm.web.cern.ch/lhcb-rpm/${RPM_REPO}/"
 
 centos7:
   image: gitlab-registry.cern.ch/lhcb-docker/python-deployment:centos7

@@ -3537,6 +3537,12 @@ function(gaudi_generate_env_conf filename)
   foreach(root_var ${root_vars})
     set(data "${data}  <env:default variable=\"${root_var}\">${${root_var}}</env:default>\n")
   endforeach()
+  foreach(_ns IN LISTS gaudi_target_namespaces)
+    if(DEFINED ${_ns}_DIR)
+      string(TOUPPER "${_ns}" _NS)
+      string(APPEND data "  <env:default variable=\"${_NS}_PROJECT_ROOT\">${${_ns}_DIR}/../../../../..</env:default>\n")
+    endif()
+  endforeach()
 
   # include inherited environments
   # (note: it's important that the full search path is ready before we start including)

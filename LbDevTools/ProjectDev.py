@@ -65,6 +65,12 @@ def main():
             raise ValueError("invalid name")
         return name
 
+    def project_needs_fortran(project):
+        """Check if a project needs FORTRAN support"""
+        # FIXME can we make this generic such that lb-dev
+        # actually checks the project to infer if we need fortran?
+        return project == "Gauss"
+
     project_name.__name__ = "project name"  # nicer printout for errors
 
     parser.add_argument(
@@ -134,6 +140,11 @@ def main():
     except ValueError:
         parser.error("wrong number of arguments")
     project = fixProjectCase(project)
+
+    # User didn't specify "--with-fortran" but we silently add
+    # it anyway, because we know the project needs it.
+    if project_needs_fortran(project) and not args.with_fortran:
+        args.with_fortran = True
 
     args.platform = checkPlatform(parser, args.platform) or "best"
 

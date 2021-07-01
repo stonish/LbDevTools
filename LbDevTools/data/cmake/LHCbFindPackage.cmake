@@ -35,9 +35,15 @@ macro(lhcb_find_package project)
             set(old_CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH})
             file(TO_CMAKE_PATH "$ENV{CMAKE_PREFIX_PATH}" env_CMAKE_PREFIX_PATH)
             foreach(p IN LISTS old_CMAKE_PREFIX_PATH env_CMAKE_PREFIX_PATH)
-                file(GLOB ps "${p}/${PROJECT}/${PROJECT}_*/InstallArea/${LHCB_PLATFORM}")
-                list(SORT ps ORDER DESCENDING)
-                list(APPEND CMAKE_PREFIX_PATH ${ps})
+                file(GLOB ps
+                    "${p}/${project}/InstallArea/${LHCB_PLATFORM}"
+                    "${p}/${project}_*/InstallArea/${LHCB_PLATFORM}"
+                    "${p}/${PROJECT}/${PROJECT}_*/InstallArea/${LHCB_PLATFORM}"
+                )
+                if(ps)
+                    list(SORT ps ORDER DESCENDING)
+                    list(APPEND CMAKE_PREFIX_PATH ${ps})
+                endif()
             endforeach()
         endif()
         find_package(${ARGV})

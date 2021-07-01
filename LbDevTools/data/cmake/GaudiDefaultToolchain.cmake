@@ -34,6 +34,11 @@ endif()
 
 set_paths_from_projects(${tools} ${projects})
 
+# LHCB_PLATFORM is used in LHCbFindPackage.cmake instead of BINARY_TAG
+if(NOT DEFINED LHCB_PLATFORM)
+  set(LHCB_PLATFORM "${BINARY_TAG}")
+endif()
+
 # set legacy variables for backward compatibility
 if(NOT EXISTS "${GaudiProject_DIR}/BinaryTagUtils.cmake")
   # with newer versions of Gaudi these variables are set after the toolchain,

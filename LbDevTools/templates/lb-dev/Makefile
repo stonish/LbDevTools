@@ -4,7 +4,7 @@ DEVTOOLS_DATADIR := ${datadir}
 
 ifeq ($$(wildcard build.conf),build.conf)
 include build.conf
-export LCG_VERSION
+export LCG_VERSION=$$(lcg_version)
 endif
 
 

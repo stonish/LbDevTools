@@ -333,6 +333,9 @@ def main():
             version = ".".join(re.findall(r"\d+", version))
             if local_version != "0":
                 local_version = version
+        else:
+            # it's a non standard version, like "master" or "HEAD"
+            local_version = "0"
 
     data = dict(
         project=project,
@@ -404,7 +407,8 @@ def main():
         with open(dest, "w") as f:
             f.write(
                 "# Dependencies\nlhcb_find_package({project} {version} REQUIRED)\n".format(
-                    project=project, version=version
+                    project=project,
+                    version=version if re.match(r"^[0-9.]*$", version) else "",
                 )
             )
 

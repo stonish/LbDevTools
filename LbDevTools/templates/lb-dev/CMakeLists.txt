@@ -13,14 +13,14 @@ include(${datadir}/cmake/LHCbFindPackage.cmake)
 # Get the list of projects we are working on
 execute_process(
     COMMAND git remote
-    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+    WORKING_DIRECTORY $${CMAKE_SOURCE_DIR}
     OUTPUT_VARIABLE enabled_projects
     ERROR_QUIET OUTPUT_STRIP_TRAILING_WHITESPACE)
 # (this is a trick to split a atring into a list of words)
-string(REGEX MATCHALL "[a-zA-Z0-9]+" enabled_projects "${enabled_projects}")
+string(REGEX MATCHALL "[a-zA-Z0-9]+" enabled_projects "$${enabled_projects}")
 # Set flags to inherit private dependencies of the projects we work on
 foreach(p IN LISTS enabled_projects)
-    set(WITH_${p}_PRIVATE_DEPENDENCIES TRUE)
+    set(WITH_$${p}_PRIVATE_DEPENDENCIES TRUE)
 endforeach()
 
 include($${CMAKE_CURRENT_LIST_DIR}/cmake/${local_project}Dependencies.cmake)

@@ -8,18 +8,30 @@
 # granted to it by virtue of its status as an Intergovernmental Organization  #
 # or submit itself to any jurisdiction.                                       #
 ###############################################################################
+#[========================================================================[.rst:
+LHCbFindPackage
+===============
+
+This module provide the special :cmake:command:`lhcb_find_package` that
+implements the special lookup policy required by LHCb deployment model.
+
+#]========================================================================]
 
 include_guard(GLOBAL) # Protect from multiple include (global scope, because
                       # everything defined in this file is globally visible)
 
 #[========================================================================[.rst:
-.. code-block:: cmake
+.. cmake:command:: lhcb_find_package
 
-  lhcb_find_package(project ...)
+    .. code-block:: cmake
 
-Special wrapper around ``find_package`` allowing a project to be in the same
-*master project* and to extend the search to include projects deployed in
-directories like ``<PROJECT>/<PROJECT>_<VERSION>/InstalArea/<platform>``.
+        lhcb_find_package(project ...)
+
+    Special wrapper around :cmake:command:`find_package` allowing a
+    project to be in the same *master project* as the required project and
+    to extend the search to include projects deployed in directories like
+    ``<PROJECT>/<PROJECT>_<VERSION>/InstalArea/<platform>``
+    (i.e. following LHCb deployment policy).
 #]========================================================================]
 macro(lhcb_find_package project)
     # check if we are in a master project and the project requested is available

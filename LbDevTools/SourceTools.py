@@ -339,7 +339,7 @@ def ensure_clang_format_style(path):
             debug("found .clang-format in %s", base)
             _found_clang_format_dirs.append(base)
         else:
-            base = get_git_root(path)
+            base = get_git_root(path).decode()
             debug("found .git top dir in %s", base)
             if base:
                 from LbDevTools import createClangFormat

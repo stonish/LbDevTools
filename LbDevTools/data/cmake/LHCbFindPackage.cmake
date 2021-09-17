@@ -32,6 +32,11 @@ include_guard(GLOBAL) # Protect from multiple include (global scope, because
     to extend the search to include projects deployed in directories like
     ``<PROJECT>/<PROJECT>_<VERSION>/InstalArea/<platform>``
     (i.e. following LHCb deployment policy).
+
+    If the special variable :cmake:variable:`<Project>_EXACT_VERSION` is
+    set to a version string, the search will be restricted to the the exact
+    version. This is useful for the case where we need to pick up older
+    versions of projects.
 #]========================================================================]
 macro(lhcb_find_package project)
     # check if we are in a master project and the project requested is available

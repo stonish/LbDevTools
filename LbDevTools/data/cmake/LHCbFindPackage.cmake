@@ -58,7 +58,21 @@ macro(lhcb_find_package project)
                 endif()
             endforeach()
         endif()
-        find_package(${ARGV})
+        set(_args ${ARGV})
+        if(DEFINED ${project}_EXACT_VERSION)
+            # Use the exact version requested for the project
+            list(POP_FRONT _args)  # remove project name
+            list(POP_FRONT _args _arg1)  # remove version (if any)
+            if(NOT _arg1 MATCHES "^[0-9.]+$")
+                # not a version, keep it
+                list(INSERT _args 0 ${_arg1})
+            endif()
+            unset(_arg1)
+            # add back the project name, version and require exact match
+            list(INSERT _args 0 ${project} ${${project}_EXACT_VERSION} EXACT)
+        endif()
+        find_package(${_args})
+        unset(_args)
         if(DEFINED ${project}_EXACT_VERSION AND ${project}_FOUND AND NOT ${project}_VERSION STREQUAL ${project}_EXACT_VERSION)
             message(FATAL_ERROR "Version mismatch: requested ${project}/${${project}_EXACT_VERSION} exact match but found ${${project}_VERSION}")
         endif()

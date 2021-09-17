@@ -70,6 +70,7 @@ macro(lhcb_find_package project)
             unset(_arg1)
             # add back the project name, version and require exact match
             list(INSERT _args 0 ${project} ${${project}_EXACT_VERSION} EXACT)
+            message(STATUS "lhcb_find_package: forcing ${project} version to ${${project}_EXACT_VERSION}")
         endif()
         find_package(${_args})
         unset(_args)

@@ -1,5 +1,5 @@
 ###############################################################################
-# (c) Copyright 2018 CERN                                                     #
+# (c) Copyright 2018-2021 CERN                                                #
 #                                                                             #
 # This software is distributed under the terms of the GNU General Public      #
 # Licence version 3 (GPL Version 3), copied verbatim in the file "COPYING".   #
@@ -254,10 +254,12 @@ def main():
                     start = i
                 elif end < 0 and "end: list of subdirectories" in l:
                     end = i
-            # - if we have something that make sense, we just add the
-            #   required lines at the end (not trying to be too clever)
+            # - if we have something that make sense, we add the
+            #   required lines avoiding duplicates and in alphabetical order
             if end > start:
-                lines.insert(end, "    {}\n".format("\n    ".join(paths)))
+                subdirs = set(l.strip() for l in lines[start + 1 : end])
+                subdirs.update(paths)
+                lines[start + 1 : end] = ["    {}\n".format(l) for l in sorted(subdirs)]
                 with open(top_cmake, "w") as f:
                     f.writelines(lines)
                 repo.index.add([top_cmake])

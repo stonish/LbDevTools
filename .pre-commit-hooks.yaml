@@ -1,0 +1,15 @@
+- id: lb-check-copyright
+  name: lb-check-copyright
+  description: Check for missing copyright messages.
+  entry: lb-check-copyright
+  language: python
+  types: [text]
+  pass_filenames: false
+
+- id: lb-add-copyright
+  name: lb-add-copyright
+  description: Check and add missing copyright messages if missing.
+  entry: lb-add-copyright
+  language: python
+  types: [text]
+  pass_filenames: true

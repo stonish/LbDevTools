@@ -10,6 +10,7 @@
   name: lb-add-copyright
   description: Check and add missing copyright messages if missing.
   entry: lb-add-copyright
+  args: ["--pre-commit"]
   language: python
   types: [text]
   pass_filenames: true

@@ -549,18 +549,27 @@ def add_copyright():
         action="store_true",
         help="add copyright also to non supported file types",
     )
+    parser.add_argument(
+        "--pre-commit",
+        action="store_true",
+        help="Print modified files but don't print warnings (for pre-commit hook)",
+    )
 
     args = parser.parse_args()
 
     for path in args.files:
         if not args.force and not to_check(path):
-            print(
-                "warning: cannot add copyright to {} (file type not "
-                "supported)".format(path)
-            )
+            if not args.pre_commit:
+                print(
+                    "warning: cannot add copyright to {} (file type not "
+                    "supported)".format(path)
+                )
         elif has_copyright(path):
-            print("warning: {} already has a copyright statement".format(path))
+            if not args.pre_commit:
+                print("warning: {} already has a copyright statement".format(path))
         else:
+            if args.pre_commit:
+                print("Adding copyright notice to", path)
             add_copyright_to_file(path, args.year, args.license_fn, args.license)
 
 

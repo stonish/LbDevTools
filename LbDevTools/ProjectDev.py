@@ -41,7 +41,7 @@ def main():
     )
     from LbEnv.ProjectEnv.lookup import findProject, MissingProjectError
     from LbDevTools.GitTools.common import add_version_argument
-    from subprocess import call
+    from subprocess import call, DEVNULL
 
     parser = ArgumentParser()
 
@@ -461,6 +461,15 @@ def main():
         # use default
         createClangFormat(dev_style_file)
 
+    # add .pre-commit-config.yaml from upstream project if needed
+    upstream_pre_commit_config = os.path.join(
+        projectDir, os.pardir, os.pardir, ".pre-commit-config.yaml"
+    )
+    if os.path.exists(upstream_pre_commit_config):
+        with open(os.path.join(devProjectDir, ".pre-commit-config.yaml"), "w") as f:
+            f.write("# Copied from {}\n".format(upstream_pre_commit_config))
+            f.writelines(open(upstream_pre_commit_config))
+
     if args.git:
         createGitIgnore(os.path.join(devProjectDir, ".gitignore"), selfignore=False)
         call(["git", "add", "."], cwd=devProjectDir)
@@ -476,6 +485,13 @@ def main():
             ],
             cwd=devProjectDir,
         )
+        if os.path.exists(os.path.join(devProjectDir, ".pre-commit-config.yaml")):
+            call(
+                ["pre-commit", "install"],
+                cwd=devProjectDir,
+                stdout=DEVNULL,
+                stderr=DEVNULL,
+            )
 
     # Success report
     base_tag = "vXrY"  # in cas we cannot guess, use a placeholder

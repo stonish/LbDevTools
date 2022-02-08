@@ -116,7 +116,7 @@ def createClangFormat(dest, overwrite=False):
     return False
 
 
-def initProject(path, overwrite=False):
+def initProject(path, overwrite=False, ignore_pre_commit=False):
     """
     Initialize the sources for an LHCb project for building.
 
@@ -126,16 +126,18 @@ def initProject(path, overwrite=False):
     @param path: path to the root directory of the project
     @param overwrite: whether existing files should be overwritten, set it to
                       True to overwrite all of them or to a list of filenames
+    @param ignore_pre_commit: to not call "pre-commit install" even if
+                              .pre-commit-config.yaml is present
     """
     extraignore = []
     factories = [
         ("Makefile", createProjectMakefile),
         ("toolchain.cmake", createToolchainFile),
-        (
+        (".clang-format", createClangFormat),
+        (  # this has to be last to take into account what was added
             ".gitignore",
             lambda dest, overwrite: createGitIgnore(dest, overwrite, extraignore),
         ),
-        (".clang-format", createClangFormat),
     ]
 
     # handle the possible values of overwrite to always have a set of names
@@ -151,3 +153,17 @@ def initProject(path, overwrite=False):
     for filename, factory in factories:
         if factory(os.path.join(path, filename), overwrite=filename in overwrite):
             extraignore.append("/" + filename)
+
+    if os.path.exists(os.path.join(path, ".pre-commit-config.yaml")):
+        import logging
+
+        if not ignore_pre_commit:
+            from subprocess import run
+
+            logging.debug(
+                run(
+                    ["pre-commit", "install"], cwd=path, capture_output=True
+                ).stdout.decode()
+            )
+        else:
+            logging.warning("ignoring .pre-commit-config.yaml (pre-commit not invoked)")

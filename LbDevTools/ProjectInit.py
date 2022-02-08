@@ -47,13 +47,19 @@ def main():
         help="overwrite existing files [default: %(default)s]",
     )
 
+    parser.add_argument(
+        "--ignore-pre-commit",
+        action="store_true",
+        help="do not enable pre-commit hook even if .pre-commit-config.yaml is present",
+    )
+
     add_verbosity_argument(parser)
 
-    parser.set_defaults(path=os.curdir, overwrite=False)
+    parser.set_defaults(path=os.curdir, overwrite=False, ignore_pre_commit=False)
 
     args = parser.parse_args()
     handle_verbosity_argument(args)
 
     logging.debug("using project root '%s'", args.path)
 
-    initProject(args.path, args.overwrite)
+    initProject(args.path, args.overwrite, args.ignore_pre_commit)

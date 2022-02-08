@@ -406,7 +406,7 @@ def main():
         )
         with open(dest, "w") as f:
             f.write(
-                "# Dependencies\nlhcb_find_package({project} {version} REQUIRED)\n".format(
+                "# Dependencies\nlhcb_find_package({project} {version} EXACT REQUIRED)\n".format(
                     project=project,
                     version=version if re.match(r"^[0-9.]*$", version) else "",
                 )

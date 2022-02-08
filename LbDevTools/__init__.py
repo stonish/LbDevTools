@@ -131,11 +131,11 @@ def initProject(path, overwrite=False):
     factories = [
         ("Makefile", createProjectMakefile),
         ("toolchain.cmake", createToolchainFile),
-        (
+        (".clang-format", createClangFormat),
+        (  # this has to be last to take into account what was added
             ".gitignore",
             lambda dest, overwrite: createGitIgnore(dest, overwrite, extraignore),
         ),
-        (".clang-format", createClangFormat),
     ]
 
     # handle the possible values of overwrite to always have a set of names

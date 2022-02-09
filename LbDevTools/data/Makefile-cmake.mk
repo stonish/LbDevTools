@@ -32,7 +32,7 @@
 #         print the list of available targets
 #
 #     configure [*]_
-#         alias to CMake 'rebuild_cache' target
+#         force an explicit CMake configuration
 #
 # :Author: Marco Clemencic
 #
@@ -100,6 +100,7 @@ else
   BUILD_CONF_FILE := Makefile
 endif
 BUILD_CMD := $(CMAKE) --build $(BUILDDIR) --target
+CONFIG_CMD := $(CMAKE) -S $(CURDIR) -B $(BUILDDIR) $(CMAKEFLAGS)
 
 # default target
 all:
@@ -118,7 +119,8 @@ endif
 # aliases
 .PHONY: configure tests FORCE
 ifneq ($(wildcard $(BUILDDIR)/$(BUILD_CONF_FILE)),)
-configure: rebuild_cache
+configure:
+	$(CONFIG_CMD)
 else
 configure: $(BUILDDIR)/$(BUILD_CONF_FILE)
 endif
@@ -157,4 +159,4 @@ $(MAKEFILE_LIST):
 
 # trigger CMake configuration
 $(BUILDDIR)/$(BUILD_CONF_FILE):
-	$(CMAKE) -S $(CURDIR) -B $(BUILDDIR) $(CMAKEFLAGS)
+	$(CONFIG_CMD)

@@ -34,6 +34,10 @@
 #     configure [*]_
 #         force an explicit CMake configuration
 #
+#     full-configure [*]_
+#         wipe the CMake cache and force full configuration
+#         (the binaries are not removed so, possibly not rebuilt)
+#
 # :Author: Marco Clemencic
 #
 # .. [*] Targets defined by this Makefile.
@@ -125,6 +129,12 @@ else
 configure: $(BUILDDIR)/$(BUILD_CONF_FILE)
 endif
 	@ # do not delegate further
+
+# Note: in principle this should delegate to "make configure" after removing the files to generate
+#       but this does not work because of how make handles recursion
+full-configure:
+	$(RM) $(BUILDDIR)/$(BUILD_CONF_FILE) $(BUILDDIR)/CMakeCache.txt
+	$(CONFIG_CMD)
 
 # This wrapping around the test target is used to ensure the generation of
 # the XML output from ctest.

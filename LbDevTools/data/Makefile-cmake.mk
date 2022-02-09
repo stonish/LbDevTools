@@ -32,7 +32,11 @@
 #         print the list of available targets
 #
 #     configure [*]_
-#         alias to CMake 'rebuild_cache' target
+#         force an explicit CMake configuration
+#
+#     full-configure [*]_
+#         wipe the CMake cache and force full configuration
+#         (the binaries are not removed so, possibly not rebuilt)
 #
 # :Author: Marco Clemencic
 #
@@ -100,6 +104,7 @@ else
   BUILD_CONF_FILE := Makefile
 endif
 BUILD_CMD := $(CMAKE) --build $(BUILDDIR) --target
+CONFIG_CMD := $(CMAKE) -S $(CURDIR) -B $(BUILDDIR) $(CMAKEFLAGS)
 
 # default target
 all:
@@ -116,13 +121,20 @@ ifneq ($(MAKECMDGOALS),purge)
 endif
 
 # aliases
-.PHONY: configure tests FORCE
+.PHONY: configure test FORCE
 ifneq ($(wildcard $(BUILDDIR)/$(BUILD_CONF_FILE)),)
-configure: rebuild_cache
+configure:
+	$(CONFIG_CMD)
 else
 configure: $(BUILDDIR)/$(BUILD_CONF_FILE)
 endif
 	@ # do not delegate further
+
+# Note: in principle this should delegate to "make configure" after removing the files to generate
+#       but this does not work because of how make handles recursion
+full-configure:
+	$(RM) $(BUILDDIR)/$(BUILD_CONF_FILE) $(BUILDDIR)/CMakeCache.txt
+	$(CONFIG_CMD)
 
 # This wrapping around the test target is used to ensure the generation of
 # the XML output from ctest.
@@ -157,4 +169,4 @@ $(MAKEFILE_LIST):
 
 # trigger CMake configuration
 $(BUILDDIR)/$(BUILD_CONF_FILE):
-	$(CMAKE) -S $(CURDIR) -B $(BUILDDIR) $(CMAKEFLAGS)
+	$(CONFIG_CMD)

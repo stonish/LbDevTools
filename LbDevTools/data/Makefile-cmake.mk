@@ -121,7 +121,7 @@ ifneq ($(MAKECMDGOALS),purge)
 endif
 
 # aliases
-.PHONY: configure tests FORCE
+.PHONY: configure test FORCE
 ifneq ($(wildcard $(BUILDDIR)/$(BUILD_CONF_FILE)),)
 configure:
 	$(CONFIG_CMD)

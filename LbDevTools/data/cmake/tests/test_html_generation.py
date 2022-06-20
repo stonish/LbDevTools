@@ -12,7 +12,7 @@ It does not take arguments so we change the pwd to the test directory to invoke 
 
 class Test:
     def test_simple(self):
-        """ Basic test that checks that the output of the command is correct on a simple Test.xml """
+        """Basic test that checks that the output of the command is correct on a simple Test.xml"""
         base_dir = dirname(__file__)
 
         # The file is ../CTestXML2HTML. We take the abspath as we'll run in the test directory

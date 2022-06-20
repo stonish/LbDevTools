@@ -21,7 +21,7 @@ from git import Repo
 
 
 def build_file_list(rootdir, fileset):
-    """ Build the list of files in the repo """
+    """Build the list of files in the repo"""
     for subdir, dirs, files in os.walk(rootdir):
         reldir = subdir
         for file in files:

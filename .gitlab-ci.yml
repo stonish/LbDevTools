@@ -83,7 +83,8 @@ python3.9:
 formatting:
   image: gitlab-registry.cern.ch/lhcb-docker/python-deployment:python-3.7
   script:
-    - pip install black==20.8b1
+    # Need to use click 7.x to avoid "ImportError: cannot import name '_unicodefun' from 'click'"
+    - pip install black==20.8b1 'click~=7.0'
     - black --check --exclude templates .
 
 # Packaging step

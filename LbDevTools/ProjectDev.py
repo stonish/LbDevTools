@@ -405,13 +405,13 @@ def main():
             devProjectDir, "cmake", "{}Dependencies.cmake".format(local_project)
         )
         with open(dest, "w") as f:
+            _version = ""
+            if re.match(r"^[0-9.]+$", version):
+                _version = "{} EXACT ".format(version)
+            f.write("# Dependencies\n")
+            f.write("lhcb_find_package({} {}REQUIRED)\n".format(project, _version))
             f.write(
-                "# Dependencies\nlhcb_find_package({project} {version}REQUIRED)\n".format(
-                    project=project,
-                    version="{} EXACT ".format(version)
-                    if re.match(r"^[0-9.]+$", version)
-                    else "",
-                )
+                "lhcb_env(PRIVATE DEFAULT OVERRIDE_LBEXEC_APP {})\n".format(project)
             )
 
     # generate searchPath.cmake

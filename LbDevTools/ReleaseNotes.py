@@ -169,7 +169,9 @@ def find_merge_requests_git(project, repo, since, until=""):
     iids = [iid for iid in iids if iid]
     # .list(iids=iids) produces a wrong query, so do it semi-manually:
     # TODO fix this in a future version of python-gitlab
-    mrs = project.mergerequests.list(all=True, **{"iids[]": iids}) if iids else []
+    mrs = []
+    for i in range(0, len(iids), 10):
+        mrs += project.mergerequests.list(all=True, **{"iids[]": iids[i : i + 10]})
     if len(mrs) != len(iids):
         raise RuntimeError(
             "Could not list all {} MRs, got {}".format(len(iids), len(mrs))
@@ -478,7 +480,7 @@ Example:
             logging.warning(
                 "Querying GitLab without token will disable some features.\n"
                 "Either set $GITLAB_TOKEN or use --token.\nA token can be "
-                "obtained from https://gitlab.cern.ch/profile/personal_access_tokens"
+                "obtained from https://gitlab.cern.ch/-/profile/personal_access_tokens"
             )
 
     template = get_template(args.template, template_paths)

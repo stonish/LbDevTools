@@ -321,7 +321,7 @@ set(manifest_data
 ")
 set(projects)
 foreach(pack IN LISTS packages_found)
-  if("${${pack}_DIR}${${pack}_ROOT_DIR}" MATCHES "/InstallArea/")
+  if(${pack} IN_LIST LHCB_PROJECTS_FOUND)
     # it looks like an LHCb project, so we treat it differently
     list(APPEND projects ${pack})
   else()

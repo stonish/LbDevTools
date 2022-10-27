@@ -773,10 +773,11 @@ def format():
             ]
         )
         try:
-            payload.encode()
-            charset = None
+            payload.encode("ascii")
         except UnicodeEncodeError:
             charset = "utf-8"
+        else:
+            charset = None
         msg.set_payload(payload, charset=charset)
 
         if args.format_patch == "-":

@@ -1,5 +1,5 @@
 ###############################################################################
-# (c) Copyright 2019-2021 CERN for the benefit of the LHCb Collaboration      #
+# (c) Copyright 2019-2022 CERN for the benefit of the LHCb Collaboration      #
 #                                                                             #
 # This software is distributed under the terms of the GNU General Public      #
 # Licence version 3 (GPL Version 3), copied verbatim in the file "COPYING".   #
@@ -359,6 +359,17 @@ string(APPEND manifest_data "</manifest>\n")
 # - write manifest.xml file and schedule install
 file(WRITE ${CMAKE_BINARY_DIR}/manifest.xml "${manifest_data}")
 install(FILES ${CMAKE_BINARY_DIR}/manifest.xml DESTINATION .)
+
+# - write list of data packages found during build (needed in LHCbIntegrationTests)
+file(REMOVE "${PROJECT_BINARY_DIR}/.data_packages_found.txt")
+foreach(data_package IN LISTS data_packages_found)
+    string(REPLACE "/" "_" dp_env_name "${data_package}")
+    file(APPEND "${PROJECT_BINARY_DIR}/.data_packages_found.txt"
+        "${${data_package}_ROOT_DIR}/${dp_env_name}.xenv\n")
+endforeach()
+if(EXISTS "${PROJECT_BINARY_DIR}/.data_packages_found.txt")
+    install(FILES "${PROJECT_BINARY_DIR}/.data_packages_found.txt" DESTINATION .)
+endif()
 
 # now we know if we use other LHCb projects and for those we have to pull
 # the metadata file from our metadatafile

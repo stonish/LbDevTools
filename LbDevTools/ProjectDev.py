@@ -347,7 +347,7 @@ def main():
         build_tool=("cmake" if use_cmake else "cmt"),
         local_project=local_project,
         local_version=local_version,
-        with_fortran=" FORTRAN" if args.with_fortran else "",
+        with_fortran=" Fortran" if args.with_fortran else "",
         cmt_project=args.name,
         datadir=DATA_DIR,
         platform=args.platform,

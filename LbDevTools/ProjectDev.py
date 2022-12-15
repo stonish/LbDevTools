@@ -27,6 +27,20 @@ from LbEnv import fixProjectCase
 from LbDevTools import createGitIgnore, createClangFormat, DATA_DIR
 
 
+def extract_lcg_layer(project_root):
+    """
+    If the project sets the LCG_LAYER variable return the value used
+    otherwise return None.
+    """
+    cmake_lists_name = os.path.join(project_root, "CMakeLists.txt")
+    if os.path.exists(cmake_lists_name):
+        content = open(cmake_lists_name).read()
+        match = re.search(r"LCG_LAYER\s+(\S+)", content)
+        if match:
+            return match.group(1)
+    return None
+
+
 def main():
     """
     Script to generate a local development project.
@@ -259,6 +273,7 @@ def main():
         try:
             projectDir = findProject(project, version, args.platform)
             logging.info("using %s %s from %s", project, version, projectDir)
+            layer = extract_lcg_layer(os.path.join(projectDir, os.pardir, os.pardir))
         except MissingProjectError as x:
             parser.error(str(x))
 
@@ -354,6 +369,11 @@ def main():
         lcg_version=LbEnv.ProjectEnv.lookup.getHepToolsInfo(
             os.path.join(projectDir, "manifest.xml")
         )[0],
+        optional_lcg_layer='\nset(LCG_LAYER {} CACHE STRING "Specific set of version to use")\n'.format(
+            layer
+        )
+        if layer
+        else "",
     )
 
     # FIXME: improve generation of searchPath files, so that they match the command line

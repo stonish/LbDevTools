@@ -363,6 +363,7 @@ install(FILES ${CMAKE_BINARY_DIR}/manifest.xml DESTINATION .)
 # - write list of data packages found during build (needed in LHCbIntegrationTests)
 file(REMOVE "${PROJECT_BINARY_DIR}/.data_packages_found.txt")
 foreach(data_package IN LISTS data_packages_found)
+    string(REGEX REPLACE ":.*" "" data_package "${data_package}")
     string(REPLACE "/" "_" dp_env_name "${data_package}")
     file(APPEND "${PROJECT_BINARY_DIR}/.data_packages_found.txt"
         "${${data_package}_ROOT_DIR}/${dp_env_name}.xenv\n")

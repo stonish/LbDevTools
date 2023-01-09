@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.15)
-
+${optional_lcg_layer)
 project(${local_project}
     VERSION ${local_version}
     LANGUAGES CXX${with_fortran})
@@ -23,6 +23,7 @@ foreach(p IN LISTS enabled_projects)
     set(WITH_$${p}_PRIVATE_DEPENDENCIES TRUE)
 endforeach()
 
+list(PREPEND CMAKE_MODULE_PATH $${PROJECT_SOURCE_DIR}/cmake)
 include($${CMAKE_CURRENT_LIST_DIR}/cmake/${local_project}Dependencies.cmake)
 
 set(GAUDI_PREFER_LOCAL_TARGETS TRUE)

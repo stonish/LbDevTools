@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.15)
-${optional_lcg_layer)
+${optional_lcg_layer}
 project(${local_project}
     VERSION ${local_version}
     LANGUAGES CXX${with_fortran})

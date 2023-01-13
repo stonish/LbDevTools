@@ -73,7 +73,7 @@ macro(lhcb_find_package project)
             # Use the exact version requested for the project
             list(POP_FRONT _args)  # remove project name
             list(POP_FRONT _args _arg1)  # remove version (if any)
-            if(NOT _arg1 MATCHES "^[0-9.]+$")
+            if(NOT _arg1 MATCHES "^[0-9.<]+$")
                 # not a version, keep it
                 list(INSERT _args 0 ${_arg1})
             endif()
